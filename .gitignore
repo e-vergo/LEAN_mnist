@@ -1,0 +1,55 @@
+# Lean build artifacts
+/.lake/
+/lake-packages/
+/build/
+*.olean
+*.ilean
+*.trace
+
+# Lake manifest
+lake-manifest.json
+
+# Lean 4 cache
+.lake-cache/
+
+# Editor and IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Python (if used for scripts)
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+*.egg-info/
+
+# Data files
+/data/
+*.idx-ubyte
+*.idx3-ubyte
+*.idx1-ubyte
+*.gz
+*.tar
+*.zip
+
+# Model checkpoints and outputs
+/checkpoints/
+/models/
+/results/
+/logs/
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+
+# OS-specific
+Thumbs.db
+.Trash-*
