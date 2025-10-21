@@ -92,7 +92,25 @@ Uses deterministic pattern instead of random generation for reproducibility.
 -/
 def generateSyntheticDataset (n : Nat) (inputDim : Nat) (numClasses : Nat)
     : IO (Array (Vector inputDim × Nat)) := do
-  sorry
+  -- Generate n samples with deterministic patterns
+  let mut dataset : Array (Vector inputDim × Nat) := Array.empty
+
+  for i in [0:n] do
+    -- Create deterministic pattern based on sample index
+    -- Each sample gets a unique pattern based on its index
+    let sample : Vector inputDim := ⊞ (j : Idx inputDim) =>
+      -- Use sine wave pattern for variation
+      let val := Float.sin ((i.toFloat + j.1.toNat.toFloat) / 10.0)
+      -- Scale to [0, 1] range
+      (val + 1.0) / 2.0
+
+    -- Assign label based on simple rule: modulo classification
+    -- This creates a deterministic but non-trivial classification problem
+    let label := i % numClasses
+
+    dataset := dataset.push (sample, label)
+
+  return dataset
 
 /-- Generate a tiny overfitting dataset.
 
@@ -101,7 +119,27 @@ able to memorize (overfit) completely if training works correctly.
 -/
 def generateOverfitDataset (inputDim : Nat) (numClasses : Nat)
     : IO (Array (Vector inputDim × Nat)) := do
-  sorry
+  -- Create exactly 10 fixed samples with simple, distinct patterns
+  let mut dataset : Array (Vector inputDim × Nat) := Array.empty
+
+  -- Generate 10 samples with distinct patterns
+  for i in [0:10] do
+    -- Each sample has a unique pattern based on its index
+    let sample : Vector inputDim := ⊞ (j : Idx inputDim) =>
+      -- Create simple repeating pattern for each sample
+      let baseValue := i.toFloat / 10.0  -- Range [0.0, 0.9]
+      let offset := (j.1.toNat % 3).toFloat / 3.0  -- Add small variation
+      let combined := baseValue + offset
+      -- Clamp to [0, 1] range
+      if combined > 1.0 then 1.0 else combined
+
+    -- Assign labels cyclically to ensure class balance
+    -- For numClasses=2: samples 0,2,4,6,8 get label 0; 1,3,5,7,9 get label 1
+    let label := i % numClasses
+
+    dataset := dataset.push (sample, label)
+
+  return dataset
 
 /-! ## Helper Functions for Testing -/
 

@@ -54,7 +54,35 @@ open VerifiedNN.Testing.Integration
 
 /-- Run all available test suites with comprehensive reporting -/
 def runAllTests : IO Unit := do
-  sorry
+  IO.println "=========================================="
+  IO.println "VerifiedNN Complete Test Suite"
+  IO.println "=========================================="
+  IO.println ""
+
+  -- Run unit tests
+  IO.println "╔══════════════════════════════════════════╗"
+  IO.println "║          UNIT TESTS                      ║"
+  IO.println "╔══════════════════════════════════════════╗"
+  UnitTests.runAllTests
+  IO.println ""
+
+  -- Run optimizer tests
+  IO.println "╔══════════════════════════════════════════╗"
+  IO.println "║       OPTIMIZER TESTS                    ║"
+  IO.println "╔══════════════════════════════════════════╗"
+  OptimizerTests.runTests
+  IO.println ""
+
+  -- Run integration tests
+  IO.println "╔══════════════════════════════════════════╗"
+  IO.println "║      INTEGRATION TESTS                   ║"
+  IO.println "╔══════════════════════════════════════════╗"
+  Integration.runAllIntegrationTests
+  IO.println ""
+
+  IO.println "=========================================="
+  IO.println "✓ All Test Suites Complete"
+  IO.println "=========================================="
 
 /-- Quick smoke test for rapid iteration -/
 def smokeTest : IO Unit := do

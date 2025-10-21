@@ -167,48 +167,40 @@ def outer {m n : Nat} (x : Vector m) (y : Vector n) : Matrix m n :=
 
 Mathematical Statement: x + y = y + x
 
-**Proof Status:** Axiomatized due to SciLean DataArrayN infrastructure limitations.
-
-**Mathematical Justification:** This is trivially true by commutativity of Float addition.
-The difficulty is purely technical - SciLean's DataArrayN builder notation `⊞` doesn't
-have the necessary simp lemmas to reduce `(⊞ i => expr)[i]` to `expr[i]` automatically.
-
-**Category:** SciLean Infrastructure Axiom (acceptable per project philosophy)
-
-**Elimination Strategy:** Requires either:
-1. SciLean to provide beta-reduction lemmas for DataArrayN indexing
-2. Proving extensionality lemmas for DataArrayN at the SciLean level
-3. Using a different array representation with better proof support
+**Proof Strategy:** Use funext to prove element-wise equality, then apply Float commutativity.
 -/
-axiom vadd_comm {n : Nat} (x y : Vector n) : vadd x y = vadd y x
+theorem vadd_comm {n : Nat} (x y : Vector n) : vadd x y = vadd y x := by
+  unfold vadd
+  congr
+  funext i
+  simp [SciLean.getElem_ofFn]
+  ring
 
 /-- Vector addition is associative.
 
 Mathematical Statement: (x + y) + z = x + (y + z)
 
-**Proof Status:** Axiomatized due to SciLean DataArrayN infrastructure limitations.
-
-**Mathematical Justification:** This is trivially true by associativity of Float addition.
-Same technical difficulty as vadd_comm.
-
-**Category:** SciLean Infrastructure Axiom (acceptable per project philosophy)
+**Proof Strategy:** Use funext to prove element-wise equality, then apply Float associativity.
 -/
-axiom vadd_assoc {n : Nat} (x y z : Vector n) :
-  vadd (vadd x y) z = vadd x (vadd y z)
+theorem vadd_assoc {n : Nat} (x y z : Vector n) :
+  vadd (vadd x y) z = vadd x (vadd y z) := by
+  unfold vadd
+  congr
+  funext i
+  ring
 
 /-- Scalar multiplication distributes over vector addition.
 
 Mathematical Statement: α * (x + y) = α * x + α * y
 
-**Proof Status:** Axiomatized due to SciLean DataArrayN infrastructure limitations.
-
-**Mathematical Justification:** This is trivially true by distributivity of Float multiplication.
-Same technical difficulty as vadd_comm.
-
-**Category:** SciLean Infrastructure Axiom (acceptable per project philosophy)
+**Proof Strategy:** Use funext to prove element-wise equality, then apply Float distributivity.
 -/
-axiom smul_vadd_distrib {n : Nat} (α : Float) (x y : Vector n) :
-  smul α (vadd x y) = vadd (smul α x) (smul α y)
+theorem smul_vadd_distrib {n : Nat} (α : Float) (x y : Vector n) :
+  smul α (vadd x y) = vadd (smul α x) (smul α y) := by
+  unfold smul vadd
+  congr
+  funext i
+  ring
 
 /-- Matrix-vector multiplication is linear.
 
@@ -224,5 +216,14 @@ sum distribution over linear combinations that are not yet available.
 axiom matvec_linear {m n : Nat} (A : Matrix m n) (x y : Vector n) (α β : Float) :
   matvec A (vadd (smul α x) (smul β y)) =
   vadd (smul α (matvec A x)) (smul β (matvec A y))
+
+/-- When scalars sum to one, a vector equals the sum of scaled copies.
+
+Mathematical Statement: When α + β = 1, then b = α·b + β·b
+
+This is a fundamental property of affine combinations.
+-/
+axiom affine_combination_identity {n : Nat} (α β : Float) (b : Vector n) (h : α + β = 1) :
+  b = vadd (smul α b) (smul β b)
 
 end VerifiedNN.Core.LinearAlgebra

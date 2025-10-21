@@ -22,6 +22,7 @@ import VerifiedNN.Loss.Gradient
 import SciLean
 import Mathlib.Analysis.Calculus.FDeriv.Basic
 import Mathlib.Analysis.Calculus.Deriv.Basic
+import Mathlib.Analysis.SpecialFunctions.Exp
 
 namespace VerifiedNN.Verification.GradientCorrectness
 
@@ -41,7 +42,7 @@ lemma id_differentiable : Differentiable ℝ (id : ℝ → ℝ) :=
 /-- Helper lemma: Derivative of identity is 1.
 -/
 lemma deriv_id' (x : ℝ) : deriv (id : ℝ → ℝ) x = 1 := by
-  sorry
+  exact deriv_id x
 
 /-- ReLU is differentiable almost everywhere (except at x = 0).
 
@@ -53,7 +54,34 @@ For automatic differentiation purposes, we typically use 0 at x = 0.
 -/
 theorem relu_gradient_almost_everywhere (x : ℝ) (hx : x ≠ 0) :
   deriv (fun y => if y > 0 then y else 0) x = if x > 0 then 1 else 0 := by
-  sorry
+  -- Split into cases: x > 0 or x < 0 (using hx : x ≠ 0)
+  by_cases h : x > 0
+  · -- Case: x > 0
+    -- In a neighborhood of x, the function is just y ↦ y
+    simp only [if_pos h]
+    -- Show derivative equals 1
+    have : ∀ᶠ y in 𝓝 x, (if y > 0 then y else 0) = y := by
+      apply eventually_nhds_iff.mpr
+      use {z | z > 0}, IsOpen.mem_nhds isOpen_Ioi h
+      intro z hz
+      exact if_pos hz
+    rw [deriv_congr_nhds this]
+    exact deriv_id x
+  · -- Case: x < 0 (since x ≠ 0 and ¬(x > 0))
+    simp only [if_neg h]
+    -- Show x < 0
+    have hx_neg : x < 0 := by
+      cases' ne_iff_lt_or_gt.mp hx with hlt hgt
+      · exact hlt
+      · exact absurd hgt h
+    -- In a neighborhood of x, the function is constantly 0
+    have : ∀ᶠ y in 𝓝 x, (if y > 0 then y else 0) = 0 := by
+      apply eventually_nhds_iff.mpr
+      use {z | z < 0}, IsOpen.mem_nhds isOpen_Iio hx_neg
+      intro z hz
+      exact if_neg (not_lt.mpr (le_of_lt hz))
+    rw [deriv_congr_nhds this]
+    exact deriv_const x 0
 
 /-- Sigmoid is differentiable everywhere with derivative σ(x)(1 - σ(x)).
 
@@ -62,12 +90,59 @@ theorem relu_gradient_almost_everywhere (x : ℝ) (hx : x ≠ 0) :
 theorem sigmoid_gradient_correct (x : ℝ) :
   deriv (fun y => 1 / (1 + Real.exp (-y))) x =
     (1 / (1 + Real.exp (-x))) * (1 - 1 / (1 + Real.exp (-x))) := by
-  sorry
-  -- Proof strategy:
-  -- 1. Apply deriv_div and deriv_const
-  -- 2. Apply deriv_add and deriv_exp
-  -- 3. Simplify algebraically to show σ(x)(1-σ(x))
-  -- 4. Use mathlib's Real.exp and division rules
+  -- Define σ(x) = 1/(1 + e^(-x)) for readability
+  let σ := fun y => 1 / (1 + Real.exp (-y))
+
+  -- Key facts needed for the proof:
+  -- 1. e^(-x) is always positive, so 1 + e^(-x) > 1 > 0
+  have denom_pos : 1 + Real.exp (-x) > 0 := by
+    linarith [Real.exp_pos (-x)]
+
+  have denom_ne_zero : 1 + Real.exp (-x) ≠ 0 := by
+    linarith [Real.exp_pos (-x)]
+
+  -- The derivative of 1/(1 + e^(-x)) using quotient rule:
+  -- d/dx[1/(1+e^(-x))] = -1 * d/dx[1+e^(-x)] / (1+e^(-x))²
+  --                    = -1 * (-e^(-x)) / (1+e^(-x))²
+  --                    = e^(-x) / (1+e^(-x))²
+
+  -- We want to show this equals σ(x)(1-σ(x)) = (1/(1+e^(-x))) * (e^(-x)/(1+e^(-x)))
+  --                                          = e^(-x) / (1+e^(-x))²
+
+  -- Use deriv_div to compute derivative of quotient
+  have h_deriv : deriv σ x =
+      (deriv (fun _ => (1 : ℝ)) x * (1 + Real.exp (-x)) - 1 * deriv (fun y => 1 + Real.exp (-y)) x)
+      / (1 + Real.exp (-x))^2 := by
+    unfold σ
+    rw [deriv_div]
+    · rfl
+    · exact differentiable_const _
+    · apply Differentiable.add
+      · exact differentiable_const _
+      · apply Differentiable.comp
+        · exact Real.differentiable_exp
+        · apply Differentiable.neg
+          exact differentiable_id
+    · exact denom_ne_zero
+
+  -- Simplify: deriv of constant is 0, deriv of (1 + e^(-x)) is -e^(-x)
+  have h_num : deriv (fun _ => (1 : ℝ)) x * (1 + Real.exp (-x)) - 1 * deriv (fun y => 1 + Real.exp (-y)) x
+               = Real.exp (-x) := by
+    rw [deriv_const, zero_mul, zero_sub]
+    have : deriv (fun y => 1 + Real.exp (-y)) x = -Real.exp (-x) := by
+      rw [deriv_add_const]
+      rw [deriv_comp]
+      · simp [Real.deriv_exp, deriv_neg, deriv_id]
+        ring
+      · exact differentiable_id.neg.differentiableAt
+      · exact Real.differentiable_exp.differentiableAt
+    rw [this, mul_neg, neg_neg]
+
+  -- Now show this equals σ(x)(1 - σ(x))
+  rw [h_deriv, h_num]
+  unfold σ
+  field_simp [denom_ne_zero]
+  ring
 
 /-! ## Linear Algebra Operation Gradients -/
 
@@ -149,8 +224,8 @@ theorem chain_rule_preserves_correctness
   (hf : DifferentiableAt ℝ f x) (hg : DifferentiableAt ℝ g (f x)) :
   fderiv ℝ (g ∘ f) x = (fderiv ℝ g (f x)).comp (fderiv ℝ f x) := by
   -- This is a direct application of the chain rule from mathlib
-  -- The theorem fderiv.comp states exactly this
-  exact fderiv.comp x hg hf
+  -- The theorem fderiv_comp states exactly this
+  exact fderiv_comp x hg hf
   -- Proof strategy:
   -- 1. Apply fderiv_comp from mathlib ✓ PROVEN
   -- 2. This is a standard theorem in calculus ✓

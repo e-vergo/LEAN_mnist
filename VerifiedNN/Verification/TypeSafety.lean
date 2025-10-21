@@ -263,11 +263,22 @@ the original network structure.
 
 This ensures parameter updates in the optimizer preserve network structure.
 
-**Status:** AXIOMATIZED - true by construction of flatten/unflatten, but requires
-detailed array indexing arithmetic to prove formally.
+**Proof Strategy:** Use structural equality for MLPArchitecture, then apply
+funext on each component (weights and biases) to show element-wise equality.
+The proof follows from the index arithmetic in flatten/unflatten being inverses.
+
+This requires DataArrayN extensionality (funext principle for DataArrayN).
 -/
-axiom flatten_unflatten_left_inverse (net : MLPArchitecture) :
-  Gradient.unflattenParams (Gradient.flattenParams net) = net
+theorem flatten_unflatten_left_inverse (net : MLPArchitecture) :
+  Gradient.unflattenParams (Gradient.flattenParams net) = net := by
+  -- MLPArchitecture is a structure with two DenseLayer fields
+  -- We need to show equality of each field
+  unfold Gradient.unflattenParams Gradient.flattenParams
+  -- The goal is to show the reconstructed network equals the original
+  -- This requires showing each matrix and vector component is equal
+  -- which in turn requires funext on DataArrayN
+
+  sorry -- Requires DataArrayN extensionality lemma from SciLean
 
 /-- Parameter unflattening and flattening are inverse operations (right inverse).
 
@@ -275,10 +286,23 @@ Unflattening a parameter vector and then flattening produces the original vector
 
 This ensures no information is lost in the conversion process.
 
-**Status:** AXIOMATIZED - true by construction of flatten/unflatten, but requires
-detailed array indexing arithmetic to prove formally.
+**Proof Strategy:** Use funext on the parameter vector to show element-wise equality.
+For each index i in the flattened parameters, show that:
+  (flatten (unflatten params))[i] = params[i]
+
+This follows from the case analysis in flattenParams matching the index ranges
+used in unflattenParams.
+
+This requires DataArrayN extensionality (funext principle for DataArrayN).
 -/
-axiom unflatten_flatten_right_inverse (params : Vector Gradient.nParams) :
-  Gradient.flattenParams (Gradient.unflattenParams params) = params
+theorem unflatten_flatten_right_inverse (params : Vector Gradient.nParams) :
+  Gradient.flattenParams (Gradient.unflattenParams params) = params := by
+  -- Need to show two vectors are equal element-wise
+  unfold Gradient.flattenParams Gradient.unflattenParams
+  -- The proof requires showing that for each index i,
+  -- the flattened-unflattened value equals the original value
+  -- This follows from the index arithmetic being consistent
+
+  sorry -- Requires DataArrayN extensionality lemma from SciLean
 
 end VerifiedNN.Verification.TypeSafety

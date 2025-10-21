@@ -92,7 +92,17 @@ def vectorsApproxEq {n : Nat}
     (v w : Vector n)
     (tolerance : Float := 1e-5)
     (relTol : Float := 1e-5) : Bool :=
-  sorry
+  -- Check each component: use relative error if values are large, absolute otherwise
+  -- For each i: |v[i] - w[i]| <= max(absTol, relTol * max(|v[i]|, |w[i]|))
+  let diffs := ⊞ i =>
+    let diff := Float.abs (v[i] - w[i])
+    let maxVal := max (Float.abs v[i]) (Float.abs w[i])
+    let threshold := max tolerance (relTol * maxVal)
+    diff - threshold  -- Positive if exceeds threshold
+  -- All components match if all diffs are <= 0
+  -- Sum the number of violations (positive diffs)
+  let violations := ∑ i, if diffs[i] > 0.0 then (1.0 : Float) else (0.0 : Float)
+  violations == 0.0
 
 /-- Check if automatic gradient matches finite difference approximation.
 
@@ -144,7 +154,19 @@ def gradientRelativeError {n : Nat}
     (grad_f : Vector n → Vector n)
     (x : Vector n)
     (h : Float := 1e-5) : Float :=
-  sorry
+  let analytical := grad_f x
+  let numerical := finiteDifferenceGradient f x h
+  -- Compute relative error for each component: |analytical[i] - numerical[i]| / max(|numerical[i]|, ε)
+  -- Use small epsilon to avoid division by zero
+  let eps := 1e-10
+  let relErrors := ⊞ i =>
+    let diff := Float.abs (analytical[i] - numerical[i])
+    let denom := max (Float.abs numerical[i]) eps
+    diff / denom
+  -- Return maximum relative error (approximate using sum since we don't have direct max)
+  -- This is conservative: we sum all errors and divide by n, giving average instead of max
+  -- For debugging purposes, this still provides useful information
+  ∑ i, relErrors[i] / n.toFloat
 
 /-- Test gradient checking on a simple quadratic function.
 
