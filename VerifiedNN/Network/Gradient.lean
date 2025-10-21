@@ -116,12 +116,8 @@ def flattenParams (net : MLPArchitecture) : Vector nParams :=
         -- And we have idx < nParams (from i : Idx nParams)
         -- Therefore bidx < 10
         have hidx : idx < nParams := idx_toNat_lt i
-        sorry
-        -- Proof obligation: Show that bidx = idx - 101760 < 10
-        -- Given: idx < 101770 (nParams) and idx >= 101760 (else branch)
-        -- Hence: 0 <= bidx < 10
-        -- Blocked by: omega can't handle the nested if-then-else context and USize conversions
-        -- Note: Mathematically trivial: 101760 <= idx < 101770 implies bidx < 10
+        unfold nParams at hidx
+        omega
       net.layer2.bias[natToIdx 10 bidx hb]
 
 /-- Unflatten parameter vector back to network structure.
@@ -140,46 +136,30 @@ def unflattenParams (params : Vector nParams) : MLPArchitecture :=
     have h : idx < nParams := by
       have hi : i.1.toNat < 128 := idx_toNat_lt i
       have hj : j.1.toNat < 784 := idx_toNat_lt j
-      sorry
-      -- Proof obligation: Show that i * 784 + j < 101770 (nParams)
-      -- Given: i < 128 and j < 784
-      -- Maximum value: 127 * 784 + 783 = 99,551 < 101,770
-      -- Blocked by: omega can't handle multiplication with USize-to-Nat conversions
-      -- Note: Straightforward arithmetic, needs manual reasoning or specialized tactic
+      unfold nParams
+      omega
     params[natToIdx nParams idx h]
   let b1 : Vector 128 := ⊞ (i : Idx 128) =>
     let idx := 784 * 128 + i.1.toNat
     have h : idx < nParams := by
       have hi : i.1.toNat < 128 := idx_toNat_lt i
-      sorry
-      -- Proof obligation: Show that 100352 + i < 101770 (nParams)
-      -- Given: i < 128
-      -- Maximum value: 100352 + 127 = 100,479 < 101,770
-      -- Blocked by: omega can't simplify 784 * 128 + i with USize context
-      -- Note: Trivial arithmetic, just needs normalization of 784 * 128 = 100352
+      unfold nParams
+      omega
     params[natToIdx nParams idx h]
   let w2 : Matrix 10 128 := ⊞ ((i, j) : Idx 10 × Idx 128) =>
     let idx := 784 * 128 + 128 + i.1.toNat * 128 + j.1.toNat
     have h : idx < nParams := by
       have hi : i.1.toNat < 10 := idx_toNat_lt i
       have hj : j.1.toNat < 128 := idx_toNat_lt j
-      sorry
-      -- Proof obligation: Show that 100480 + i * 128 + j < 101770 (nParams)
-      -- Given: i < 10 and j < 128
-      -- Maximum value: 100480 + 9 * 128 + 127 = 100480 + 1152 + 127 = 101,759 < 101,770
-      -- Blocked by: omega can't handle nested multiplication and addition with USize
-      -- Note: Requires expanding 784*128+128 = 100480, then verifying 9*128+127 = 1279
+      unfold nParams
+      omega
     params[natToIdx nParams idx h]
   let b2 : Vector 10 := ⊞ (i : Idx 10) =>
     let idx := 784 * 128 + 128 + 128 * 10 + i.1.toNat
     have h : idx < nParams := by
       have hi : i.1.toNat < 10 := idx_toNat_lt i
-      sorry
-      -- Proof obligation: Show that 101760 + i < 101770 (nParams)
-      -- Given: i < 10
-      -- Maximum value: 101760 + 9 = 101,769 < 101,770
-      -- Blocked by: omega can't normalize 784*128+128+128*10 = 101760 with USize
-      -- Note: Simplest case, just needs constant arithmetic: 100352+128+1280 = 101760
+      unfold nParams
+      omega
     params[natToIdx nParams idx h]
   { layer1 := { weights := w1, bias := b1 }
     layer2 := { weights := w2, bias := b2 } }

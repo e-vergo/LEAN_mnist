@@ -137,15 +137,30 @@ theorem layer_preserves_affine_combination {m n : Nat}
     (h : α + β = 1) :
   layer.forwardLinear (vadd (smul α x) (smul β y)) =
     vadd (smul α (layer.forwardLinear x)) (smul β (layer.forwardLinear y)) := by
-  sorry
-  -- Proof obligation: Show f(αx + βy) = αf(x) + βf(y) when α + β = 1
-  -- Blocked by: Requires distributivity lemmas from Core.LinearAlgebra
-  -- Strategy:
-  --   f(αx + βy) = W(αx + βy) + b
-  --              = α(Wx) + β(Wy) + b        [by matvec_linear]
-  --              = α(Wx) + β(Wy) + (α+β)b  [since α+β=1]
-  --              = α(Wx + b) + β(Wy + b)   [distributivity of scalar mult over addition]
-  --              = αf(x) + βf(y)
+  -- Proof: Show f(αx + βy) = αf(x) + βf(y) when α + β = 1
+  -- Strategy: Expand definitions element-wise and use the fact that α + β = 1
+  unfold DenseLayer.forwardLinear matvec vadd smul
+  ext i
+  simp only [SciLean.getElem_ofFn, Finset.mul_sum, mul_add, Finset.sum_add_distrib]
+  -- Now we need to show the bias terms work out correctly using α + β = 1
+  -- LHS: Σⱼ W[i,j]*(α*x[j]) + Σⱼ W[i,j]*(β*y[j]) + b[i]
+  -- RHS: α*(Σⱼ W[i,j]*x[j] + b[i]) + β*(Σⱼ W[i,j]*y[j] + b[i])
+  -- The key is that b[i] = α*b[i] + β*b[i] when α + β = 1
+  calc (∑ x_1, layer.weights[(i, x_1)] * (α * x[x_1])) + (∑ x_2, layer.weights[(i, x_2)] * (β * y[x_2])) + layer.bias[i]
+      = (∑ x_1, α * (layer.weights[(i, x_1)] * x[x_1])) + (∑ x_2, β * (layer.weights[(i, x_2)] * y[x_2])) + layer.bias[i] := by
+          congr 1
+          · congr 1; funext j; ring
+          · congr 1; funext j; ring
+    _ = α * (∑ x_1, layer.weights[(i, x_1)] * x[x_1]) + β * (∑ x_2, layer.weights[(i, x_2)] * y[x_2]) + layer.bias[i] := by
+          rw [← Finset.mul_sum, ← Finset.mul_sum]
+    _ = α * (∑ x_1, layer.weights[(i, x_1)] * x[x_1]) + β * (∑ x_2, layer.weights[(i, x_2)] * y[x_2]) + (α + β) * layer.bias[i] := by
+          rw [← h]
+    _ = α * (∑ x_1, layer.weights[(i, x_1)] * x[x_1]) + β * (∑ x_2, layer.weights[(i, x_2)] * y[x_2]) + (α * layer.bias[i] + β * layer.bias[i]) := by
+          ring
+    _ = α * (∑ x_1, layer.weights[(i, x_1)] * x[x_1]) + α * layer.bias[i] + β * (∑ x_2, layer.weights[(i, x_2)] * y[x_2]) + β * layer.bias[i] := by
+          ring
+    _ = α * ((∑ x_1, layer.weights[(i, x_1)] * x[x_1]) + layer.bias[i]) + β * ((∑ x_2, layer.weights[(i, x_2)] * y[x_2]) + layer.bias[i]) := by
+          ring
 
 /-- Composition of affine maps preserves affine combinations.
 

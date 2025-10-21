@@ -139,7 +139,6 @@ Before considering a proof complete:
 - **Work without context** - never attempt proofs without reading imports and documentation
 - **Waste rate-limited queries** - exhaust local search before external API calls
 - **Corrupt proof state** - validate with diagnostics after every single change
-- **Leave TODO comments** - proof obligations are either completed or documented with explicit rationale
 - **Duplicate existing work** - always check mathlib and project before reproving
 - **Claim success prematurely** - verify compilation, axioms, and goal discharge rigorously
 
@@ -184,12 +183,6 @@ When a proof attempt fails:
    - If specific case fails, try proving a more general version
    - Sometimes the general case has better lemma support in mathlib
 
-5. **Document True Blockers (Rare):**
-   - If genuinely blocked after exhaustive attempts, document:
-     - What you tried and why it failed
-     - What lemma or axiom would be needed to proceed
-     - Whether this represents a gap in mathlib or project infrastructure
-   - This should be extremely rare - most proofs are completable with effort
 
 ## Project-Specific Context: Verified Neural Networks
 

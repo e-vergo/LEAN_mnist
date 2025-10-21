@@ -114,13 +114,16 @@ theorem sigmoid_gradient_correct (x : ℝ) :
     exact h1.const_add 1
 
   -- Now 1/g has derivative
-  -- SORRY 1/6: Derivative of reciprocal function
-  -- Mathematical statement: d/dx[1/g(x)] = -g'(x)/g(x)²
-  -- Blocked by: Need mathlib's HasDerivAt.inv or HasDerivAt.div lemmas
-  -- Proof strategy: Apply chain rule to (g(x))^(-1) using HasDerivAt.rpow or direct division rule
-  -- Reference: mathlib's Mathlib.Analysis.Calculus.Deriv.Inv (if exists) or build from HasDerivAt.div
-  -- Status: Should be provable with existing mathlib lemmas once we find the right ones
-  have h_inv_g : HasDerivAt (fun y => 1 / g y) (Real.exp (-x) / (g x)^2) x := by sorry
+  -- Using mathlib's HasDerivAt.inv: (c⁻¹)' = -c' / c²
+  have h_inv_g : HasDerivAt (fun y => 1 / g y) (Real.exp (-x) / (g x)^2) x := by
+    -- Apply HasDerivAt.inv directly: (g⁻¹)' = -g' / g²
+    -- We have h_g : HasDerivAt g (-Real.exp (-x)) x
+    -- So (1/g)' = -(-Real.exp(-x)) / g(x)² = Real.exp(-x) / g(x)²
+    have h_inv := h_g.inv denom_ne_zero
+    -- h_inv : HasDerivAt (fun y => (g y)⁻¹) (- (-Real.exp (-x)) / (g x)²) x
+    convert h_inv using 1
+    · ext y; simp [one_div]
+    · ring
 
   -- Extract the deriv
   rw [h_inv_g.deriv]
@@ -228,15 +231,14 @@ theorem smul_gradient_correct
   intro x
   -- Scalar multiplication is a continuous linear map
   -- For a continuous linear map L, fderiv ℝ L = L
-  -- SORRY 2/6: Scalar multiplication gradient
-  -- Mathematical statement: ∇(c·x) = c·I where I is the identity
-  -- Blocked by: Need to show fderiv of a continuous linear map equals itself
-  -- Proof strategy:
-  --   1. Show (c • ·) is a continuous linear map (ContinuousLinearMap.smulRight)
-  --   2. Apply ContinuousLinearMap.fderiv: for linear L, fderiv ℝ L x = L
-  -- Reference: mathlib's ContinuousLinearMap.fderiv or DifferentiableAt.fderiv_clm
-  -- Status: Should be straightforward once we construct the ContinuousLinearMap properly
-  sorry
+  -- Key insight: (c • ·) = c • id (as a continuous linear map)
+  -- So fderiv ℝ (c • ·) = c • id (by ContinuousLinearMap.fderiv)
+
+  have h_eq : (fun v : Fin n → ℝ => c • v) = (c • ContinuousLinearMap.id ℝ (Fin n → ℝ) : Fin n → ℝ → Fin n → ℝ) := by
+    ext v
+    simp [ContinuousLinearMap.smul_apply]
+  rw [h_eq]
+  exact ContinuousLinearMap.fderiv _ _
 
 /-! ## Composition and Chain Rule -/
 
@@ -285,16 +287,8 @@ theorem layer_composition_gradient_correct
   have h_affine : DifferentiableAt ℝ (fun v => W.mulVec v + b) x := by
     apply DifferentiableAt.add
     · -- W.mulVec v is differentiable (linear map)
-      -- SORRY 3/6: Matrix-vector multiplication differentiability
-      -- Mathematical statement: x ↦ Wx is differentiable (it's linear)
-      -- Blocked by: Need to show Matrix.mulVec is differentiable at x
-      -- Proof strategy:
-      --   1. We already proved matvec_gradient_wrt_vector shows it's DifferentiableAt
-      --   2. Just apply that theorem here
-      --   3. Alternatively: Matrix.mulVec is componentwise linear, use differentiableAt_pi
-      -- Reference: Our own theorem matvec_gradient_wrt_vector above (line 138)
-      -- Status: Should be immediate application of existing theorem
-      sorry
+      -- Apply our theorem matvec_gradient_wrt_vector from line 147
+      exact matvec_gradient_wrt_vector W x
     · -- constant b is differentiable
       exact (differentiable_const b).differentiableAt
 
