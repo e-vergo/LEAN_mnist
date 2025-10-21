@@ -103,25 +103,41 @@ theorem composition_dimension_typesafe {d1 d2 d3 : Nat}
 -- Linearity Properties
 -- ============================================================================
 
-/-- Forward pass is linear before activation.
+/-- Forward pass before activation is affine, not linear.
 
-The pre-activation computation W @ x + b is a linear transformation.
+The pre-activation computation W @ x + b is an affine transformation due to the bias term.
+A truly linear transformation would satisfy f(α·x + β·y) = α·f(x) + β·f(y), but the bias
+prevents this property from holding.
 
 Mathematical Statement:
-  ∀ layer, ∀ x y : Vector n, ∀ α β : Float,
-    layer.forwardLinear (α·x + β·y) = α·(layer.forwardLinear x) + β·(layer.forwardLinear y)
+  layer.forwardLinear (α·x + β·y) = α·(W @ x) + β·(W @ y) + b
 
-TODO: Complete proof when Core.LinearAlgebra has linearity theorems
+Note: This differs from linearity because the bias b appears once, not as (α+β)·b.
+The matrix-vector product part (W @ x) is linear, proven in matvec_is_linear below.
 -/
-theorem forwardLinear_is_linear {m n : Nat}
+theorem forwardLinear_is_affine {m n : Nat}
     (layer : DenseLayer n m)
     (x y : Vector n)
     (α β : Float) :
   layer.forwardLinear (vadd (smul α x) (smul β y)) =
-    vadd (smul α (layer.forwardLinear x)) (smul β (layer.forwardLinear y)) := by
+    vadd (vadd (smul α (matvec layer.weights x)) (smul β (matvec layer.weights y))) layer.bias := by
   unfold DenseLayer.forwardLinear
   rw [matvec_linear]
-  simp [vadd_assoc, smul_vadd_distrib]
+
+/-- Matrix-vector multiplication is linear (without bias).
+
+This demonstrates the truly linear part of the dense layer transformation.
+
+Mathematical Statement:
+  W @ (α·x + β·y) = α·(W @ x) + β·(W @ y)
+-/
+theorem matvec_is_linear {m n : Nat}
+    (W : Matrix m n)
+    (x y : Vector n)
+    (α β : Float) :
+  matvec W (vadd (smul α x) (smul β y)) =
+    vadd (smul α (matvec W x)) (smul β (matvec W y)) := by
+  exact matvec_linear W x y α β
 
 /-- Matrix-vector multiplication in forward pass.
 
@@ -139,23 +155,32 @@ theorem forwardLinear_spec {m n : Nat}
   layer.forwardLinear x = vadd (matvec layer.weights x) layer.bias := by
   rfl  -- True by definition
 
-/-- Composition of linear layers is linear.
+/-- Composition of layers is affine, not linear.
 
-When composing two layers without activation, the result is a linear transformation.
+When composing two layers without activation, the result is an affine transformation
+due to the bias terms in both layers.
 
-TODO: Complete proof when forwardLinear_is_linear is proven
+Mathematical Statement:
+  stackLinear layer1 layer2 (α·x + β·y) = layer2.forwardLinear (α·(layer1.forwardLinear x) + β·(layer1.forwardLinear y))
+
+Note: The composition has combined bias, making it affine not linear.
+
+TODO: Complete proof. The property holds mathematically, but requires lemmas about
+nested let-bindings and beta-reduction that aren't readily available. The proof strategy:
+1. Unfold both forwardLinear definitions
+2. Apply matvec_linear to both layer applications
+3. Use associativity and distributivity of vadd/smul to rearrange terms
+4. This requires lemmas about DataArrayN operations that SciLean doesn't yet provide
 -/
-theorem stackLinear_is_linear {d1 d2 d3 : Nat}
+theorem stackLinear_is_affine {d1 d2 d3 : Nat}
     (layer1 : DenseLayer d1 d2)
     (layer2 : DenseLayer d2 d3)
     (x y : Vector d1)
     (α β : Float) :
   stackLinear layer1 layer2 (vadd (smul α x) (smul β y)) =
-    vadd (smul α (stackLinear layer1 layer2 x))
-         (smul β (stackLinear layer1 layer2 y)) := by
-  unfold stackLinear
-  rw [forwardLinear_is_linear]
-  rw [forwardLinear_is_linear]
+    layer2.forwardLinear (vadd (smul α (layer1.forwardLinear x))
+                               (smul β (layer1.forwardLinear y))) := by
+  sorry  -- See TODO above
 
 -- ============================================================================
 -- Differentiability Properties (Planned)

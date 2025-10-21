@@ -131,7 +131,7 @@ This helps maintain the variance of activations across layers.
 **Returns:** Initialized dense layer
 -/
 def initDenseLayerXavier (inDim outDim : Nat) : IO (DenseLayer inDim outDim) := do
-  let limit := Float.sqrt (6.0 / (inDim.toFloat + outDim.toFloat))
+  let limit : Float := Float.sqrt (6.0 / (inDim.toFloat + outDim.toFloat))
   let weights ← initMatrixUniform outDim inDim (- limit) limit
   let bias ← initVectorZeros outDim
   return { weights, bias }

@@ -92,11 +92,8 @@ def argmax {n : Nat} (v : Vector n) : Nat :=
     -- Helper function: recursively find argmax from index i onwards
     -- Returns (maxIndex, maxValue) pair
     let rec findMaxFrom (i : Fin n) (currentMaxIdx : Nat) (currentMaxVal : Float) : Nat × Float :=
-      have hi : i.val < n := i.isLt
-      -- USize bound: mathematically trivial from hi, but omega can't handle toUSize.toNat
-      let idx : Idx n := ⟨i.val.toUSize, by
-        sorry  -- TODO: USize bound proof (technical detail)
-      ⟩
+      -- Convert Fin n to Idx n using SciLean's equivalence
+      let idx : Idx n := (Idx.finEquiv n).invFun i
       let val := v[idx]
       let (newMaxIdx, newMaxVal) :=
         if val > currentMaxVal then (i.val, val) else (currentMaxIdx, currentMaxVal)
@@ -107,9 +104,7 @@ def argmax {n : Nat} (v : Vector n) : Nat :=
 
     -- Start from index 0
     let firstIdx : Fin n := ⟨0, h⟩
-    let firstIdxIdx : Idx n := ⟨(0 : Nat).toUSize, by
-      sorry  -- TODO: USize bound proof (technical detail)
-    ⟩
+    let firstIdxIdx : Idx n := (Idx.finEquiv n).invFun firstIdx
     let result := findMaxFrom firstIdx 0 v[firstIdxIdx]
     result.1
   else
@@ -162,10 +157,8 @@ def MLPArchitecture.predictBatch {b : Nat} (net : MLPArchitecture) (X : Batch b 
   -- Use Array.ofFn to functionally create array of predictions
   Array.ofFn (fun (i : Fin b) =>
     -- Extract row i from outputs as a Vector 10
-    -- USize bound: mathematically trivial from Fin b, but omega can't handle conversions
-    let row : Vector 10 := ⊞ (j : Idx 10) => outputs[⟨i.val.toUSize, by
-      sorry  -- TODO: USize bound proof (technical detail)
-    ⟩, j]
+    -- Convert Fin b to Idx b using SciLean's equivalence
+    let row : Vector 10 := ⊞ (j : Idx 10) => outputs[(Idx.finEquiv b).invFun i, j]
     argmax row
   )
 
