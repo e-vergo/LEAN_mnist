@@ -22,8 +22,10 @@ package «verifiedNN» where
 require scilean from git
   "https://github.com/lecopivo/SciLean.git" @ "master"
 
-require LSpec from git
-  "https://github.com/argumentcomputer/LSpec.git" @ "main"
+-- LSpec temporarily disabled due to Lean version incompatibility
+-- Re-enable when writing tests or when SciLean updates to newer Lean version
+-- require LSpec from git
+--   "https://github.com/argumentcomputer/LSpec.git" @ "main"
 
 @[default_target]
 lean_lib «VerifiedNN» where

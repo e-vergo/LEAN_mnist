@@ -29,12 +29,14 @@ def epsilon : Float := 1e-7
 def approxEq (x y : Float) (eps : Float := epsilon) : Bool :=
   Float.abs (x - y) ≤ eps
 
-/-- Approximate equality for vectors -/
+/-- Approximate equality for vectors
+    TODO: Implement element-wise comparison using SciLean API -/
 def vectorApproxEq {n : Nat} (v w : Vector n) (eps : Float := epsilon) : Bool :=
-  sorry -- TODO: implement element-wise comparison
+  sorry
 
-/-- Approximate equality for matrices -/
+/-- Approximate equality for matrices
+    TODO: Implement element-wise comparison using SciLean API -/
 def matrixApproxEq {m n : Nat} (a b : Matrix m n) (eps : Float := epsilon) : Bool :=
-  sorry -- TODO: implement element-wise comparison
+  sorry
 
 end VerifiedNN.Core
