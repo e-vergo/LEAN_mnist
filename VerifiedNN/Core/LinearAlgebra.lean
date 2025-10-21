@@ -187,6 +187,7 @@ theorem vadd_assoc {n : Nat} (x y z : Vector n) :
   unfold vadd
   congr
   funext i
+  simp [SciLean.getElem_ofFn]
   ring
 
 /-- Scalar multiplication distributes over vector addition.
@@ -200,6 +201,7 @@ theorem smul_vadd_distrib {n : Nat} (α : Float) (x y : Vector n) :
   unfold smul vadd
   congr
   funext i
+  simp [SciLean.getElem_ofFn]
   ring
 
 /-- Matrix-vector multiplication is linear.
