@@ -272,13 +272,40 @@ This requires DataArrayN extensionality (funext principle for DataArrayN).
 theorem flatten_unflatten_left_inverse (net : MLPArchitecture) :
   Gradient.unflattenParams (Gradient.flattenParams net) = net := by
   -- MLPArchitecture is a structure with two DenseLayer fields
-  -- We need to show equality of each field
-  unfold Gradient.unflattenParams Gradient.flattenParams
-  -- The goal is to show the reconstructed network equals the original
-  -- This requires showing each matrix and vector component is equal
-  -- which in turn requires funext on DataArrayN
+  -- We'll prove equality by showing each field matches
+  cases net with
+  | mk layer1 layer2 =>
+    -- Now prove that unflatten (flatten {layer1, layer2}) = {layer1, layer2}
+    -- This requires showing layer1.weights, layer1.bias, layer2.weights, layer2.bias are preserved
+    simp only [Gradient.unflattenParams, Gradient.flattenParams]
 
-  sorry -- Requires DataArrayN extensionality lemma from SciLean
+    -- Need to apply structural equality for DenseLayer
+    -- Show the reconstructed layers equal the original layers
+    congr 1
+    · -- layer1 equality
+      cases layer1 with
+      | mk weights1 bias1 =>
+        congr
+        · -- weights equality: need funext for DataArrayN
+          funext i j
+          simp [Gradient.natToIdx]
+          sorry -- TODO: Prove index arithmetic shows this recovers original value
+        · -- bias equality: need funext for DataArrayN
+          funext i
+          simp [Gradient.natToIdx]
+          sorry -- TODO: Prove index arithmetic shows this recovers original value
+    · -- layer2 equality
+      cases layer2 with
+      | mk weights2 bias2 =>
+        congr
+        · -- weights equality
+          funext i j
+          simp [Gradient.natToIdx]
+          sorry -- TODO: Prove index arithmetic shows this recovers original value
+        · -- bias equality
+          funext i
+          simp [Gradient.natToIdx]
+          sorry -- TODO: Prove index arithmetic shows this recovers original value
 
 /-- Parameter unflattening and flattening are inverse operations (right inverse).
 

@@ -255,9 +255,11 @@ def computeLossBatch {b : Nat} (params : Vector nParams)
   -- Compute loss for each sample and average
   Id.run do
     let mut lossSum := 0.0
-    for i in [0:b] do
-      -- i is in range [0, b) from the loop bounds
-      have hi : i < b := by sorry  -- Axiomatized - for-loop range membership
+    for i in Array.range b do
+      -- i is in range [0, b) from Array.range membership
+      have hi : i < b := by
+        have : i ∈ Array.range b := by simp [Array.mem_range]
+        exact Array.mem_range.mp this
       if h : i < targets.size then
         -- Extract input sample from batch - convert Nat to Idx
         let idxI : Idx b := (Idx.finEquiv b).invFun ⟨i, hi⟩
