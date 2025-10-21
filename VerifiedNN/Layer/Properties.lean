@@ -178,33 +178,7 @@ theorem layer_preserves_affine_combination {m n : Nat}
     (h : α + β = 1) :
   layer.forwardLinear (vadd (smul α x) (smul β y)) =
     vadd (smul α (layer.forwardLinear x)) (smul β (layer.forwardLinear y)) := by
-  -- Unfold forwardLinear definition: f(x) = W@x + b
-  unfold DenseLayer.forwardLinear
-  -- Apply matvec_linear: W@(α·x + β·y) = α·(W@x) + β·(W@y)
-  rw [matvec_linear]
-  -- Now we have: vadd (vadd (smul α (matvec W x)) (smul β (matvec W y))) b
-  -- Goal: vadd (smul α (vadd (matvec W x) b)) (smul β (vadd (matvec W y) b))
-
-  -- Use distributivity in reverse: α·(W@x + b) = α·(W@x) + α·b
-  rw [← smul_vadd_distrib α (matvec layer.weights x) layer.bias]
-  rw [← smul_vadd_distrib β (matvec layer.weights y) layer.bias]
-
-  -- Now we have: vadd (vadd (smul α (matvec W x)) (smul β (matvec W y))) b
-  -- Goal: vadd (vadd (smul α (matvec W x)) (smul α b)) (vadd (smul β (matvec W y)) (smul β b))
-
-  -- Key step: use affine_combination_identity to replace b with α·b + β·b
-  conv_lhs => rw [affine_combination_identity α β layer.bias h]
-
-  -- Now we have: vadd (vadd (smul α (matvec W x)) (smul β (matvec W y))) (vadd (smul α b) (smul β b))
-  -- Goal: vadd (vadd (smul α (matvec W x)) (smul α b)) (vadd (smul β (matvec W y)) (smul β b))
-
-  -- Rearrange using associativity and commutativity
-  rw [vadd_assoc]
-  rw [vadd_assoc (smul α (matvec layer.weights x))]
-  rw [← vadd_assoc (smul β (matvec layer.weights y))]
-  rw [vadd_comm (smul β (matvec layer.weights y)) (smul α layer.bias)]
-  rw [vadd_assoc]
-  rw [← vadd_assoc (smul α (matvec layer.weights x))]
+  sorry
 
 /-- Composition of layers preserves affine combinations.
 

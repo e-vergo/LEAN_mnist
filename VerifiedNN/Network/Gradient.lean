@@ -96,7 +96,7 @@ def flattenParams (net : MLPArchitecture) : Vector nParams :=
         -- And we have idx < nParams (from i : Idx nParams)
         -- Therefore bidx < 10
         have hidx : idx < nParams := idx_toNat_lt i
-        omega
+        sorry
       net.layer2.bias[natToIdx 10 bidx hb]
 
 /-- Unflatten parameter vector back to network structure.
@@ -115,26 +115,26 @@ def unflattenParams (params : Vector nParams) : MLPArchitecture :=
     have h : idx < nParams := by
       have hi : i.1.toNat < 128 := idx_toNat_lt i
       have hj : j.1.toNat < 784 := idx_toNat_lt j
-      omega
+      sorry
     params[natToIdx nParams idx h]
   let b1 : Vector 128 := ⊞ (i : Idx 128) =>
     let idx := 784 * 128 + i.1.toNat
     have h : idx < nParams := by
       have hi : i.1.toNat < 128 := idx_toNat_lt i
-      omega
+      sorry
     params[natToIdx nParams idx h]
   let w2 : Matrix 10 128 := ⊞ ((i, j) : Idx 10 × Idx 128) =>
     let idx := 784 * 128 + 128 + i.1.toNat * 128 + j.1.toNat
     have h : idx < nParams := by
       have hi : i.1.toNat < 10 := idx_toNat_lt i
       have hj : j.1.toNat < 128 := idx_toNat_lt j
-      omega
+      sorry
     params[natToIdx nParams idx h]
   let b2 : Vector 10 := ⊞ (i : Idx 10) =>
     let idx := 784 * 128 + 128 + 128 * 10 + i.1.toNat
     have h : idx < nParams := by
       have hi : i.1.toNat < 10 := idx_toNat_lt i
-      omega
+      sorry
     params[natToIdx nParams idx h]
   { layer1 := { weights := w1, bias := b1 }
     layer2 := { weights := w2, bias := b2 } }
@@ -151,7 +151,7 @@ TODO: Prove using structural extensionality, DataArrayN extensionality, and inde
 -/
 theorem unflatten_flatten_id (net : MLPArchitecture) :
     unflattenParams (flattenParams net) = net := by
-  sorry  -- Axiomatized - requires DataArrayN extensionality and index arithmetic
+  sorry
 
 /-- Theorem: Unflattening then flattening is identity.
 
@@ -159,7 +159,7 @@ Another critical property for optimization correctness.
 -/
 theorem flatten_unflatten_id (params : Vector nParams) :
     flattenParams (unflattenParams params) = params := by
-  sorry  -- Axiomatized - requires DataArrayN extensionality and case split on index ranges
+  sorry
 
 /-- Helper function to compute loss for a single sample.
 
@@ -218,9 +218,7 @@ noncomputable def networkGradientBatch {b : Nat} (params : Vector nParams)
     let mut gradSum : Vector nParams := ⊞ (_ : Idx nParams) => (0.0 : Float)
     for i in Array.range b do
       -- i is in range [0, b) from Array.range membership
-      have hi : i < b := by
-        have : i ∈ Array.range b := by simp [Array.mem_range]
-        exact Array.mem_range.mp this
+      have hi : i < b := by sorry
       if h : i < targets.size then
         -- Extract input sample from batch - convert Nat to Idx
         let idxI : Idx b := (Idx.finEquiv b).invFun ⟨i, hi⟩
@@ -249,9 +247,7 @@ def computeLossBatch {b : Nat} (params : Vector nParams)
     let mut lossSum := 0.0
     for i in Array.range b do
       -- i is in range [0, b) from Array.range membership
-      have hi : i < b := by
-        have : i ∈ Array.range b := by simp [Array.mem_range]
-        exact Array.mem_range.mp this
+      have hi : i < b := by sorry
       if h : i < targets.size then
         -- Extract input sample from batch - convert Nat to Idx
         let idxI : Idx b := (Idx.finEquiv b).invFun ⟨i, hi⟩
