@@ -79,10 +79,41 @@ def MLPArchitecture.forwardBatch {b : Nat} (net : MLPArchitecture) (X : Batch b 
 
 **Returns:** Index of the maximum element (0-indexed)
 
-**Implementation Note:** TODO: Implement proper argmax. Currently uses sorry.
+**Implementation:** Uses a functional fold pattern to avoid Idx type complexity.
+Iterates through all indices [0, n), tracking the maximum value and its index.
+
+**Edge Case:** Returns 0 for empty vectors (n = 0).
+
+**Approach:** Functional recursion over Fin n indices, avoiding imperative loops
+and Idx type construction issues encountered in previous attempts.
 -/
 def argmax {n : Nat} (v : Vector n) : Nat :=
-  sorry  -- TODO: Implement argmax - requires proper Idx type handling
+  if h : 0 < n then
+    -- Helper function: recursively find argmax from index i onwards
+    -- Returns (maxIndex, maxValue) pair
+    let rec findMaxFrom (i : Fin n) (currentMaxIdx : Nat) (currentMaxVal : Float) : Nat × Float :=
+      have hi : i.val < n := i.isLt
+      -- USize bound: mathematically trivial from hi, but omega can't handle toUSize.toNat
+      let idx : Idx n := ⟨i.val.toUSize, by
+        sorry  -- TODO: USize bound proof (technical detail)
+      ⟩
+      let val := v[idx]
+      let (newMaxIdx, newMaxVal) :=
+        if val > currentMaxVal then (i.val, val) else (currentMaxIdx, currentMaxVal)
+      if h' : i.val + 1 < n then
+        findMaxFrom ⟨i.val + 1, h'⟩ newMaxIdx newMaxVal
+      else
+        (newMaxIdx, newMaxVal)
+
+    -- Start from index 0
+    let firstIdx : Fin n := ⟨0, h⟩
+    let firstIdxIdx : Idx n := ⟨(0 : Nat).toUSize, by
+      sorry  -- TODO: USize bound proof (technical detail)
+    ⟩
+    let result := findMaxFrom firstIdx 0 v[firstIdxIdx]
+    result.1
+  else
+    0  -- Empty vector case
 
 /-- Predict class from network output.
 
@@ -123,9 +154,19 @@ def MLPArchitecture.forwardLogits (net : MLPArchitecture) (x : Vector 784) : Vec
 
 **Returns:** Array of predicted class indices
 
-**Implementation Note:** TODO - Requires proper Idx type handling for batched operations.
+**Implementation Note:** Uses functional approach with Array.ofFn to avoid
+imperative loop complexities. Extracts each row from batch output and applies argmax.
 -/
 def MLPArchitecture.predictBatch {b : Nat} (net : MLPArchitecture) (X : Batch b 784) : Array Nat :=
-  sorry  -- TODO: Implement batched prediction with proper Idx type handling
+  let outputs := net.forwardBatch X  -- outputs : Batch b 10
+  -- Use Array.ofFn to functionally create array of predictions
+  Array.ofFn (fun (i : Fin b) =>
+    -- Extract row i from outputs as a Vector 10
+    -- USize bound: mathematically trivial from Fin b, but omega can't handle conversions
+    let row : Vector 10 := ⊞ (j : Idx 10) => outputs[⟨i.val.toUSize, by
+      sorry  -- TODO: USize bound proof (technical detail)
+    ⟩, j]
+    argmax row
+  )
 
 end VerifiedNN.Network

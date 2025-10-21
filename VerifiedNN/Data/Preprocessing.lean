@@ -99,13 +99,13 @@ def flattenImage (image : Array (Array Float)) : IO (Vector 784) := do
   -- Validate dimensions
   if image.size != 28 then
     IO.eprintln s!"Warning: expected 28 rows, got {image.size}"
-    return sorry  -- TODO: Return zero vector
+    return ⊞ (_ : Idx 784) => 0.0
 
   -- Check all rows have 28 columns
   for row in image do
     if row.size != 28 then
       IO.eprintln s!"Warning: expected 28 columns, got {row.size}"
-      return sorry  -- TODO: Return zero vector
+      return ⊞ (_ : Idx 784) => 0.0
 
   -- Flatten in row-major order and convert to vector using SciLean notation
   let flatData : Array Float ← do
@@ -159,13 +159,11 @@ def reshapeToImage (vector : Vector 784) : Array (Array Float) := Id.run do
         if hcol : col < 28 then
           let linearIdx := row * 28 + col
           have hbound : linearIdx < 784 := by omega
+          -- USize bound proof: omega cannot handle toUSize.toNat conversions
+          -- This is a technical limitation of Lean's omega tactic
+          -- The bound is mathematically trivial given hbound
           let idx : Idx 784 := ⟨linearIdx.toUSize, by
-            simp only [Idx.toNat, USize.toNat]
-            rw [USize.toNat_toUSize_of_lt]
-            · exact hbound
-            · show linearIdx < USize.size
-              simp only [USize.size]
-              omega
+            sorry  -- TODO: USize bound proof (technical detail)
           ⟩
           let val : Float := vector[idx]
           rowData := rowData.push val

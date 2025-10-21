@@ -29,8 +29,7 @@ which corresponds to the predicted class label.
 **Returns:** Predicted class index (0-9 for MNIST)
 -/
 def getPredictedClass {n : Nat} (output : Vector n) : Nat :=
-  -- TODO: Implement argmax - requires proper Idx type handling
-  sorry
+  argmax output
 
 /-- Check if a single prediction is correct.
 
