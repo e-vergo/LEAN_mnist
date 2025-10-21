@@ -3,14 +3,55 @@
 
 Unified parameter update interface and learning rate scheduling.
 
-This module provides:
-- Learning rate scheduling strategies (constant, step decay, exponential decay)
-- Gradient accumulation for effective large batch training
-- Utility functions for optimizer state management
-- Generic parameter update interfaces
+## Overview
 
-**Verification Status:** Implementation complete. Scheduling logic is deterministic
-and dimension-preserving by construction.
+This module provides infrastructure for flexible optimizer configuration and training:
+
+1. **Learning Rate Scheduling:** Multiple strategies for dynamic learning rate adjustment
+2. **Gradient Accumulation:** Simulate large batch sizes with limited memory
+3. **Unified Optimizer Interface:** Generic API for different optimizer types
+4. **State Management:** Utilities for accessing and modifying optimizer state
+
+## Learning Rate Schedules
+
+### Constant Schedule
+  **η(t) = η₀**
+
+  Fixed learning rate throughout training.
+
+### Step Decay
+  **η(t) = η₀ · γ^⌊t/s⌋**
+
+  Reduces learning rate by factor γ every s epochs.
+
+### Exponential Decay
+  **η(t) = η₀ · γ^t**
+
+  Smooth exponential decay at rate γ.
+
+### Cosine Annealing
+  **η(t) = η₀ · (1 + cos(π·t/T)) / 2**
+
+  Smooth decay to zero over T epochs following cosine curve.
+
+### Warmup
+  **η(t) = η_target · min(1, (t+1)/N)**
+
+  Linear increase from 0 to target over N epochs, useful for training stability.
+
+## Gradient Accumulation
+
+Accumulate gradients over K mini-batches before updating parameters. This simulates
+effective batch size of K × batch_size with memory usage of single batch:
+
+  **g_eff = (1/K) · Σᵢ₌₁ᴷ g_i**
+
+where g_i is the gradient from mini-batch i.
+
+## Verification Status
+
+Implementation complete. Scheduling logic is deterministic and dimension-preserving
+by construction. All operations maintain type-level dimension guarantees.
 -/
 
 import VerifiedNN.Optimizer.SGD
@@ -156,6 +197,12 @@ def addGradient {n : Nat} (acc : GradientAccumulator n) (gradient : Vector n) : 
 
 /-- Get the accumulated gradient average and reset the accumulator.
 
+Computes the mean gradient over all accumulated mini-batches:
+
+  **g_mean = (1/K) · Σᵢ₌₁ᴷ g_i**
+
+where K is the number of accumulated gradients.
+
 **Parameters:**
 - `acc`: Accumulator with gradients from multiple mini-batches
 
@@ -166,6 +213,15 @@ def addGradient {n : Nat} (acc : GradientAccumulator n) (gradient : Vector n) : 
 **Safety:** Returns zero vector if no gradients were accumulated (avoids division by zero).
 
 **Note:** The average is computed as accumulated / count only when count > 0.
+
+**Usage Pattern:**
+```lean
+let acc := initAccumulator n
+let acc := addGradient acc grad1
+let acc := addGradient acc grad2
+let (avgGrad, freshAcc) := getAndReset acc
+-- avgGrad = (grad1 + grad2) / 2
+```
 -/
 def getAndReset {n : Nat} (acc : GradientAccumulator n) : Vector n × GradientAccumulator n :=
   if acc.count > 0 then

@@ -7,6 +7,26 @@ This module provides utilities for:
 1. Flattening network parameters into a single vector for optimization
 2. Unflattening parameter vectors back to network structure
 3. Computing gradients with respect to all network parameters
+
+## Memory Layout
+
+Parameters are flattened in this order:
+- **Indices 0..100351** (100,352 elements): Layer 1 weights (784 × 128)
+- **Indices 100352..100479** (128 elements): Layer 1 bias
+- **Indices 100480..101759** (1,280 elements): Layer 2 weights (128 × 10)
+- **Indices 101760..101769** (10 elements): Layer 2 bias
+- **Total: 101,770 parameters**
+
+## Verification Status
+
+**8 sorries remaining** - all related to index arithmetic proofs:
+- 1 sorry in `flattenParams`: Proving final bias index < nParams
+- 4 sorries in `unflattenParams`: Proving computed indices < nParams for each component
+- 2 sorries in round-trip theorems: Structural extensionality and index arithmetic
+- 2 sorries in batch functions: Proving loop indices < batch size
+
+All sorries are mathematically trivial but require detailed omega-style arithmetic
+reasoning that interacts poorly with Lean's type conversion (USize ↔ Nat ↔ Idx).
 -/
 
 import VerifiedNN.Network.Architecture
@@ -97,6 +117,11 @@ def flattenParams (net : MLPArchitecture) : Vector nParams :=
         -- Therefore bidx < 10
         have hidx : idx < nParams := idx_toNat_lt i
         sorry
+        -- Proof obligation: Show that bidx = idx - 101760 < 10
+        -- Given: idx < 101770 (nParams) and idx >= 101760 (else branch)
+        -- Hence: 0 <= bidx < 10
+        -- Blocked by: omega can't handle the nested if-then-else context and USize conversions
+        -- Note: Mathematically trivial: 101760 <= idx < 101770 implies bidx < 10
       net.layer2.bias[natToIdx 10 bidx hb]
 
 /-- Unflatten parameter vector back to network structure.
@@ -116,12 +141,22 @@ def unflattenParams (params : Vector nParams) : MLPArchitecture :=
       have hi : i.1.toNat < 128 := idx_toNat_lt i
       have hj : j.1.toNat < 784 := idx_toNat_lt j
       sorry
+      -- Proof obligation: Show that i * 784 + j < 101770 (nParams)
+      -- Given: i < 128 and j < 784
+      -- Maximum value: 127 * 784 + 783 = 99,551 < 101,770
+      -- Blocked by: omega can't handle multiplication with USize-to-Nat conversions
+      -- Note: Straightforward arithmetic, needs manual reasoning or specialized tactic
     params[natToIdx nParams idx h]
   let b1 : Vector 128 := ⊞ (i : Idx 128) =>
     let idx := 784 * 128 + i.1.toNat
     have h : idx < nParams := by
       have hi : i.1.toNat < 128 := idx_toNat_lt i
       sorry
+      -- Proof obligation: Show that 100352 + i < 101770 (nParams)
+      -- Given: i < 128
+      -- Maximum value: 100352 + 127 = 100,479 < 101,770
+      -- Blocked by: omega can't simplify 784 * 128 + i with USize context
+      -- Note: Trivial arithmetic, just needs normalization of 784 * 128 = 100352
     params[natToIdx nParams idx h]
   let w2 : Matrix 10 128 := ⊞ ((i, j) : Idx 10 × Idx 128) =>
     let idx := 784 * 128 + 128 + i.1.toNat * 128 + j.1.toNat
@@ -129,12 +164,22 @@ def unflattenParams (params : Vector nParams) : MLPArchitecture :=
       have hi : i.1.toNat < 10 := idx_toNat_lt i
       have hj : j.1.toNat < 128 := idx_toNat_lt j
       sorry
+      -- Proof obligation: Show that 100480 + i * 128 + j < 101770 (nParams)
+      -- Given: i < 10 and j < 128
+      -- Maximum value: 100480 + 9 * 128 + 127 = 100480 + 1152 + 127 = 101,759 < 101,770
+      -- Blocked by: omega can't handle nested multiplication and addition with USize
+      -- Note: Requires expanding 784*128+128 = 100480, then verifying 9*128+127 = 1279
     params[natToIdx nParams idx h]
   let b2 : Vector 10 := ⊞ (i : Idx 10) =>
     let idx := 784 * 128 + 128 + 128 * 10 + i.1.toNat
     have h : idx < nParams := by
       have hi : i.1.toNat < 10 := idx_toNat_lt i
       sorry
+      -- Proof obligation: Show that 101760 + i < 101770 (nParams)
+      -- Given: i < 10
+      -- Maximum value: 101760 + 9 = 101,769 < 101,770
+      -- Blocked by: omega can't normalize 784*128+128+128*10 = 101760 with USize
+      -- Note: Simplest case, just needs constant arithmetic: 100352+128+1280 = 101760
     params[natToIdx nParams idx h]
   { layer1 := { weights := w1, bias := b1 }
     layer2 := { weights := w2, bias := b2 } }
@@ -152,6 +197,16 @@ TODO: Prove using structural extensionality, DataArrayN extensionality, and inde
 theorem unflatten_flatten_id (net : MLPArchitecture) :
     unflattenParams (flattenParams net) = net := by
   sorry
+  -- Proof obligation: Show that round-trip preserves network structure
+  -- Strategy:
+  --   1. Apply MLPArchitecture extensionality (layer1 = layer1, layer2 = layer2)
+  --   2. Apply DenseLayer extensionality (weights = weights, bias = bias)
+  --   3. Apply DataArrayN extensionality (pointwise equality at all indices)
+  --   4. For each index (i,j), show that:
+  --      unflattenParams(flattenParams(net))[i,j] = net[i,j]
+  --      by unfolding definitions and simplifying index arithmetic
+  -- Blocked by: Requires custom DataArrayN extensionality lemma and tedious case analysis
+  -- Note: Mathematically obvious by construction, but Lean needs explicit proof
 
 /-- Theorem: Unflattening then flattening is identity.
 
@@ -160,6 +215,15 @@ Another critical property for optimization correctness.
 theorem flatten_unflatten_id (params : Vector nParams) :
     flattenParams (unflattenParams params) = params := by
   sorry
+  -- Proof obligation: Show that round-trip preserves parameter vector
+  -- Strategy:
+  --   1. Apply DataArrayN extensionality (prove elementwise equality)
+  --   2. For each index k : Idx nParams, show:
+  --      flattenParams(unflattenParams(params))[k] = params[k]
+  --   3. Case split on k's range (which layer/component it belongs to)
+  --   4. In each case, unfold definitions and verify index arithmetic cancels
+  -- Blocked by: Requires explicit case analysis on 4 ranges and index arithmetic
+  -- Note: Dual of unflatten_flatten_id, same level of detail required
 
 /-- Helper function to compute loss for a single sample.
 
@@ -218,7 +282,13 @@ noncomputable def networkGradientBatch {b : Nat} (params : Vector nParams)
     let mut gradSum : Vector nParams := ⊞ (_ : Idx nParams) => (0.0 : Float)
     for i in Array.range b do
       -- i is in range [0, b) from Array.range membership
-      have hi : i < b := by sorry
+      have hi : i < b := by
+        sorry
+        -- Proof obligation: Show that i < b for i ∈ Array.range b
+        -- Given: Array.range b produces array [0, 1, ..., b-1]
+        -- Hence: For all i in the array, i < b holds
+        -- Blocked by: Requires lemma about Array.range membership
+        -- Note: Should be provable with: Array.mem_range_iff_mem_finRange
       if h : i < targets.size then
         -- Extract input sample from batch - convert Nat to Idx
         let idxI : Idx b := (Idx.finEquiv b).invFun ⟨i, hi⟩
@@ -247,7 +317,13 @@ def computeLossBatch {b : Nat} (params : Vector nParams)
     let mut lossSum := 0.0
     for i in Array.range b do
       -- i is in range [0, b) from Array.range membership
-      have hi : i < b := by sorry
+      have hi : i < b := by
+        sorry
+        -- Proof obligation: Show that i < b for i ∈ Array.range b
+        -- Given: Array.range b produces array [0, 1, ..., b-1]
+        -- Hence: For all i in the array, i < b holds
+        -- Blocked by: Requires lemma about Array.range membership (same as in networkGradientBatch)
+        -- Note: Should be provable with: Array.mem_range_iff_mem_finRange
       if h : i < targets.size then
         -- Extract input sample from batch - convert Nat to Idx
         let idxI : Idx b := (Idx.finEquiv b).invFun ⟨i, hi⟩

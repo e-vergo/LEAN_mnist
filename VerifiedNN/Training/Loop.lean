@@ -1,10 +1,60 @@
 /-
 # Training Loop
 
-Main training loop implementation.
+Main training loop implementation for neural network training.
 
-This module provides the core training loop for neural network training,
-including epoch iteration, mini-batch processing, and progress tracking.
+## Overview
+
+This module implements the core training loop that orchestrates the entire
+training process for the MLP network on MNIST. It handles:
+- Epoch iteration with configurable hyperparameters
+- Mini-batch processing via SGD optimization
+- Progress tracking and periodic evaluation
+- Training state management and checkpointing
+
+## Implementation Status
+
+**Partial implementation:** Core functionality is complete, but the following
+enhancements are planned:
+- Gradient clipping for training stability
+- Early stopping based on validation metrics
+- Learning rate scheduling
+- More sophisticated logging and visualization
+
+## Training Architecture
+
+The training loop follows this structure:
+1. **Initialization:** Set up network, optimizer state, and configuration
+2. **Epoch Loop:** For each epoch, shuffle data and create mini-batches
+3. **Batch Loop:** For each batch, compute gradients and update parameters
+4. **Evaluation:** Periodically evaluate on validation set
+5. **Checkpoint:** Return final trained state
+
+## Gradient Computation
+
+Gradients are computed using automatic differentiation via SciLean:
+- Forward pass through network computes predictions
+- Cross-entropy loss measures prediction error
+- Backward pass (automatic) computes gradients w.r.t. parameters
+- Gradients are averaged across the mini-batch
+- SGD step updates parameters using averaged gradients
+
+## Usage
+
+```lean
+-- Simple interface
+let trainedNet ← trainEpochs initialNet trainData 10 32 0.01
+
+-- Full control with configuration
+let config : TrainConfig := {
+  epochs := 10
+  batchSize := 32
+  learningRate := 0.01
+  printEveryNBatches := 100
+  evaluateEveryNEpochs := 1
+}
+let finalState ← trainEpochsWithConfig initialNet trainData config (some validData)
+```
 -/
 
 import VerifiedNN.Network.Architecture
@@ -256,7 +306,7 @@ noncomputable def resumeTraining
 
   -- Train for additional epochs
   let mut currentState := updatedState
-  for epochIdx in [0:additionalEpochs] do
+  for _epochIdx in [0:additionalEpochs] do
     IO.println s!"Epoch {currentState.currentEpoch + 1}"
     currentState ← trainOneEpoch currentState trainData config validData
 

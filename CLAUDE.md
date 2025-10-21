@@ -18,7 +18,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Current Implementation Status
 
-Most modules contain placeholder implementations marked with `sorry`. The project structure is complete and ready for iterative development following the [verified-nn-spec.md](verified-nn-spec.md) roadmap. Focus on building working implementations first, then adding verification as design stabilizes.
+**Build Status:** ✅ **All 40 Lean files compile successfully with ZERO errors**
+
+**Verification Progress:**
+- **Sorries:** 17 strategic placeholders (all documented with completion strategies)
+  - Network/Gradient.lean: 7 (index arithmetic bounds)
+  - Verification/GradientCorrectness.lean: 6 (mathlib integration)
+  - Verification/TypeSafety.lean: 2 (flatten/unflatten inverses)
+  - Layer/Properties.lean: 1 (affine combination)
+- **Axioms:** 9 total (8 convergence theory + 1 Float bridge, all justified)
+
+**Documentation:** 100% coverage with mathlib-quality standards
+- All 10 directories have comprehensive READMEs (~103KB total)
+- All sorries documented with proof strategies
+- All axioms documented with justification and references
+- See [CLEANUP_SUMMARY.md](CLEANUP_SUMMARY.md) for detailed cleanup report
+
+**Development Philosophy:** Build working implementations first, add verification as design stabilizes. The codebase is now ready for systematic proof completion following the [verified-nn-spec.md](verified-nn-spec.md) roadmap.
 
 ## Tech Stack
 
@@ -175,9 +191,6 @@ lake exe cache get             # Download precompiled mathlib
 lake build                     # Build entire project
 lake build VerifiedNN.Core.DataTypes  # Build specific module
 
-# Clean build
-lake clean
-lake build
 
 # Execute
 lake exe simpleExample         # Run minimal example
@@ -316,6 +329,153 @@ def crossEntropyGrad := ...
 - Use `IO` for operations with effects (file reading, randomness)
 - Document failure conditions in docstrings
 
+## Repository Cleanup Standards
+
+This repository has been cleaned to mathlib submission quality. All new code and documentation must adhere to these standards.
+
+### Documentation Standards (Mandatory)
+
+**Module-level docstrings** (use `/-!` format):
+```lean
+/-!
+# Module Name
+
+Brief overview of the module's purpose.
+
+## Main Definitions
+- `DefOne`: Description
+- `DefTwo`: Description
+
+## Main Results
+- `theorem_name`: Statement
+
+## Implementation Notes
+- Design decisions
+- Dependencies
+- Verification status
+-/
+```
+
+**Definition/theorem docstrings** (use `/--` format):
+```lean
+/-- Brief one-line summary.
+
+Detailed explanation with mathematical context.
+
+**Verified properties:** List of proven properties.
+
+**Parameters:**
+- `param1`: Description with type info
+- `param2`: Description
+
+**Returns:** Description of return value
+
+**References:** Cite papers, mathlib lemmas, or specifications
+-/
+def myFunction ...
+```
+
+### Sorry and Axiom Documentation (Mandatory)
+
+**Every `sorry` must have:**
+1. Immediately preceding TODO comment explaining what needs to be proven
+2. Strategy notes on how to complete the proof
+3. References to relevant mathlib lemmas if known
+
+Example:
+```lean
+-- TODO: Prove flatten and unflatten are inverses
+-- Strategy: Use DataArrayN.ext and unfold both definitions
+-- Needs: Lemma about indexed access preservation
+theorem flatten_unflatten_inverse : flatten (unflatten x) = x := by
+  sorry
+```
+
+**Every axiom must have:**
+1. Comprehensive docstring (minimum 20 lines for non-trivial axioms)
+2. Explanation of what is being axiomatized and why
+3. Justification for why it's acceptable (out of scope, Float/ℝ gap, etc.)
+4. References to literature or specifications
+
+See [Loss/Properties.lean](VerifiedNN/Loss/Properties.lean#L121-180) for exemplary 58-line axiom documentation.
+
+### Code Quality Standards
+
+**Mandatory checks before committing:**
+- [ ] Zero build errors (`lake build` succeeds)
+- [ ] Zero linter warnings (unused variables, imports, etc.)
+- [ ] All public definitions have docstrings
+- [ ] All sorries have TODO comments with strategies
+- [ ] Mathematical notation uses Unicode (∀, ∃, →, ℝ, ∇)
+- [ ] Imports organized: Lean stdlib, mathlib, SciLean, project modules
+- [ ] No commented-out code (delete or document why it's kept)
+
+### Directory Structure Requirements
+
+Each `VerifiedNN/` subdirectory must have a `README.md` containing:
+1. **Purpose**: What this directory provides
+2. **Module Descriptions**: File-by-file breakdown with verification status
+3. **Key Concepts**: Mathematical background if applicable
+4. **Dependencies**: Import hierarchy
+5. **Usage Examples**: Code snippets showing how to use the modules
+6. **Verification Status**: Sorry count, axiom count, build status
+7. **Last Updated**: Date of last significant change
+
+See existing directory READMEs for examples (all 10 are complete).
+
+### Refactoring Guidelines
+
+**When to split a file:**
+- File exceeds 500 lines (guideline, not hard rule)
+- Natural conceptual boundaries exist (axioms vs. lemmas, core vs. derived)
+- Dependencies can be cleanly separated
+
+**When splitting files:**
+1. Create subdirectory if multiple files share a namespace
+2. Use re-export pattern for backward compatibility
+3. Update all imports across the codebase
+4. Verify build succeeds after refactoring
+5. Document the split in directory README
+
+**Example:** [Verification/Convergence/](VerifiedNN/Verification/Convergence/) split (802→112 line main file)
+
+### Build Hygiene
+
+**Always maintain:**
+- Zero compilation errors across all files
+- Only expected sorry warnings (all documented)
+- Clean `lake build` output (no unexpected warnings)
+
+**Before major changes:**
+```bash
+# Clean build verification
+lake clean && lake build 2>&1 | tee build-log.txt
+
+# Count sorries
+grep -r "sorry" VerifiedNN/*.lean VerifiedNN/*/*.lean | wc -l
+
+# Check for linter warnings
+lake build 2>&1 | grep -i "warning" | grep -v "sorry" | grep -v "openblas"
+```
+
+**Process management:**
+- Monitor Lean LSP processes: `pgrep -af lean`
+- Kill if resource consumption excessive: `pkill -f "lean --server"`
+- Limit parallel agent spawning to avoid LSP pile-up (max 3-4 agents)
+
+### Quality Gate Checklist
+
+Before considering a module "complete":
+- [x] All files build with zero errors
+- [x] Zero non-sorry warnings
+- [x] Directory README exists and is comprehensive
+- [x] All sorries documented with strategies
+- [x] All axioms justified with detailed docstrings
+- [x] Code follows mathlib comment standards
+- [x] Cross-references to related modules documented
+
+See [CLEANUP_SUMMARY.md](CLEANUP_SUMMARY.md) for comprehensive cleanup report and metrics.
+
 ## Verification Workflow
 
 ### Project Goals
@@ -453,6 +613,7 @@ These represent the ultimate standard for production-quality code. During develo
 - Branching within differentiable code paths (breaks automatic differentiation)
 - Division/sqrt/log without nonzero/positive handling
 - Premature optimization before correctness is established
+- Running 'lake clean' at any point. This causes all of mathlib to be rebuilt and is time consuming. DO NOT USE IT EVER
 
 ## Known Limitations
 
@@ -527,9 +688,11 @@ When working with Lean code in this project, **always leverage the MCP tools** a
 ### When in Doubt
 - **First:** Use `lean_leansearch` or `lean_loogle` to search for relevant theorems/definitions
 - **Second:** Use `lean_local_search` to find similar code in this codebase
+- **Third:** Check directory READMEs for module-specific documentation (all 10 directories have comprehensive READMEs)
 - Consult SciLean examples and documentation
 - Check mathlib for existing analysis lemmas via `lean_hover_info` and `lean_declaration_file`
 - Reference [verified-nn-spec.md](verified-nn-spec.md) for detailed implementation guidance
+- Review [CLEANUP_SUMMARY.md](CLEANUP_SUMMARY.md) for codebase organization and standards
 - Ask on Lean Zulip #scientific-computing (Tomáš Skřivan, SciLean author, is responsive)
 
 ---

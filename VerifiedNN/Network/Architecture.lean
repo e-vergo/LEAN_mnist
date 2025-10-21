@@ -2,6 +2,25 @@
 # Network Architecture
 
 MLP architecture definition and forward pass implementation.
+
+This module defines a two-layer multilayer perceptron (MLP) for MNIST classification:
+- **Architecture:** 784 → 128 → 10
+- **Activations:** ReLU (hidden layer), Softmax (output layer)
+- **Purpose:** Digit classification (0-9)
+
+## Key Components
+
+- `MLPArchitecture`: Network structure containing two dense layers
+- `forward`: Single-sample forward pass
+- `forwardBatch`: Efficient batched forward pass
+- `predict`: Class prediction from network output
+- `argmax`: Helper function to find maximum element index
+
+## Verification Status
+
+- No sorries in this module
+- All dimension specifications enforced by dependent types
+- Compile-time guarantees on layer compatibility
 -/
 
 import VerifiedNN.Layer.Dense
@@ -15,7 +34,19 @@ open VerifiedNN.Layer
 open VerifiedNN.Core.Activation
 open SciLean
 
-/-- MLP architecture: 784 -> 128 -> 10 -/
+/-- MLP architecture: 784 → 128 → 10
+
+Two-layer fully-connected neural network for MNIST classification.
+
+**Architecture:**
+- Input layer: 784 dimensions (28×28 pixel images flattened)
+- Hidden layer: 128 dimensions with ReLU activation
+- Output layer: 10 dimensions (digit classes 0-9) with Softmax activation
+
+**Type Safety:** Layer dimensions are enforced at compile time through dependent types.
+The type checker ensures that layer1.outDim (128) matches layer2.inDim (128),
+preventing dimension mismatches.
+-/
 structure MLPArchitecture where
   layer1 : DenseLayer 784 128
   layer2 : DenseLayer 128 10

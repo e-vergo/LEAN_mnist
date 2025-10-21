@@ -1,39 +1,73 @@
-/-
-# Cross-Entropy Loss
-
-Cross-entropy loss function with numerical stability.
-
-This module implements cross-entropy loss using the log-sum-exp trick for numerical
-stability. The loss measures the difference between predicted probability distributions
-and true labels.
-
-**Verification Status:**
-- Implementation uses Float (computational)
-- Mathematical properties proven on ℝ in Properties.lean
-- Numerical stability via log-sum-exp trick (prevents overflow/underflow)
-- Gradient correctness verified in Gradient.lean
-
-**Mathematical Definition:**
-For predictions ŷ and one-hot target y:
-  L(ŷ, y) = -log(ŷ[target]) = -log(exp(z[target]) / Σⱼ exp(z[j]))
-
-Using log-sum-exp trick:
-  L = -z[target] + log-sum-exp(z)
-where log-sum-exp(z) = log(Σⱼ exp(z[j])) computed stably as:
-  log-sum-exp(z) = max(z) + log(Σⱼ exp(z[j] - max(z)))
-
-**Numerical Stability Rationale:**
-Without the max trick, exp(1000) overflows to infinity, causing NaN in gradients.
-By factoring out max(z), we ensure all exponentiated values are in a safe range.
-This is critical for training deep networks where logits can grow large.
-
-**References:**
-- Goodfellow et al., Deep Learning (2016), Section 4.1
-- https://en.wikipedia.org/wiki/LogSumExp
--/
-
 import VerifiedNN.Core.DataTypes
 import SciLean
+
+/-!
+# Cross-Entropy Loss
+
+Cross-entropy loss function with numerical stability for multi-class classification.
+
+This module implements the cross-entropy loss function using the log-sum-exp trick for
+numerical stability. Cross-entropy measures the dissimilarity between predicted probability
+distributions and true one-hot encoded labels, providing the foundation for gradient-based
+training of neural network classifiers.
+
+## Mathematical Definition
+
+For logit predictions `z ∈ ℝⁿ` and one-hot target `y ∈ {0,1}ⁿ` (with target index `t`):
+
+```
+L(z, t) = -log(softmax(z)[t])
+        = -log(exp(z[t]) / ∑ⱼ exp(z[j]))
+        = -z[t] + log(∑ⱼ exp(z[j]))
+```
+
+The log-sum-exp function is computed as:
+```
+LSE(z) = log(∑ⱼ exp(z[j]))
+       = m + log(∑ⱼ exp(z[j] - m))    where m = max(z)
+```
+
+## Numerical Stability
+
+**The Challenge:** Without the max trick, large logits cause overflow:
+- `exp(1000)` → `∞` (overflow to infinity)
+- Results in `NaN` gradients during backpropagation
+- Training diverges catastrophically
+
+**The Solution:** Factor out the maximum before exponentiation:
+- All shifted values `z[j] - max(z)` are non-positive
+- Largest becomes `exp(0) = 1.0` (perfectly stable)
+- Smaller values decay exponentially without underflow issues
+- Critical for deep networks where logits can span [-100, 100] range
+
+**Example:**
+```
+Unstable: log(exp(1000) + exp(999) + exp(998))  → NaN (overflow)
+Stable:   1000 + log(exp(0) + exp(-1) + exp(-2)) → 1000.41 ✓
+```
+
+## Verification Status
+
+| Property | Status | Location |
+|----------|--------|----------|
+| Non-negativity | Proven on ℝ | Properties.lean `loss_nonneg_real` |
+| Float implementation | Axiomatized | Properties.lean `float_crossEntropy_preserves_nonneg` |
+| Gradient correctness | Verified | Gradient.lean analytical formula |
+| Numerical validation | Tested | Test.lean comprehensive tests |
+
+## Implementation Notes
+
+- **Type:** Float-based implementation for computational efficiency
+- **Stability:** Uses average as reference point (see `logSumExp` implementation note)
+- **Batching:** Supports both single-sample and mini-batch loss computation
+- **Edge cases:** Handles empty batches, invalid targets via modulo wrapping
+
+## References
+
+- Goodfellow et al., *Deep Learning* (2016), Section 4.1
+- Bishop, *Pattern Recognition and Machine Learning* (2006), Section 4.3.4
+- https://en.wikipedia.org/wiki/LogSumExp (numerical stability discussion)
+-/
 
 namespace VerifiedNN.Loss
 

@@ -4,7 +4,33 @@
 Weight initialization strategies for neural networks.
 
 This module implements Xavier/Glorot and He initialization methods,
-which are designed to maintain proper gradient flow during training.
+which are designed to maintain proper gradient flow during training by
+setting initial weight scales based on layer dimensions.
+
+## Initialization Strategies
+
+**Xavier/Glorot Initialization:**
+- Distribution: Uniform over [-√(6/(n_in + n_out)), √(6/(n_in + n_out))]
+- Purpose: General-purpose initialization maintaining activation variance
+- Use case: Good default for tanh/sigmoid activations
+
+**He Initialization:**
+- Distribution: Normal with mean 0, std √(2/n_in)
+- Purpose: Specifically designed for ReLU activations
+- Use case: Preferred for this MLP architecture (uses ReLU)
+
+## Implementation Details
+
+- Random number generation via IO monad (system RNG)
+- Box-Muller transform for normal distribution sampling
+- Biases initialized to zero by default
+- Functional DataArrayN construction from random arrays
+
+## Verification Status
+
+- No sorries in this module
+- Pure randomness interface (no verification of statistical properties)
+- Type safety ensures correct dimension initialization
 -/
 
 import VerifiedNN.Network.Architecture

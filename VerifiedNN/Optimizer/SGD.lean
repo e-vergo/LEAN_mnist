@@ -3,13 +3,35 @@
 
 SGD optimizer implementation for neural network parameter updates.
 
-This module implements the basic stochastic gradient descent update rule:
-  θ_{t+1} = θ_t - η * ∇L(θ_t)
-where θ are the parameters, η is the learning rate, and ∇L is the gradient.
+## Algorithm
 
-**Verification Status:** Implementation complete. Formal verification of convergence
-properties is out of scope (optimization theory), but dimension consistency is
-maintained by construction via dependent types.
+This module implements the basic stochastic gradient descent update rule:
+
+  **θ_{t+1} = θ_t - η · ∇L(θ_t)**
+
+where:
+- θ ∈ ℝⁿ are the model parameters
+- η > 0 is the learning rate (step size)
+- ∇L(θ_t) is the gradient of the loss function at parameters θ_t
+- t is the iteration/epoch counter
+
+## Features
+
+- **Basic SGD step:** Standard parameter update with configurable learning rate
+- **Gradient clipping:** Prevents gradient explosion by bounding gradient norm
+- **Learning rate scheduling:** Dynamic learning rate updates during training
+- **Type-safe dimensions:** Dependent types ensure parameter-gradient consistency
+
+## Verification Status
+
+Implementation complete. Formal verification of convergence properties is out of
+scope (optimization theory), but dimension consistency is maintained by construction
+via dependent types. All parameter updates preserve dimension invariants.
+
+## References
+
+- Robbins, H., & Monro, S. (1951). "A Stochastic Approximation Method"
+- Bottou, L. (2010). "Large-Scale Machine Learning with Stochastic Gradient Descent"
 -/
 
 import VerifiedNN.Core.DataTypes
@@ -58,15 +80,21 @@ def sgdStep {n : Nat} (state : SGDState n) (gradient : Vector n) : SGDState n :=
 
 /-- SGD step with gradient clipping to prevent gradient explosion.
 
-Clips gradient norm to specified maximum before applying update. If ‖∇L‖ > maxNorm,
-the gradient is rescaled to have norm maxNorm while preserving direction.
+Clips gradient norm to specified maximum before applying update. The clipping operation is:
+
+  **g_clipped = g · min(1, maxNorm / ‖g‖₂)**
+
+If ‖g‖₂ ≤ maxNorm, the gradient is unchanged. Otherwise, it is rescaled to have
+norm exactly maxNorm while preserving direction.
 
 **Parameters:**
 - `state`: Current SGD state
 - `gradient`: Computed gradient (potentially large)
-- `maxNorm`: Maximum allowed gradient norm
+- `maxNorm`: Maximum allowed gradient norm (typically 1.0 or 5.0)
 
 **Returns:** Updated SGD state with clipped gradient applied
+
+**Note:** Uses squared norm comparison to avoid unnecessary sqrt computation in common case.
 
 **Performance:** Marked inline for hot-path optimization.
 -/

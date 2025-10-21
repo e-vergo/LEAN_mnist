@@ -3,17 +3,47 @@
 
 SGD optimizer with momentum for improved convergence and reduced oscillation.
 
+## Classical Momentum Algorithm
+
 This module implements SGD with classical momentum (also known as heavy ball method):
-  v_{t+1} = β * v_t + ∇L(θ_t)
-  θ_{t+1} = θ_t - η * v_{t+1}
-where v is the velocity, β is the momentum coefficient (typically 0.9), and η is the learning rate.
+
+  **v_{t+1} = β · v_t + ∇L(θ_t)**
+  **θ_{t+1} = θ_t - η · v_{t+1}**
+
+where:
+- v ∈ ℝⁿ is the velocity (exponential moving average of gradients)
+- β ∈ [0, 1) is the momentum coefficient (typically 0.9 or 0.99)
+- η > 0 is the learning rate
+- θ ∈ ℝⁿ are the model parameters
+- ∇L(θ_t) is the gradient of the loss function
+
+## Benefits
 
 Momentum helps accelerate SGD in relevant directions and dampens oscillations, leading to
-faster convergence especially in the presence of high curvature or noisy gradients.
+faster convergence especially in the presence of:
+- High curvature or ill-conditioned problems
+- Noisy gradients (stochastic approximation)
+- Narrow ravines in the loss landscape
 
-**Verification Status:** Implementation complete. Convergence properties verified
-informally but not formally proven (optimization theory out of scope). Dimension
-consistency maintained by dependent types.
+The momentum term accumulates velocity in directions of consistent gradient, allowing
+the optimizer to build up speed and overcome local variations.
+
+## Nesterov Momentum
+
+This module also provides Nesterov Accelerated Gradient (NAG), which evaluates the
+gradient at a "look-ahead" position for improved convergence properties.
+
+## Verification Status
+
+Implementation complete. Convergence properties verified informally but not formally
+proven (optimization theory out of scope). Dimension consistency maintained by dependent
+types. All updates preserve dimension invariants.
+
+## References
+
+- Polyak, B. T. (1964). "Some methods of speeding up the convergence of iteration methods"
+- Nesterov, Y. (1983). "A method for solving the convex programming problem..."
+- Sutskever et al. (2013). "On the importance of initialization and momentum in deep learning"
 -/
 
 import VerifiedNN.Core.DataTypes
@@ -70,14 +100,20 @@ def momentumStep {n : Nat} (state : MomentumState n) (gradient : Vector n) : Mom
 
 /-- Momentum step with gradient clipping to prevent gradient explosion.
 
-Clips gradient norm before incorporating into velocity accumulation.
+Clips gradient norm before incorporating into velocity accumulation. The clipping
+operation is applied to the current gradient before adding to velocity:
+
+  **g_clipped = g · min(1, maxNorm / ‖g‖₂)**
+  **v_{t+1} = β · v_t + g_clipped**
 
 **Parameters:**
 - `state`: Current momentum state
 - `gradient`: Computed gradient (potentially large)
-- `maxNorm`: Maximum allowed gradient norm
+- `maxNorm`: Maximum allowed gradient norm (typically 1.0 or 5.0)
 
 **Returns:** Updated state with clipped gradient applied
+
+**Note:** Clipping is applied to instantaneous gradient, not the velocity itself.
 
 **Performance:** Marked inline for hot-path optimization.
 -/
@@ -135,22 +171,31 @@ def initMomentum {n : Nat} (initialParams : Vector n) (lr : Float) (beta : Float
 
 /-- Nesterov momentum update (look-ahead variant).
 
-Update rules:
-  θ_lookahead = θ_t - β * v_t
-  v_{t+1} = β * v_t + ∇L(θ_lookahead)
-  θ_{t+1} = θ_t - η * v_{t+1}
+Nesterov Accelerated Gradient (NAG) update rules:
 
-Nesterov momentum evaluates the gradient at the "look-ahead" position, which
-can provide better convergence properties.
+  **θ_lookahead = θ_t - β · v_t**
+  **v_{t+1} = β · v_t + ∇L(θ_lookahead)**
+  **θ_{t+1} = θ_t - η · v_{t+1}**
+
+Nesterov momentum evaluates the gradient at the "look-ahead" position (where momentum
+would take us), which can provide better convergence properties than classical momentum.
+This is particularly effective for convex optimization problems.
+
+**Intuition:** Classical momentum first computes the gradient at the current position,
+then moves. Nesterov momentum first looks ahead to where we would move with momentum,
+then computes the gradient there, providing a "corrective" force.
 
 **Note:** Requires re-computation of gradient at look-ahead position, so this
 function takes a gradient computation function rather than a pre-computed gradient.
+This adds computational cost (approximately 2× gradient computation per step).
 
 **Parameters:**
 - `state`: Current momentum state
 - `computeGrad`: Function to compute gradient at a given parameter vector
 
 **Returns:** Updated state with Nesterov momentum applied
+
+**Performance:** More expensive than classical momentum due to two gradient evaluations.
 -/
 def nesterovStep {n : Nat} (state : MomentumState n) (computeGrad : Vector n → Vector n) : MomentumState n :=
   let lookahead := state.params - state.momentum • state.velocity

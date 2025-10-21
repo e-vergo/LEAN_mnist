@@ -1,10 +1,69 @@
 /-
 # Training Metrics
 
-Accuracy computation and evaluation metrics.
+Evaluation metrics for neural network performance measurement.
 
-This module provides functions for evaluating neural network performance
-on test datasets, including classification accuracy and loss computation.
+## Overview
+
+This module provides comprehensive evaluation metrics for assessing
+neural network performance during training and testing:
+- **Classification accuracy:** Overall and per-class correctness
+- **Loss computation:** Average cross-entropy loss on datasets
+- **Prediction utilities:** Extract predicted classes from network outputs
+
+## Implementation Status
+
+**Complete implementation:** All core metrics are fully implemented:
+- Overall classification accuracy
+- Per-class accuracy breakdown
+- Average loss computation
+- Console output utilities
+
+Potential future enhancements:
+- Confusion matrix generation
+- Precision, recall, F1-score metrics
+- Top-k accuracy for multi-class problems
+- Real-time metrics visualization
+
+## Metric Definitions
+
+### Classification Accuracy
+```
+accuracy = (# correct predictions) / (# total examples)
+```
+For MNIST, random guessing achieves ~10% accuracy (1/10 classes).
+A well-trained network should achieve >95% test accuracy.
+
+### Cross-Entropy Loss
+Measures the difference between predicted probabilities and true labels.
+Lower loss indicates better calibrated predictions. Loss approaching 0
+indicates perfect confidence in correct predictions.
+
+### Per-Class Accuracy
+Useful for identifying class imbalance or confusion:
+- If digit "1" has high accuracy but "8" has low accuracy, the network
+  may struggle with more complex shapes
+- Can guide data augmentation or model architecture decisions
+
+## Usage
+
+```lean
+-- Compute overall accuracy
+let testAcc := computeAccuracy trainedNet testData
+IO.println s!"Test accuracy: {testAcc * 100.0}%"
+
+-- Compute average loss
+let testLoss := computeAverageLoss trainedNet testData
+IO.println s!"Test loss: {testLoss}"
+
+-- Per-class breakdown
+let perClassAcc := computePerClassAccuracy trainedNet testData
+for i in [0:10] do
+  IO.println s!"Digit {i}: {perClassAcc[i]! * 100.0}%"
+
+-- Convenient printing
+printMetrics trainedNet testData "Test"
+```
 -/
 
 import VerifiedNN.Network.Architecture

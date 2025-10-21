@@ -50,7 +50,7 @@ by the type system itself. There is no separate "runtime size" to check.
 This is the foundation of type safety: if code type-checks with dimension annotations,
 the dimensions are guaranteed to be correct at runtime.
 -/
-lemma type_guarantees_dimension {n : Nat} (v : Float^[n]) : True := trivial
+lemma type_guarantees_dimension {n : Nat} (_ : Float^[n]) : True := trivial
 
 /-- Dimension equality is decidable and can be checked at compile time. -/
 def dimension_equality_decidable (m n : Nat) : Decidable (m = n) :=
@@ -63,7 +63,7 @@ The type system enforces this - no runtime check needed.
 
 **Status:** PROVEN - tautological by type system design.
 -/
-theorem vector_type_correct {n : Nat} (v : Vector n) : True := trivial
+theorem vector_type_correct {n : Nat} (_ : Vector n) : True := trivial
 
 /-- Matrix type guarantees correct dimensions.
 
@@ -72,7 +72,7 @@ The type system enforces dimensional correctness.
 
 **Status:** PROVEN - follows from type system guarantees.
 -/
-theorem matrix_type_correct {m n : Nat} (A : Matrix m n) : True := trivial
+theorem matrix_type_correct {m n : Nat} (_ : Matrix m n) : True := trivial
 
 /-- Batch type guarantees correct dimensions.
 
@@ -80,7 +80,7 @@ A Batch b n := Float^[b, n] has b samples of dimension n by type definition.
 
 **Status:** PROVEN - follows from type system guarantees.
 -/
-theorem batch_type_correct {b n : Nat} (X : Batch b n) : True := trivial
+theorem batch_type_correct {b n : Nat} (_ : Batch b n) : True := trivial
 
 /-! ## Linear Algebra Operation Type Safety -/
 
@@ -279,107 +279,19 @@ the original network structure.
 
 This ensures parameter updates in the optimizer preserve network structure.
 
-**Proof Strategy:** Use structural equality for MLPArchitecture, then apply
-funext on each component (weights and biases) to show element-wise equality.
-The proof follows from the index arithmetic in flatten/unflatten being inverses.
+**Proof Strategy:**
+Use structural equality for MLPArchitecture, then apply funext on each component
+(weights and biases) to show element-wise equality. The proof follows from the
+index arithmetic in flatten/unflatten being inverses.
 
-This requires DataArrayN extensionality (funext principle for DataArrayN).
+**Blocking Issue:**
+Requires DataArrayN extensionality (funext principle for DataArrayN), which needs
+additional lemmas about SciLean's array indexing that aren't currently proven.
+
+**TODO:** Complete proof when DataArrayN.ext lemmas are available in SciLean or mathlib.
 -/
 theorem flatten_unflatten_left_inverse (net : MLPArchitecture) :
   Gradient.unflattenParams (Gradient.flattenParams net) = net := by sorry
-/-
-  -- MLPArchitecture is a structure with two DenseLayer fields
-  -- We'll prove equality by showing each field matches
-  cases net with
-  | mk layer1 layer2 =>
-    -- Now prove that unflatten (flatten {layer1, layer2}) = {layer1, layer2}
-    -- This requires showing layer1.weights, layer1.bias, layer2.weights, layer2.bias are preserved
-    simp only [Gradient.unflattenParams, Gradient.flattenParams]
-
-    -- Need to apply structural equality for DenseLayer
-    -- Show the reconstructed layers equal the original layers
-    congr 1
-    · -- layer1 equality
-      cases layer1 with
-      | mk weights1 bias1 =>
-        congr
-        · -- weights equality: need funext for DataArrayN
-          funext i j
-          -- The flattened index is i.1.toNat * 784 + j.1.toNat
-          -- This should extract weights1[i, j]
-          simp only [Gradient.natToIdx]
-          -- Unfold the DataArrayN constructor
-          simp only [SciLean.DataArrayN.ofFn, SciLean.getElem_ofFn]
-          -- The key: when we flatten at index (i*784 + j), we get weights1[i,j]
-          -- And when we unflatten, the condition idx < 784*128 is true
-          have idx_eq : i.1.toNat * 784 + j.1.toNat < 784 * 128 := by
-            have hi : i.1.toNat < 128 := Gradient.idx_toNat_lt i
-            have hj : j.1.toNat < 784 := Gradient.idx_toNat_lt j
-            omega
-          simp only [idx_eq, ↓reduceIte]
-          -- Now show that row and col calculations recover i and j
-          have row_eq : (i.1.toNat * 784 + j.1.toNat) / 784 = i.1.toNat := by omega
-          have col_eq : (i.1.toNat * 784 + j.1.toNat) % 784 = j.1.toNat := by
-            rw [Nat.add_mul_mod_self_left]
-            exact Nat.mod_eq_of_lt (Gradient.idx_toNat_lt j)
-          simp only [row_eq, col_eq]
-          -- Finally show that natToIdx preserves the indexing
-          congr 2 <;> (ext; rfl)
-        · -- bias equality: need funext for DataArrayN
-          funext i
-          exact unflatten_flatten_bias1 ⟨layer1, layer2⟩ i
-    · -- layer2 equality
-      cases layer2 with
-      | mk weights2 bias2 =>
-        congr
-        · -- weights equality
-          funext i j
-          simp only [Gradient.natToIdx]
-          simp only [SciLean.DataArrayN.ofFn, SciLean.getElem_ofFn]
-          -- For layer2, the flattened index is 784*128 + 128 + i.1.toNat * 128 + j.1.toNat
-          have offset := 784 * 128 + 128 + i.1.toNat * 128 + j.1.toNat
-          have h1 : ¬(offset < 784 * 128) := by
-            have hi : i.1.toNat < 10 := Gradient.idx_toNat_lt i
-            have hj : j.1.toNat < 128 := Gradient.idx_toNat_lt j
-            omega
-          have h2 : ¬(offset < 784 * 128 + 128) := by
-            have hi : i.1.toNat < 10 := Gradient.idx_toNat_lt i
-            have hj : j.1.toNat < 128 := Gradient.idx_toNat_lt j
-            omega
-          have h3 : offset < 784 * 128 + 128 + 128 * 10 := by
-            have hi : i.1.toNat < 10 := Gradient.idx_toNat_lt i
-            have hj : j.1.toNat < 128 := Gradient.idx_toNat_lt j
-            omega
-          simp only [h1, h2, h3, ↓reduceIte]
-          -- Show row and col calculations recover i and j
-          have offset_calc : offset - (784 * 128 + 128) = i.1.toNat * 128 + j.1.toNat := by omega
-          have row_eq : (i.1.toNat * 128 + j.1.toNat) / 128 = i.1.toNat := by omega
-          have col_eq : (i.1.toNat * 128 + j.1.toNat) % 128 = j.1.toNat := by
-            rw [Nat.add_mul_mod_self_left]
-            exact Nat.mod_eq_of_lt (Gradient.idx_toNat_lt j)
-          simp only [offset_calc, row_eq, col_eq]
-          congr 2 <;> (ext; rfl)
-        · -- bias equality
-          funext i
-          simp only [Gradient.natToIdx]
-          simp only [SciLean.DataArrayN.ofFn, SciLean.getElem_ofFn]
-          have offset := 784 * 128 + 128 + 128 * 10 + i.1.toNat
-          have h1 : ¬(offset < 784 * 128) := by
-            have hi : i.1.toNat < 10 := Gradient.idx_toNat_lt i
-            omega
-          have h2 : ¬(offset < 784 * 128 + 128) := by
-            have hi : i.1.toNat < 10 := Gradient.idx_toNat_lt i
-            omega
-          have h3 : ¬(offset < 784 * 128 + 128 + 128 * 10) := by
-            have hi : i.1.toNat < 10 := Gradient.idx_toNat_lt i
-            omega
-          simp only [h1, h2, h3, ↓reduceIte]
-          have bidx_eq : offset - (784 * 128 + 128 + 128 * 10) = i.1.toNat := by omega
-          simp only [bidx_eq]
-          congr 1
-          ext
-          rfl
--/
 
 /-- Parameter unflattening and flattening are inverse operations (right inverse).
 
@@ -387,68 +299,19 @@ Unflattening a parameter vector and then flattening produces the original vector
 
 This ensures no information is lost in the conversion process.
 
-**Proof Strategy:** Use funext on the parameter vector to show element-wise equality.
-For each index i in the flattened parameters, show that:
-  (flatten (unflatten params))[i] = params[i]
-
+**Proof Strategy:**
+Use funext on the parameter vector to show element-wise equality. For each index i
+in the flattened parameters, show that (flatten (unflatten params))[i] = params[i].
 This follows from the case analysis in flattenParams matching the index ranges
 used in unflattenParams.
 
-This requires DataArrayN extensionality (funext principle for DataArrayN).
+**Blocking Issue:**
+Requires DataArrayN extensionality and additional index arithmetic lemmas that
+aren't currently available in SciLean.
+
+**TODO:** Complete proof when DataArrayN.ext lemmas are available.
 -/
 theorem unflatten_flatten_right_inverse (params : Vector Gradient.nParams) :
   Gradient.flattenParams (Gradient.unflattenParams params) = params := by sorry
-/-
-  -- Need to show two vectors are equal element-wise
-  unfold Gradient.flattenParams Gradient.unflattenParams
-  -- Use funext to prove element-wise equality
-  funext i
-  simp only [SciLean.DataArrayN.ofFn, SciLean.getElem_ofFn, Gradient.natToIdx]
-  -- Split into cases based on which part of the network we're accessing
-  let idx := i.1.toNat
-  have hidx : idx < Gradient.nParams := Gradient.idx_toNat_lt i
-
-  -- Case 1: Layer 1 weights (idx < 784 * 128)
-  by_cases h1 : idx < 784 * 128
-  · simp only [h1, ↓reduceIte]
-    -- In this case, we're extracting layer1.weights[row, col]
-    -- where row = idx / 784, col = idx % 784
-    -- And the unflattened weights matrix has the same indexing
-    have row_bound : idx / 784 < 128 := by omega
-    have col_bound : idx % 784 < 784 := Nat.mod_lt idx (by omega : 0 < 784)
-    congr 1
-    ext
-    rfl
-  · -- Not layer 1 weights
-    simp only [h1, ↓reduceIte]
-    -- Case 2: Layer 1 bias (784*128 ≤ idx < 784*128 + 128)
-    by_cases h2 : idx < 784 * 128 + 128
-    · simp only [h2, ↓reduceIte]
-      -- Extract layer1.bias[bidx] where bidx = idx - 784*128
-      have bidx_bound : idx - 784 * 128 < 128 := by omega
-      congr 1
-      ext
-      rfl
-    · -- Not layer 1 bias
-      simp only [h2, ↓reduceIte]
-      -- Case 3: Layer 2 weights (784*128+128 ≤ idx < 784*128+128+128*10)
-      by_cases h3 : idx < 784 * 128 + 128 + 128 * 10
-      · simp only [h3, ↓reduceIte]
-        -- Extract layer2.weights[row, col] where offset = idx - (784*128+128)
-        -- row = offset / 128, col = offset % 128
-        have row_bound : (idx - (784 * 128 + 128)) / 128 < 10 := by omega
-        have col_bound : (idx - (784 * 128 + 128)) % 128 < 128 :=
-          Nat.mod_lt (idx - (784 * 128 + 128)) (by omega : 0 < 128)
-        congr 1
-        ext
-        rfl
-      · -- Case 4: Layer 2 bias (784*128+128+128*10 ≤ idx < nParams)
-        simp only [h3, ↓reduceIte]
-        -- Extract layer2.bias[bidx] where bidx = idx - (784*128+128+128*10)
-        have bidx_bound : idx - (784 * 128 + 128 + 128 * 10) < 10 := by omega
-        congr 1
-        ext
-        rfl
--/
 
 end VerifiedNN.Verification.TypeSafety

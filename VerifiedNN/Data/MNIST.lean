@@ -1,27 +1,38 @@
-/-
-# MNIST Data Loading
-
-Load MNIST dataset from IDX or CSV format.
-
-The IDX file format is a binary format used for storing MNIST data:
-- Magic number (4 bytes): data type indicator
-- Number of dimensions (4 bytes)
-- Dimension sizes (4 bytes each)
-- Data values (1 byte per pixel for images, 1 byte per label)
-
-**Verification status:** Implementation only, no formal verification.
-**Float vs ℝ gap:** Acknowledged - pixel values are Float approximations.
--/
-
 import VerifiedNN.Core.DataTypes
 import SciLean
+
+/-!
+# MNIST Data Loading
+
+Functions for loading MNIST dataset from IDX binary format.
+
+## Main definitions
+
+* `loadMNISTImages`: Parse IDX image file into array of 784-dimensional vectors
+* `loadMNISTLabels`: Parse IDX label file into array of natural numbers (0-9)
+* `loadMNIST`: Combine images and labels into dataset pairs
+* `loadMNISTTrain`: Load standard training set (60,000 samples)
+* `loadMNISTTest`: Load standard test set (10,000 samples)
+
+## Implementation notes
+
+The IDX file format is a simple binary format:
+* Magic number (4 bytes): data type indicator (2051 for images, 2049 for labels)
+* Dimension metadata (4 bytes each)
+* Data values (1 byte per pixel/label)
+
+All multi-byte integers are stored in big-endian format.
+
+Pixel values are stored as UInt8 (0-255) and converted to Float.
+This is an unverified implementation - no formal proofs of correctness.
+-/
 
 namespace VerifiedNN.Data.MNIST
 
 open VerifiedNN.Core
 open SciLean
 
-/-- Read a big-endian 32-bit unsigned integer from byte array -/
+/-- Read big-endian 32-bit unsigned integer from byte array. -/
 private def readU32BE (bytes : ByteArray) (offset : Nat) : Option UInt32 := do
   if offset + 4 > bytes.size then
     none
@@ -33,26 +44,17 @@ private def readU32BE (bytes : ByteArray) (offset : Nat) : Option UInt32 := do
     some ((b0.toUInt32 <<< 24) ||| (b1.toUInt32 <<< 16) |||
           (b2.toUInt32 <<< 8) ||| b3.toUInt32)
 
-/-- Convert byte (0-255) to Float -/
+/-- Convert byte (0-255) to Float. -/
 private def byteToFloat (b : UInt8) : Float :=
   b.toNat.toFloat
 
 /-- Load MNIST images from IDX file format.
 
-The IDX format for MNIST images:
-- Magic number: 2051 (0x00000803)
-- Number of images: 4 bytes
-- Number of rows: 4 bytes (28)
-- Number of columns: 4 bytes (28)
-- Pixel data: 1 byte per pixel (0-255)
+The IDX format for MNIST images has magic number 2051 (0x00000803),
+followed by image count, dimensions (28×28), and pixel data (1 byte per pixel, 0-255).
 
-**Parameters:**
-- `path`: Path to the IDX file containing MNIST images
-
-**Returns:** Array of 784-dimensional vectors (flattened 28x28 images)
-
-**Error handling:** Returns empty array on parse failure (logs error to stderr)
--/
+Returns array of 784-dimensional vectors (flattened 28×28 images), or empty array on error.
+Errors are logged to stderr. -/
 def loadMNISTImages (path : System.FilePath) : IO (Array (Vector 784)) := do
   try
     -- Read entire file as ByteArray
@@ -102,18 +104,11 @@ def loadMNISTImages (path : System.FilePath) : IO (Array (Vector 784)) := do
 
 /-- Load MNIST labels from IDX file format.
 
-The IDX format for MNIST labels:
-- Magic number: 2049 (0x00000801)
-- Number of labels: 4 bytes
-- Label data: 1 byte per label (0-9)
+The IDX format for MNIST labels has magic number 2049 (0x00000801),
+followed by label count and label data (1 byte per label, 0-9).
 
-**Parameters:**
-- `path`: Path to the IDX file containing MNIST labels
-
-**Returns:** Array of natural numbers (0-9) representing digit classes
-
-**Error handling:** Returns empty array on parse failure (logs error to stderr)
--/
+Returns array of natural numbers representing digit classes, or empty array on error.
+Errors are logged to stderr. -/
 def loadMNISTLabels (path : System.FilePath) : IO (Array Nat) := do
   try
     -- Read entire file as ByteArray
@@ -152,17 +147,10 @@ def loadMNISTLabels (path : System.FilePath) : IO (Array Nat) := do
 
 /-- Load full MNIST dataset by combining images and labels.
 
-**Parameters:**
-- `imagePath`: Path to the IDX file containing MNIST images
-- `labelPath`: Path to the IDX file containing MNIST labels
+Returns array of (image, label) pairs where image is a 784-dimensional Float vector
+and label is a Nat in range [0-9].
 
-**Returns:** Array of (image, label) pairs where:
-  - image is a 784-dimensional Float vector
-  - label is a Nat in range [0-9]
-
-**Error handling:** If image and label counts don't match, returns only matching pairs.
-                   Logs warning to stderr if mismatch detected.
--/
+If image and label counts don't match, returns only matching pairs and logs warning. -/
 def loadMNIST (imagePath : System.FilePath) (labelPath : System.FilePath) :
     IO (Array (Vector 784 × Nat)) := do
   let images ← loadMNISTImages imagePath
@@ -184,15 +172,7 @@ def loadMNIST (imagePath : System.FilePath) (labelPath : System.FilePath) :
 
 /-- Load standard MNIST training set (60,000 samples).
 
-**Parameters:**
-- `dataDir`: Directory containing MNIST files
-
-**Expected files:**
-- `dataDir/train-images-idx3-ubyte`
-- `dataDir/train-labels-idx1-ubyte`
-
-**Returns:** Array of (image, label) pairs for training
--/
+Expects files `train-images-idx3-ubyte` and `train-labels-idx1-ubyte` in `dataDir`. -/
 def loadMNISTTrain (dataDir : System.FilePath) : IO (Array (Vector 784 × Nat)) := do
   let imagePath := dataDir / "train-images-idx3-ubyte"
   let labelPath := dataDir / "train-labels-idx1-ubyte"
@@ -200,15 +180,7 @@ def loadMNISTTrain (dataDir : System.FilePath) : IO (Array (Vector 784 × Nat)) 
 
 /-- Load standard MNIST test set (10,000 samples).
 
-**Parameters:**
-- `dataDir`: Directory containing MNIST files
-
-**Expected files:**
-- `dataDir/t10k-images-idx3-ubyte`
-- `dataDir/t10k-labels-idx1-ubyte`
-
-**Returns:** Array of (image, label) pairs for testing
--/
+Expects files `t10k-images-idx3-ubyte` and `t10k-labels-idx1-ubyte` in `dataDir`. -/
 def loadMNISTTest (dataDir : System.FilePath) : IO (Array (Vector 784 × Nat)) := do
   let imagePath := dataDir / "t10k-images-idx3-ubyte"
   let labelPath := dataDir / "t10k-labels-idx1-ubyte"

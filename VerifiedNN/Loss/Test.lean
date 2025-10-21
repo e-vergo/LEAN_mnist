@@ -1,23 +1,66 @@
-/-
-# Loss Function Tests
-
-Comprehensive tests to verify loss functions compile and produce correct results.
-
-**Test Coverage:**
-- Basic functionality: loss and gradient computation
-- Numerical properties: non-negativity, gradient bounds
-- Edge cases: uniform predictions, extreme values
-- Mathematical properties: gradient sums to zero, softmax sums to 1
-
-**Testing Philosophy:**
-These are computational tests on Float values, not formal proofs.
-They provide confidence that the implementation is correct before attempting
-formal verification on ℝ.
--/
-
 import VerifiedNN.Loss.CrossEntropy
 import VerifiedNN.Loss.Gradient
 import SciLean
+
+/-!
+# Loss Function Tests
+
+Comprehensive computational validation for cross-entropy loss and gradient computations.
+
+This module provides empirical validation of the loss function implementation through a
+suite of tests covering correctness, numerical stability, and mathematical properties.
+While not formal proofs, these tests build confidence that the Float implementation
+behaves correctly before formal verification on ℝ is attempted.
+
+## Test Coverage
+
+### Functional Correctness
+- **Basic loss computation:** Single-sample cross-entropy with known inputs
+- **Gradient computation:** Analytical gradient formula implementation
+- **Softmax normalization:** Probabilities sum to 1.0 within floating-point precision
+- **One-hot encoding:** Target vector construction
+
+### Mathematical Properties
+- **Non-negativity:** Loss ≥ 0 for all inputs (validates axiom empirically)
+- **Gradient sum = 0:** Due to softmax constraint (probabilities sum to 1)
+- **Softmax bounds:** All probabilities in [0, 1]
+- **Gradient bounds:** Each component in [-1, 1]
+
+### Numerical Stability
+- **Large logits:** Values like [100, 101, 99] don't cause overflow
+- **Uniform predictions:** Correct behavior when all logits equal
+- **Expected values:** Uniform logits give loss ≈ log(n)
+
+### Edge Cases
+- **Batch processing:** Multiple samples with varying targets
+- **Regularization:** L2 penalty computation
+- **Extreme values:** Very large or very small logit values
+
+## Testing Philosophy
+
+**Relationship to Verification:**
+- These are *computational tests* on Float values, not formal proofs
+- Proofs of mathematical properties live in Properties.lean (on ℝ)
+- Tests validate that Float implementation approximates ℝ theory
+- Help catch implementation bugs before attempting formal verification
+
+**Validation Strategy:**
+1. Run tests to ensure basic correctness
+2. Use results to validate numerical stability
+3. Check that properties proven on ℝ hold approximately on Float
+4. Build confidence for axiomatizing Float→ℝ correspondence
+
+**Test Execution:**
+```bash
+lake build VerifiedNN.Loss.Test
+lake env lean --run VerifiedNN/Loss/Test.lean
+```
+
+## References
+
+- Software testing principles for numerical computing
+- IEEE 754 floating-point validation techniques
+-/
 
 namespace VerifiedNN.Loss.Test
 

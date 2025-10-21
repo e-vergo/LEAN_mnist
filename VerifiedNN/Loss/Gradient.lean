@@ -1,25 +1,75 @@
-/-
-# Loss Gradient
-
-Analytical gradient computation for cross-entropy loss.
-
-This module implements the analytical gradient of cross-entropy loss with respect to
-predictions. The gradient has a remarkably simple form: ∂L/∂predictions = softmax(predictions) - one_hot(target)
-
-**Verification Status:**
-- Implementation uses Float (computational)
-- Gradient correctness proven in Verification/GradientCorrectness.lean
-- Automatic differentiation verified to match analytical formula
-
-**Mathematical Derivation:**
-For cross-entropy loss L = -log(softmax(predictions)[target]):
-  ∂L/∂predictions[i] = softmax(predictions)[i] - 1{i=target}
-
-This is the classic result that backpropagation simplifies to (predicted - actual) for cross-entropy.
--/
-
 import VerifiedNN.Loss.CrossEntropy
 import SciLean
+
+/-!
+# Loss Gradient
+
+Analytical gradient computation for cross-entropy loss with respect to logit predictions.
+
+This module implements the analytical gradient of cross-entropy loss, revealing one of the
+most elegant results in deep learning: the gradient has the remarkably simple closed form
+`softmax(predictions) - one_hot(target)`. This simplification makes backpropagation through
+cross-entropy + softmax extremely efficient and numerically stable.
+
+## Mathematical Derivation
+
+Starting with cross-entropy loss:
+```
+L(z, t) = -log(softmax(z)[t])
+        = -z[t] + log(∑ⱼ exp(z[j]))
+```
+
+Taking the gradient with respect to logit `z[i]`:
+```
+∂L/∂z[i] = ∂(-z[t])/∂z[i] + ∂log(∑ⱼ exp(z[j]))/∂z[i]
+         = -𝟙{i=t} + exp(z[i]) / ∑ⱼ exp(z[j])
+         = -𝟙{i=t} + softmax(z)[i]
+         = softmax(z)[i] - one_hot(t)[i]
+```
+
+where `𝟙{i=t}` is the indicator function (1 if `i=t`, 0 otherwise).
+
+## The Elegant Simplification
+
+**Key Insight:** The gradient is simply `predicted_probabilities - true_probabilities`.
+
+This beautiful result means:
+- **No chain rule mess:** Despite loss depending on softmax which depends on logits,
+  the composed gradient collapses to a single subtraction
+- **Numerical stability:** No division operations in the gradient (unlike raw softmax gradient)
+- **Intuitive:** Gradient points from prediction toward truth, scaled by error magnitude
+- **Efficient:** O(n) computation for n-class classification
+
+**Example:** 3-class problem with target class 1
+```
+Logits:     [1.0, 2.0, 0.5]
+Softmax:    [0.24, 0.66, 0.10]  (predicted probabilities)
+One-hot:    [0.0,  1.0, 0.0]    (true probabilities)
+Gradient:   [0.24, -0.34, 0.10] (error signal)
+```
+
+## Verification Status
+
+| Property | Status | Location |
+|----------|--------|----------|
+| Analytical formula | Implemented | This file |
+| Matches autodiff | To be verified | Verification/GradientCorrectness.lean |
+| Gradient sum = 0 | Property | Due to softmax normalization |
+| Gradient bounded | Property | Each component ∈ [-1, 1] |
+
+## Implementation Notes
+
+- **Numerical stability:** Inherits from `softmax` which uses log-sum-exp trick
+- **Batching:** Supports vectorized batch gradient computation
+- **Regularization:** Optional L2 penalty for weight decay
+- **Efficiency:** Single forward pass through softmax, then simple subtraction
+
+## References
+
+- Bishop, *Pattern Recognition and Machine Learning* (2006), Section 4.3.4
+- Murphy, *Machine Learning: A Probabilistic Perspective* (2012), Section 8.2.3
+- Goodfellow et al., *Deep Learning* (2016), Section 6.2.2.3
+-/
 
 namespace VerifiedNN.Loss.Gradient
 

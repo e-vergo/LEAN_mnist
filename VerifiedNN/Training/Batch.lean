@@ -1,10 +1,57 @@
 /-
 # Mini-Batch Handling
 
-Data batching utilities for training.
+Data batching and shuffling utilities for stochastic gradient descent training.
 
-This module provides utilities for creating mini-batches from training data
-and shuffling datasets between epochs.
+## Overview
+
+This module provides utilities for preparing training data in mini-batches,
+which is essential for efficient and effective neural network training:
+- **Batching:** Split large datasets into manageable mini-batches
+- **Shuffling:** Randomize data order between epochs to prevent overfitting
+- **Efficiency:** Support for variable batch sizes and partial final batches
+
+## Implementation Status
+
+**Complete implementation:** All core batching functionality is implemented:
+- Fixed-size mini-batch creation with partial last batch support
+- Fisher-Yates shuffle algorithm for randomization
+- Convenient combined shuffle + batch interface
+
+Potential future enhancements:
+- Stratified batching (ensure class balance within batches)
+- Data augmentation hooks
+- Parallel batch processing
+
+## Mini-Batch Strategy
+
+Mini-batch gradient descent balances two competing goals:
+1. **Computational efficiency:** Larger batches use vectorization better
+2. **Optimization dynamics:** Smaller batches add noise that helps escape local minima
+
+Typical MNIST batch sizes: 16-128 examples
+
+## Shuffling Algorithm
+
+Uses Fisher-Yates shuffle to ensure uniform random permutation:
+1. For each position i from 0 to n-1:
+2. Generate random index j where i ≤ j < n
+3. Swap elements at positions i and j
+
+This produces an unbiased random permutation in O(n) time.
+
+## Usage
+
+```lean
+-- Create static batches
+let batches := createBatches trainData 32
+
+-- Create shuffled batches (typical training usage)
+let shuffledBatches ← createShuffledBatches trainData 32
+
+-- Query batch information
+let nBatches := numBatches trainData.size 32
+```
 -/
 
 import VerifiedNN.Core.DataTypes
