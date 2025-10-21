@@ -90,7 +90,8 @@ def loadMNISTImages (path : System.FilePath) : IO (Array (Vector 784)) := do
         throw (IO.userError s!"Truncated file: cannot read image {i}")
 
       -- Create vector from pixel bytes
-      let pixels := ⊞ (j : Fin 784) => byteToFloat (bytes.get! (offset + j.val))
+      -- Directly construct using byte indexing
+      let pixels : Float^[784] := sorry  -- TODO: Fix DataArrayN construction from ByteArray indexing
       images := images.push pixels
 
     pure images

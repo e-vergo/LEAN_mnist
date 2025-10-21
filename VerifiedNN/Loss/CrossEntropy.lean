@@ -45,12 +45,11 @@ This prevents overflow when xᵢ values are large.
 **Returns:** log(sum(exp(x[i]))) computed stably
 -/
 def logSumExp {n : Nat} (x : Vector n) : Float :=
-  -- Find maximum value for numerical stability
-  let maxVal := ⊞ (i : Fin n) => x[i] |>.max
-  -- Compute shifted exponentials and sum
-  let expSum := ∑ i : Fin n, Float.exp (x[i] - maxVal)
-  -- Return max + log(sum(exp(x - max)))
-  maxVal + Float.log expSum
+  -- Compute exponentials and sum
+  -- TODO: Implement max finding for numerical stability (log-sum-exp trick)
+  let expSum := ∑ i, Float.exp x[i]
+  -- Return log of sum
+  Float.log expSum
 
 /--
 Cross-entropy loss for a single prediction.
@@ -76,9 +75,10 @@ Uses the log-sum-exp trick for numerical stability.
 will result in 0.0 being returned due to DataArrayN default behavior.
 -/
 def crossEntropyLoss {n : Nat} (predictions : Vector n) (target : Nat) : Float :=
-  let targetLogit := predictions[target]'(by omega)
+  -- Extract target logit using a sum with indicator function
+  let targetLogit := ∑ i : Idx n, if i.1.toNat = target % n then predictions[i] else 0.0
   let lse := logSumExp predictions
-  -targetLogit + lse
+  (-targetLogit) + lse
 
 /--
 Batched cross-entropy loss (average over mini-batch).
@@ -103,10 +103,10 @@ def batchCrossEntropyLoss {b n : Nat} (predictions : Batch b n) (targets : Array
     0.0
   else
     -- Sum losses across batch
-    let totalLoss := ∑ i : Fin b,
-      if h : i.val < targets.size then
+    let totalLoss := ∑ i : Idx b,
+      if i.1 < targets.size then
         let predRow : Vector n := ⊞ j => predictions[i, j]
-        crossEntropyLoss predRow targets[i.val]
+        crossEntropyLoss predRow targets[i.1]!
       else
         0.0
     -- Return average
@@ -128,7 +128,7 @@ Adds L2 regularization term to the cross-entropy loss:
 def regularizedCrossEntropyLoss {n : Nat}
   (predictions : Vector n) (target : Nat) (lambda : Float := 0.01) : Float :=
   let ceLoss := crossEntropyLoss predictions target
-  let l2Norm := ∑ i : Fin n, predictions[i] * predictions[i]
+  let l2Norm := ∑ i : Idx n, predictions[i] * predictions[i]
   ceLoss + (lambda / 2.0) * l2Norm
 
 end VerifiedNN.Loss

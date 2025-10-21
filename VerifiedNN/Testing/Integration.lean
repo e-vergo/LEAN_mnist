@@ -35,30 +35,59 @@ open SciLean
 
 /-! ## Synthetic Dataset Generation -/
 
-/-- Generate a simple synthetic dataset for testing.
+/-- Generate a simple deterministic synthetic dataset for testing.
 
-Creates `n` random input vectors with labels determined by a simple rule
-(e.g., sum of first half of features vs second half).
-
-This allows testing the training loop without requiring MNIST data.
+Creates `n` fixed input vectors with labels determined by a simple rule.
+Uses deterministic pattern instead of random generation for reproducibility.
 -/
 def generateSyntheticDataset (n : Nat) (inputDim : Nat) (numClasses : Nat)
     : IO (Array (Vector inputDim × Nat)) := do
-  -- For now, return placeholder - full implementation requires random number generation
-  -- In practice, this would:
-  -- 1. Generate random vectors
-  -- 2. Assign labels based on some simple pattern
-  -- 3. Return as array of (input, label) pairs
-  sorry -- TODO: implement with proper random number generation
+  -- Generate deterministic patterns
+  let samples := Array.range n |>.map fun i =>
+    let input : Vector inputDim := ⊞ (j : Fin inputDim) =>
+      -- Simple pattern: each sample has different values
+      (i.toFloat + j.val.toFloat) / (inputDim.toFloat + n.toFloat)
+
+    -- Label based on sum of first half vs second half
+    let halfDim := inputDim / 2
+    let firstHalfSum := (List.range halfDim).foldl (init := 0.0) fun sum j =>
+      if h : j < inputDim then
+        sum + input[⟨j, h⟩]
+      else
+        sum
+    let secondHalfSum := (List.range halfDim).foldl (init := 0.0) fun sum j =>
+      let idx := j + halfDim
+      if h : idx < inputDim then
+        sum + input[⟨idx, h⟩]
+      else
+        sum
+
+    let label := if firstHalfSum > secondHalfSum then 0 else 1
+    (input, label % numClasses)
+
+  return samples
 
 /-- Generate a tiny overfitting dataset.
 
-Creates a very small dataset (e.g., 10 samples) that a network should be
+Creates a very small fixed dataset (10 samples) that a network should be
 able to memorize (overfit) completely if training works correctly.
 -/
 def generateOverfitDataset (inputDim : Nat) (numClasses : Nat)
     : IO (Array (Vector inputDim × Nat)) := do
-  sorry -- TODO: implement small fixed dataset for overfitting test
+  -- Create 10 fixed samples with clear patterns
+  let samples := Array.range 10 |>.map fun i =>
+    let input : Vector inputDim := ⊞ (j : Fin inputDim) =>
+      if i < 5 then
+        -- First 5 samples: positive pattern
+        (j.val.toFloat + 1.0) / inputDim.toFloat
+      else
+        -- Last 5 samples: negative pattern
+        1.0 - (j.val.toFloat + 1.0) / inputDim.toFloat
+
+    let label := if i < 5 then 0 else 1
+    (input, label % numClasses)
+
+  return samples
 
 /-! ## Helper Functions for Testing -/
 
@@ -239,6 +268,7 @@ def runAllIntegrationTests : IO Unit := do
   let mut totalTests := 0
 
   let testSuites : List (String × IO Bool) := [
+    ("Dataset Generation", testDatasetGeneration),
     ("Network Creation", testNetworkCreation),
     ("Gradient Computation", testGradientComputation),
     ("Training on Tiny Dataset", testTrainingOnTinyDataset),
@@ -283,12 +313,59 @@ def smokeTest : IO Bool := do
   -- Check that basic imports work
   IO.println "✓ All modules import successfully"
 
-  -- Once we have implementations, add minimal checks:
-  -- - Create network (doesn't crash)
-  -- - Forward pass (doesn't crash)
-  -- - Gradient computation (doesn't crash)
+  -- Test dataset generation
+  let dataset ← generateOverfitDataset 10 2
+  ok := ok && (dataset.size == 10)
+  IO.println s!"✓ Generated {dataset.size} samples"
+
+  -- Check dataset structure
+  if h : 0 < dataset.size then
+    let (sample, label) := dataset[0]
+    IO.println s!"✓ Sample shape accessible, label: {label}"
+  else
+    IO.println "✗ Dataset is empty!"
+    ok := false
 
   return ok
+
+/-- Test dataset generation functions -/
+def testDatasetGeneration : IO Bool := do
+  IO.println "\n=== Dataset Generation Test ==="
+
+  let mut allPassed := true
+
+  -- Test small dataset
+  let smallData ← generateSyntheticDataset 20 10 2
+  if smallData.size == 20 then
+    IO.println "✓ Generated 20 samples"
+  else
+    IO.println s!"✗ Expected 20 samples, got {smallData.size}"
+    allPassed := false
+
+  -- Test overfit dataset
+  let overfitData ← generateOverfitDataset 8 2
+  if overfitData.size == 10 then
+    IO.println "✓ Generated 10 overfit samples"
+  else
+    IO.println s!"✗ Expected 10 samples, got {overfitData.size}"
+    allPassed := false
+
+  -- Check label distribution
+  let labels := overfitData.map (·.2)
+  let label0Count := labels.foldl (init := 0) fun count l =>
+    if l == 0 then count + 1 else count
+  let label1Count := labels.foldl (init := 0) fun count l =>
+    if l == 1 then count + 1 else count
+
+  IO.println s!"  Label distribution: 0={label0Count}, 1={label1Count}"
+
+  if label0Count > 0 && label1Count > 0 then
+    IO.println "✓ Both classes represented"
+  else
+    IO.println "✗ Imbalanced dataset"
+    allPassed := false
+
+  return allPassed
 
 /-! ## Performance Benchmarks
 

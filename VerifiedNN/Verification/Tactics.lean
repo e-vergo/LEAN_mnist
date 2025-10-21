@@ -210,10 +210,16 @@ syntax "unfold_network" : tactic
 elab_rules : tactic
 | `(tactic| unfold_network) => do
   -- Unfold common neural network definitions
-  evalTactic (← `(tactic|
-    unfold DenseLayer.forward DenseLayer.forwardBatch
-           relu reluVec softmax
-           matvec vadd smul))
+  -- Note: This tries to unfold, but won't fail if some definitions don't exist
+  try evalTactic (← `(tactic|
+    try unfold DenseLayer.forward
+    try unfold DenseLayer.forwardBatch
+    try unfold relu
+    try unfold reluVec
+    try unfold softmax
+    try unfold matvec
+    try unfold vadd
+    try unfold smul))
 
 /-- Apply case analysis based on ReLU activation regions.
 
@@ -275,8 +281,18 @@ Used internally by tactics to identify gradient terms.
 def isGradientExpr (e : Expr) : MetaM Bool := do
   -- Check if expression is of the form (∇ f x)
   -- This is a simplified check; real implementation would be more sophisticated
-  return e.isApp && e.getAppFn.isConst &&
-         (e.getAppFn.constName? == some `SciLean.gradient)
+  if e.isApp then
+    let fn := e.getAppFn
+    if fn.isConst then
+      -- Check for gradient-related constant names
+      let name := fn.constName!
+      return name.toString.contains "gradient" ||
+             name.toString.contains "fderiv" ||
+             name.toString.contains "deriv"
+    else
+      return false
+  else
+    return false
 
 /-- Extract layer composition structure from expression.
 
@@ -297,6 +313,30 @@ def collectDimensionConstraints : TacticM (Array Expr) := do
   -- Filter for dimension-related hypotheses
   -- TODO: Implement proper filtering
   return #[]
+
+/-! ## Utility Tactics for Common Patterns -/
+
+/-- Simple tactic: Apply reflexivity after simplification.
+
+Useful for proving dimension equalities that reduce to definitional equality.
+-/
+syntax "simp_rfl" : tactic
+
+elab_rules : tactic
+| `(tactic| simp_rfl) => do
+  evalTactic (← `(tactic| simp only []))
+  evalTactic (← `(tactic| try rfl))
+
+/-- Simple tactic: Prove basic arithmetic facts about natural numbers.
+
+Attempts to discharge simple arithmetic goals automatically.
+-/
+syntax "nat_arith" : tactic
+
+elab_rules : tactic
+| `(tactic| nat_arith) => do
+  evalTactic (← `(tactic| try omega))
+  evalTactic (← `(tactic| try ring))
 
 /-! ## Tactic Documentation and Examples -/
 

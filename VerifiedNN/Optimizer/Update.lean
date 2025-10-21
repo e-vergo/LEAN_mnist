@@ -24,6 +24,8 @@ open VerifiedNN.Core
 open VerifiedNN.Optimizer
 open SciLean
 
+set_default_scalar Float
+
 /-- Learning rate scheduling strategies.
 
 Common schedules include:
@@ -37,7 +39,6 @@ inductive LRSchedule where
   | step : Float → Nat → Float → LRSchedule  -- initial, step size, decay factor
   | exponential : Float → Float → LRSchedule  -- initial, decay rate
   | cosine : Float → Nat → LRSchedule  -- initial, total epochs
-  deriving Repr
 
 /-- Apply learning rate schedule at a given epoch.
 
@@ -61,8 +62,9 @@ def applySchedule (schedule : LRSchedule) (epoch : Nat) : Float :=
   | LRSchedule.exponential initialLR decayRate =>
       initialLR * Float.pow decayRate epoch.toFloat
   | LRSchedule.cosine initialLR totalEpochs =>
-      let progress := Float.min 1.0 (epoch.toFloat / totalEpochs.toFloat)
-      let cosineDecay := (1.0 + Float.cos (Float.pi * progress)) / 2.0
+      let progress := min 1.0 (epoch.toFloat / totalEpochs.toFloat)
+      let pi : Float := 3.141592653589793
+      let cosineDecay := (1.0 + Float.cos (pi * progress)) / 2.0
       initialLR * cosineDecay
 
 /-- Warmup schedule that linearly increases learning rate from 0 to target over N epochs.
@@ -106,7 +108,6 @@ This is useful when memory constraints prevent using desired batch size directly
 structure GradientAccumulator (n : Nat) where
   accumulated : Vector n
   count : Nat
-  deriving Repr
 
 /-- Initialize gradient accumulator with zero gradients.
 
@@ -158,7 +159,6 @@ This provides a unified interface for different optimizer types.
 inductive OptimizerState (n : Nat) where
   | sgd : SGDState n → OptimizerState n
   | momentum : Momentum.MomentumState n → OptimizerState n
-  deriving Repr
 
 /-- Apply optimizer step using the appropriate update rule.
 

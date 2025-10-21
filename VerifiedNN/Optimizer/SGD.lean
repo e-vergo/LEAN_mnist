@@ -20,6 +20,8 @@ namespace VerifiedNN.Optimizer
 open VerifiedNN.Core
 open SciLean
 
+set_default_scalar Float
+
 /-- SGD optimizer state containing parameters, learning rate, and epoch counter.
 
 The state tracks:
@@ -31,7 +33,6 @@ structure SGDState (nParams : Nat) where
   params : Vector nParams
   learningRate : Float
   epoch : Nat
-  deriving Repr
 
 /-- Single SGD step: θ_{t+1} = θ_t - η * ∇L(θ_t)
 

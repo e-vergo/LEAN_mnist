@@ -13,6 +13,9 @@ namespace VerifiedNN.Training.Batch
 
 open VerifiedNN.Core
 
+/-- Inhabited instance for (Vector 784 × Nat) to support array operations -/
+instance : Inhabited (Vector 784 × Nat) := ⟨(0, 0)⟩
+
 /-- Create mini-batches from training data.
 
 Splits the input data array into mini-batches of the specified size.
@@ -24,7 +27,7 @@ The last batch may be smaller if the data size is not evenly divisible by batchS
 
 **Returns:** Array of batches, where each batch is an array of examples
 -/
-def createBatches {n : Nat}
+def createBatches
     (data : Array (Vector 784 × Nat))
     (batchSize : Nat) : Array (Array (Vector 784 × Nat)) :=
   if batchSize == 0 then
@@ -48,7 +51,7 @@ This is used to randomize training data between epochs.
 
 **Implementation:** Fisher-Yates shuffle with cryptographically secure randomness
 -/
-def shuffleData {α : Type} (data : Array α) : IO (Array α) := do
+def shuffleData {α : Type} [Inhabited α] (data : Array α) : IO (Array α) := do
   let mut arr := data
   for i in [0:data.size] do
     -- Generate random index j where i ≤ j < data.size
@@ -73,7 +76,7 @@ This is the typical usage pattern for training.
 
 **Returns:** Shuffled and batched data in IO monad
 -/
-def createShuffledBatches {n : Nat}
+def createShuffledBatches
     (data : Array (Vector 784 × Nat))
     (batchSize : Nat) : IO (Array (Array (Vector 784 × Nat))) := do
   let shuffled ← shuffleData data

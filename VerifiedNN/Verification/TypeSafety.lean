@@ -37,6 +37,18 @@ open SciLean
 
 /-! ## Basic Type Safety Properties -/
 
+/-- Helper lemma: Type-level dimension information is preserved.
+
+This meta-theorem states that if a value has a dependent type with dimension n,
+then any runtime size query will return n. This is the foundation of type safety.
+-/
+lemma type_dimension_runtime_correspondence {n : Nat} (v : Float^[n]) :
+  SciLean.DataArrayN.size v = n := dataArrayN_size_correct v
+
+/-- Dimension equality is decidable and can be checked at compile time. -/
+lemma dimension_equality_decidable (m n : Nat) : Decidable (m = n) :=
+  instDecidableEqNat m n
+
 /-- DataArrayN size matches its type parameter.
 
 This axiom states the fundamental property of SciLean's DataArrayN type:
@@ -50,9 +62,12 @@ axiom dataArrayN_size_correct {n : Nat} (v : Float^[n]) :
 /-- Vector type preserves dimension information.
 
 Since Vector n is an abbreviation for Float^[n], vectors have exactly n elements.
+
+**Status:** PROVEN - direct application of dataArrayN_size_correct axiom.
 -/
 theorem vector_size_correct {n : Nat} (v : Vector n) :
   SciLean.DataArrayN.size v = n := by
+  -- This is a direct consequence of the fundamental DataArrayN property
   exact dataArrayN_size_correct v
 
 /-- Matrix type preserves dimension information.
@@ -61,11 +76,19 @@ A Matrix m n has exactly m rows and n columns.
 -/
 theorem matrix_size_correct {m n : Nat} (A : Matrix m n) :
   (SciLean.DataArrayN.size A.1 = m) ∧ (SciLean.DataArrayN.size A.2 = n) := by
-  sorry
+  constructor
+  · -- First dimension: m rows
+    -- TODO: This requires understanding SciLean's 2D DataArrayN representation
+    -- The structure Float^[m,n] internally stores shape information
+    sorry
+  · -- Second dimension: n columns
+    -- TODO: Similar to first dimension
+    sorry
   -- Proof strategy:
   -- 1. Matrix m n := Float^[m, n] is a 2D DataArrayN
   -- 2. Apply dataArrayN_size_correct to each dimension
   -- 3. Depends on SciLean's internal DataArrayN representation
+  -- NOTE: This may need to be axiomatized depending on SciLean's API
 
 /-- Batch type preserves dimension information.
 
@@ -133,6 +156,8 @@ theorem dense_layer_output_dimension {inDim outDim : Nat}
 /-- Dense layer forward pass maintains type consistency.
 
 If the layer type-checks, the forward pass cannot produce dimension mismatches.
+
+**Status:** PROVEN - follows from dense_layer_output_dimension.
 -/
 theorem dense_layer_type_safe {inDim outDim : Nat}
     (layer : DenseLayer inDim outDim) (x : Vector inDim)
@@ -140,6 +165,7 @@ theorem dense_layer_type_safe {inDim outDim : Nat}
   let output := layer.forward x activation
   SciLean.DataArrayN.size output = outDim := by
   intro output
+  -- Direct application of the output dimension theorem
   exact dense_layer_output_dimension layer x activation
 
 /-- Batched dense layer forward pass produces correct output dimensions.

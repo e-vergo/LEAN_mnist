@@ -13,83 +13,84 @@ open SciLean
 open VerifiedNN.Core
 
 /-- Matrix-vector multiplication: A * x
-    TODO: Implement using SciLean's DataArrayN operations -/
+    Computes y[i] = Σⱼ A[i,j] * x[j] for each row i -/
 def matvec {m n : Nat} (A : Matrix m n) (x : Vector n) : Vector m :=
-  sorry
+  ⊞ i => ∑ j, A[i,j] * x[j]
 
 /-- Matrix-matrix multiplication: A * B
-    TODO: Implement using SciLean's DataArrayN operations -/
+    Computes C[i,k] = Σⱼ A[i,j] * B[j,k] -/
 def matmul {m n p : Nat} (A : Matrix m n) (B : Matrix n p) : Matrix m p :=
-  sorry
+  ⊞ (i, k) => ∑ j, A[i,j] * B[j,k]
 
 /-- Vector addition: x + y
-    TODO: Implement using SciLean's DataArrayN operations -/
+    Element-wise addition of two vectors -/
 def vadd {n : Nat} (x y : Vector n) : Vector n :=
-  sorry
+  ⊞ i => x[i] + y[i]
 
 /-- Vector subtraction: x - y
-    TODO: Implement using SciLean's DataArrayN operations -/
+    Element-wise subtraction of two vectors -/
 def vsub {n : Nat} (x y : Vector n) : Vector n :=
-  sorry
+  ⊞ i => x[i] - y[i]
 
 /-- Scalar-vector multiplication: c * x
-    TODO: Implement using SciLean's DataArrayN operations -/
+    Multiply each element of vector by scalar -/
 def smul {n : Nat} (c : Float) (x : Vector n) : Vector n :=
-  sorry
+  ⊞ i => c * x[i]
 
 /-- Element-wise vector multiplication (Hadamard product)
-    TODO: Implement using SciLean's DataArrayN operations -/
+    Multiply corresponding elements: z[i] = x[i] * y[i] -/
 def vmul {n : Nat} (x y : Vector n) : Vector n :=
-  sorry
+  ⊞ i => x[i] * y[i]
 
 /-- Vector dot product: ⟨x, y⟩
-    TODO: Implement using SciLean's DataArrayN operations -/
+    Computes Σᵢ x[i] * y[i] -/
 def dot {n : Nat} (x y : Vector n) : Float :=
-  sorry
+  ∑ i, x[i] * y[i]
 
 /-- Vector L2 norm squared: ‖x‖²
-    TODO: Implement using SciLean's DataArrayN operations -/
+    Computes Σᵢ x[i]² -/
 def normSq {n : Nat} (x : Vector n) : Float :=
-  sorry
+  ∑ i, x[i] * x[i]
 
 /-- Vector L2 norm: ‖x‖
-    TODO: Implement using SciLean's DataArrayN operations -/
+    Computes √(Σᵢ x[i]²) -/
 def norm {n : Nat} (x : Vector n) : Float :=
-  sorry
+  Float.sqrt (normSq x)
 
 /-- Matrix transpose: Aᵀ
-    TODO: Implement using SciLean's DataArrayN operations -/
+    Swaps rows and columns: Aᵀ[j,i] = A[i,j] -/
 def transpose {m n : Nat} (A : Matrix m n) : Matrix n m :=
-  sorry
+  ⊞ (j, i) => A[i,j]
 
 /-- Matrix addition
-    TODO: Implement using SciLean's DataArrayN operations -/
+    Element-wise addition: C[i,j] = A[i,j] + B[i,j] -/
 def maadd {m n : Nat} (A B : Matrix m n) : Matrix m n :=
-  sorry
+  ⊞ (i, j) => A[i,j] + B[i,j]
 
 /-- Matrix subtraction
-    TODO: Implement using SciLean's DataArrayN operations -/
+    Element-wise subtraction: C[i,j] = A[i,j] - B[i,j] -/
 def masub {m n : Nat} (A B : Matrix m n) : Matrix m n :=
-  sorry
+  ⊞ (i, j) => A[i,j] - B[i,j]
 
 /-- Scalar-matrix multiplication
-    TODO: Implement using SciLean's DataArrayN operations -/
+    Multiply each element by scalar: B[i,j] = c * A[i,j] -/
 def msmul {m n : Nat} (c : Float) (A : Matrix m n) : Matrix m n :=
-  sorry
+  ⊞ (i, j) => c * A[i,j]
 
 /-- Batch matrix-vector multiplication: X * A^T where X is batch
-    TODO: Implement using SciLean's DataArrayN operations -/
+    For each row in batch, compute: Y[k,i] = Σⱼ A[i,j] * X[k,j]
+    This is equivalent to Y = X * A^T -/
 def batchMatvec {b m n : Nat} (A : Matrix m n) (X : Batch b n) : Batch b m :=
-  sorry
+  ⊞ (k, i) => ∑ j, A[i,j] * X[k,j]
 
 /-- Add a vector to each row of a batch (broadcasting)
-    TODO: Implement using SciLean's DataArrayN operations -/
+    Adds vector v to each row: Y[k,j] = X[k,j] + v[j] -/
 def batchAddVec {b n : Nat} (X : Batch b n) (v : Vector n) : Batch b n :=
-  sorry
+  ⊞ (k, j) => X[k,j] + v[j]
 
 /-- Outer product of two vectors: x ⊗ y
-    TODO: Implement using SciLean's DataArrayN operations -/
+    Creates matrix: A[i,j] = x[i] * y[j] -/
 def outer {m n : Nat} (x : Vector m) (y : Vector n) : Matrix m n :=
-  sorry
+  ⊞ (i, j) => x[i] * y[j]
 
 end VerifiedNN.Core.LinearAlgebra

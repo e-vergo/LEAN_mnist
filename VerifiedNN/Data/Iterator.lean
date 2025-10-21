@@ -139,10 +139,10 @@ This is a simple deterministic shuffle for reproducibility. Uses LCG parameters:
 
 **Note:** This is a basic implementation. For production, consider better RNG.
 -/
-private def shuffleArray {α : Type} (arr : Array α) (seed : UInt32) : Array α :=
+private def shuffleArray {α : Type} [Inhabited α] (arr : Array α) (seed : UInt32) : Array α :=
   let n := arr.size
   if n ≤ 1 then arr
-  else
+  else Id.run do
     let mut result := arr
     let mut rng := seed
 
@@ -157,7 +157,7 @@ private def shuffleArray {α : Type} (arr : Array α) (seed : UInt32) : Array α
       result := result.set! i result[j]!
       result := result.set! j temp
 
-    result
+    pure result
 
 /-- Reset iterator and optionally shuffle data.
 
@@ -214,7 +214,7 @@ Useful for small datasets or when you need all batches at once.
 **Warning:** Loads all data into memory. Use iteration for large datasets.
 -/
 def DataIterator.collectBatches (iter : DataIterator) :
-    Array (Array (Vector 784 × Nat)) :=
+    Array (Array (Vector 784 × Nat)) := Id.run do
   let mut batches : Array (Array (Vector 784 × Nat)) := #[]
   let mut current := iter
 
@@ -225,7 +225,7 @@ def DataIterator.collectBatches (iter : DataIterator) :
       batches := batches.push batch
       current := newIter
 
-  batches
+  pure batches
 
 /-- Generic data iterator for arbitrary data types.
 

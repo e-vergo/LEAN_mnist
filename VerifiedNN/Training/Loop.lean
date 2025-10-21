@@ -78,32 +78,37 @@ Performs forward pass, computes gradients, and updates parameters.
 
 **Returns:** Updated training state
 
-**Note:** This function depends on gradient computation which may still contain `sorry`.
-The implementation structure is complete and will work once dependencies are implemented.
+**Note:** Gradient accumulation is implemented using the functional approach:
+compute individual gradients and accumulate them. The averaging is done using
+scalar multiplication.
 -/
 def trainBatch (state : TrainState) (batch : Array (Vector 784 × Nat)) : TrainState :=
-  -- Compute average gradient over the batch
-  let totalGradient := batch.foldl (fun gradSum (input, label) =>
-    let gradient := networkGradient state.optimState.params input label
-    -- TODO: Add gradients element-wise (requires vector addition in Core.LinearAlgebra)
-    -- For now, using the last gradient as placeholder
-    gradient
-  ) state.optimState.params  -- Initial value (will be replaced)
+  if batch.size == 0 then
+    state
+  else
+    -- Compute average gradient over the batch
+    -- We accumulate gradients by computing each one and adding them together
+    let totalGradient := batch.foldl (fun gradSum (input, label) =>
+      let gradient := networkGradient state.optimState.params input label
+      -- Add gradients element-wise: gradSum + gradient
+      -- Using SciLean's addition operator for DataArrayN
+      gradSum + gradient
+    ) (0 : Vector nParams)  -- Initialize with zero vector
 
-  -- Average the gradient
-  let batchGradient := totalGradient  -- TODO: divide by batch size
+    -- Average the gradient by dividing by batch size
+    let batchGradient := (1.0 / batch.size.toFloat) • totalGradient
 
-  -- Update parameters using SGD
-  let newOptimState := sgdStep state.optimState batchGradient
+    -- Update parameters using SGD
+    let newOptimState := sgdStep state.optimState batchGradient
 
-  -- Reconstruct network from updated parameters
-  let newNet := unflattenParams newOptimState.params
+    -- Reconstruct network from updated parameters
+    let newNet := unflattenParams newOptimState.params
 
-  { state with
-    net := newNet
-    optimState := newOptimState
-    totalBatchesSeen := state.totalBatchesSeen + 1
-  }
+    { state with
+      net := newNet
+      optimState := newOptimState
+      totalBatchesSeen := state.totalBatchesSeen + 1
+    }
 
 /-- Train for one epoch.
 

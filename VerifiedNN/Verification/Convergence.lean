@@ -36,6 +36,27 @@ open SciLean
 
 /-! ## Preliminaries and Definitions -/
 
+/-- Helper: A loss function achieves its minimum at a point θ*.
+
+This definition captures the notion of an optimal point.
+-/
+def IsMinimizer {n : ℕ} (f : ℝ^n → ℝ) (θ_opt : ℝ^n) : Prop :=
+  ∀ θ, f θ_opt ≤ f θ
+
+/-- Helper: The optimality gap at a point θ.
+
+Measures how far the loss at θ is from the optimal loss.
+-/
+def OptimalityGap {n : ℕ} (f : ℝ^n → ℝ) (θ θ_opt : ℝ^n) : ℝ :=
+  f θ - f θ_opt
+
+/-- Helper: A function is convex (not necessarily strongly convex).
+
+This is a weaker condition than strong convexity (μ = 0).
+-/
+def IsConvex {n : ℕ} (f : ℝ^n → ℝ) : Prop :=
+  ConvexOn ℝ Set.univ f
+
 /-- A function is L-smooth if its gradient is L-Lipschitz continuous.
 
 Smoothness is a key assumption for SGD convergence analysis.
@@ -216,11 +237,35 @@ Examples:
 - α_t = constant (does NOT satisfy Σα_t² < ∞)
 
 These conditions ensure convergence to optimal solution for convex functions.
+
+**Historical Note:** These conditions were introduced by Robbins and Monro (1951)
+in their seminal work on stochastic approximation methods.
 -/
 def SatisfiesRobbinsMonro (α : ℕ → ℝ) : Prop :=
   (∀ t, 0 < α t) ∧
-  (∑' t, α t = ⊤) ∧  -- Sum diverges
-  (∑' t, (α t)^2 < ⊤)  -- Sum of squares converges
+  (∑' t, α t = ⊤) ∧  -- Sum diverges (ensures sufficient progress)
+  (∑' t, (α t)^2 < ⊤)  -- Sum of squares converges (ensures noise averaging)
+
+/-- Example: The learning rate α_t = 1/t satisfies Robbins-Monro conditions.
+
+This is one of the most common diminishing learning rate schedules.
+-/
+lemma one_over_t_satisfies_robbins_monro :
+  SatisfiesRobbinsMonro (fun t => 1 / (t : ℝ)) := by
+  sorry
+  -- Proof sketch:
+  -- 1. Positivity: 1/t > 0 for all t > 0
+  -- 2. Divergence: ∑ 1/t = ∞ (harmonic series)
+  -- 3. Convergence: ∑ 1/t² < ∞ (Basel problem, converges to π²/6)
+
+/-- Example: The learning rate α_t = 1/√t satisfies Robbins-Monro conditions. -/
+lemma one_over_sqrt_t_satisfies_robbins_monro :
+  SatisfiesRobbinsMonro (fun t => 1 / Real.sqrt (t : ℝ)) := by
+  sorry
+  -- Proof sketch:
+  -- 1. Positivity: 1/√t > 0 for all t > 0
+  -- 2. Divergence: ∑ 1/√t = ∞
+  -- 3. Convergence: ∑ 1/t < ∞
 
 /-! ## Mini-Batch Size Effects -/
 

@@ -32,6 +32,18 @@ open SciLean
 
 /-! ## Activation Function Gradients -/
 
+/-- Helper lemma: Differentiability of identity function.
+This is a trivial result from mathlib, stated here for clarity.
+-/
+lemma id_differentiable : Differentiable ℝ (id : ℝ → ℝ) :=
+  differentiable_id
+
+/-- Helper lemma: Derivative of identity is 1.
+-/
+lemma deriv_id' (x : ℝ) : deriv (id : ℝ → ℝ) x = 1 := by
+  rw [deriv_id'']
+  simp
+
 /-- ReLU is differentiable almost everywhere (except at x = 0).
 
 The derivative is 1 for x > 0 and 0 for x < 0. At x = 0, ReLU is not differentiable
@@ -42,12 +54,28 @@ For automatic differentiation purposes, we typically use 0 at x = 0.
 -/
 theorem relu_gradient_almost_everywhere (x : ℝ) (hx : x ≠ 0) :
   deriv (fun y => if y > 0 then y else 0) x = if x > 0 then 1 else 0 := by
-  sorry
+  by_cases h : x > 0
+  · -- Case 1: x > 0
+    -- In a neighborhood of x, ReLU equals identity
+    simp only [h, if_true]
+    -- The derivative of identity is 1
+    -- TODO: Apply deriv_id in a neighborhood using eventuallyEq
+    sorry
+  · -- Case 2: x < 0 (since x ≠ 0 and not x > 0)
+    -- In a neighborhood of x, ReLU equals 0
+    have hx_neg : x < 0 := by
+      cases' (ne_iff_lt_or_gt.mp hx) with h1 h2
+      · exact h1
+      · contradiction
+    simp only [hx_neg, if_false]
+    -- The derivative of constant 0 is 0
+    -- TODO: Apply deriv_const in a neighborhood using eventuallyEq
+    sorry
   -- Proof strategy:
-  -- 1. Case split on x > 0 vs x < 0
+  -- 1. Case split on x > 0 vs x < 0 ✓ DONE
   -- 2. For x > 0: ReLU locally equals identity, so deriv = 1
   -- 3. For x < 0: ReLU locally equals 0, so deriv = 0
-  -- 4. Use deriv_const and deriv_id from mathlib
+  -- 4. Use deriv_const and deriv_id from mathlib with eventuallyEq
 
 /-- Sigmoid is differentiable everywhere with derivative σ(x)(1 - σ(x)).
 
@@ -101,11 +129,18 @@ theorem matvec_gradient_wrt_matrix {m n : ℕ} (x : ℝ^n) :
 -/
 theorem vadd_gradient_correct {n : ℕ} (b : ℝ^n) :
   ∀ (x : ℝ^n), fderiv ℝ (fun v => v + b) x = ContinuousLinearMap.id ℝ (ℝ^n) := by
-  sorry
+  intro x
+  -- The derivative of (x + b) with respect to x is the identity
+  -- since b is constant. This follows from the fact that
+  -- fderiv of an affine map v ↦ v + b is just the linear part
+  ext v
+  simp only [ContinuousLinearMap.id_apply]
   -- Proof strategy:
   -- 1. f(x) = x + b is an affine transformation
   -- 2. Use fderiv_add and fderiv_const
   -- 3. Simplify to identity map
+  -- TODO: Complete using mathlib's fderiv_add_const or similar lemma
+  sorry
 
 /-- Scalar multiplication gradient.
 
@@ -136,11 +171,13 @@ theorem chain_rule_preserves_correctness
   (f : α → β) (g : β → γ) (x : α)
   (hf : DifferentiableAt ℝ f x) (hg : DifferentiableAt ℝ g (f x)) :
   fderiv ℝ (g ∘ f) x = (fderiv ℝ g (f x)).comp (fderiv ℝ f x) := by
-  sorry
+  -- This is a direct application of the chain rule from mathlib
+  -- The theorem fderiv.comp states exactly this
+  exact fderiv.comp x hg hf
   -- Proof strategy:
-  -- 1. Apply fderiv_comp from mathlib
-  -- 2. This is a standard theorem in calculus
-  -- 3. Relies on differentiability assumptions
+  -- 1. Apply fderiv_comp from mathlib ✓ PROVEN
+  -- 2. This is a standard theorem in calculus ✓
+  -- 3. Relies on differentiability assumptions ✓
 
 /-- Layer composition (affine transformation followed by activation) preserves gradient correctness.
 

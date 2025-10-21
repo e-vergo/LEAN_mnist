@@ -47,7 +47,7 @@ see Core/Activation.lean.
 -/
 def softmax {n : Nat} (x : Vector n) : Vector n :=
   let lse := logSumExp x
-  ⊞ i => Float.exp (x[i] - lse)
+  ⊞ (i : Idx n) => Float.exp (x[i] - lse)
 
 /--
 Create a one-hot encoded vector.
@@ -64,7 +64,7 @@ Creates a vector with 1.0 at the target index and 0.0 elsewhere.
   oneHot (target := 2) (n := 5) = [0, 0, 1, 0, 0]
 -/
 def oneHot {n : Nat} (target : Nat) : Vector n :=
-  ⊞ i => if i.val = target then 1.0 else 0.0
+  ⊞ (i : Idx n) => if i.1.toNat = target then 1.0 else 0.0
 
 /--
 Gradient of cross-entropy loss with respect to predictions.
@@ -92,8 +92,8 @@ For L = -log(softmax(z)[target]) = -z[target] + log-sum-exp(z):
 -/
 def lossGradient {n : Nat} (predictions : Vector n) (target : Nat) : Vector n :=
   let probs := softmax predictions
-  let targetOneHot := oneHot target
-  ⊞ i => probs[i] - targetOneHot[i]
+  let targetOneHot : Vector n := oneHot (n := n) target
+  ⊞ (i : Idx n) => probs[i] - targetOneHot[i]
 
 /--
 Batched gradient computation for cross-entropy loss.
@@ -110,10 +110,10 @@ Computes gradients for a batch of predictions with respect to their losses.
 Each row is processed independently. If targets.size < b, remaining rows get zero gradients.
 -/
 def batchLossGradient {b n : Nat} (predictions : Batch b n) (targets : Array Nat) : Batch b n :=
-  ⊞ (i : Fin b) (j : Fin n) =>
-    if h : i.val < targets.size then
+  ⊞ (i : Idx b) (j : Idx n) =>
+    if i.1.toNat < targets.size then
       let predRow : Vector n := ⊞ k => predictions[i, k]
-      let grad := lossGradient predRow targets[i.val]
+      let grad := lossGradient predRow targets[i.1.toNat]!
       grad[j]
     else
       0.0
@@ -134,24 +134,24 @@ Computes gradient including L2 regularization term:
 def regularizedLossGradient {n : Nat}
   (predictions : Vector n) (target : Nat) (lambda : Float := 0.01) : Vector n :=
   let ceGrad := lossGradient predictions target
-  ⊞ i => ceGrad[i] + lambda * predictions[i]
+  ⊞ (i : Idx n) => ceGrad[i] + lambda * predictions[i]
 
-/--
-Register cross-entropy loss as differentiable.
+/-
+TODO: Register cross-entropy loss as differentiable.
 
 This allows SciLean's automatic differentiation to compute gradients.
 
-TODO: Complete formal verification that computed gradient matches analytical gradient.
+Complete formal verification that computed gradient matches analytical gradient.
 -/
 -- @[fun_prop]
 -- theorem crossEntropyLoss_differentiable {n : Nat} (target : Nat) :
 --   Differentiable ℝ (fun (predictions : ℝ^n) => crossEntropyLoss predictions target) := by
 --   sorry
 
-/--
-Verify that analytical gradient matches automatic differentiation.
+/-
+TODO: Verify that analytical gradient matches automatic differentiation.
 
-TODO: Prove that lossGradient equals the Frechet derivative of crossEntropyLoss.
+Prove that lossGradient equals the Frechet derivative of crossEntropyLoss.
 -/
 -- @[fun_trans]
 -- theorem crossEntropyLoss_fderiv {n : Nat} (target : Nat) (predictions : Vector n) :

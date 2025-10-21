@@ -19,11 +19,13 @@ dimension compatibility at compile time.
 -/
 
 import VerifiedNN.Layer.Dense
+import VerifiedNN.Core.Activation
 import SciLean
 
 namespace VerifiedNN.Layer
 
 open VerifiedNN.Core
+open VerifiedNN.Core.Activation
 open SciLean
 
 /-- Compose two dense layers sequentially.

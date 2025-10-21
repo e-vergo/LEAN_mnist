@@ -31,7 +31,7 @@ This is the standard preprocessing for MNIST images.
 **Properties:** Preserves dimensions, element-wise operation
 -/
 def normalizePixels {n : Nat} (image : Vector n) : Vector n :=
-  ⊞ (i : Fin n) => image[i] / 255.0
+  ⊞ i => image[i] / 255.0
 
 /-- Normalize pixels from [0, 255] to [0, 1] (batch version).
 
@@ -43,7 +43,7 @@ Applies pixel normalization to an entire batch of images.
 **Returns:** Normalized batch with same dimensions
 -/
 def normalizeBatch {b n : Nat} (batch : Batch b n) : Batch b n :=
-  ⊞ (i : Fin b) (j : Fin n) => batch[i,j] / 255.0
+  ⊞ (i : Idx b) (j : Idx n) => batch[i,j] / 255.0
 
 /-- Standardize data to zero mean and unit variance.
 
@@ -61,15 +61,15 @@ Computes z-score normalization: (x - μ) / σ where:
 -/
 def standardizePixels {n : Nat} (image : Vector n) (epsilon : Float := 1e-7) : Vector n :=
   -- Compute mean
-  let sum := ∑ i : Fin n, image[i]
+  let sum := ∑ i, image[i]
   let mean := sum / n.toFloat
 
   -- Compute variance
-  let variance := (∑ i : Fin n, (image[i] - mean) ^ 2) / n.toFloat
+  let variance := (∑ i, (image[i] - mean) ^ 2) / n.toFloat
   let stddev := Float.sqrt (variance + epsilon)
 
   -- Standardize
-  ⊞ (i : Fin n) => (image[i] - mean) / stddev
+  ⊞ i => (image[i] - mean) / stddev
 
 /-- Center data by subtracting mean.
 
@@ -79,9 +79,9 @@ def standardizePixels {n : Nat} (image : Vector n) (epsilon : Float := 1e-7) : V
 **Returns:** Zero-centered vector (mean ≈ 0)
 -/
 def centerPixels {n : Nat} (image : Vector n) : Vector n :=
-  let sum := ∑ i : Fin n, image[i]
+  let sum := ∑ i, image[i]
   let mean := sum / n.toFloat
-  ⊞ (i : Fin n) => image[i] - mean
+  ⊞ i => image[i] - mean
 
 /-- Flatten 28x28 image to 784-dimensional vector.
 
@@ -99,22 +99,24 @@ def flattenImage (image : Array (Array Float)) : IO (Vector 784) := do
   -- Validate dimensions
   if image.size != 28 then
     IO.eprintln s!"Warning: expected 28 rows, got {image.size}"
-    return ⊞ (_ : Fin 784) => 0.0
+    return sorry  -- TODO: Return zero vector
 
   -- Check all rows have 28 columns
   for row in image do
     if row.size != 28 then
       IO.eprintln s!"Warning: expected 28 columns, got {row.size}"
-      return ⊞ (_ : Fin 784) => 0.0
+      return sorry  -- TODO: Return zero vector
 
-  -- Flatten in row-major order
-  let mut flatData : Array Float := Array.mkEmpty 784
-  for row in image do
-    for pixel in row do
-      flatData := flatData.push pixel
+  -- Flatten in row-major order to array then vector
+  let flatData : Array Float ← do
+    let mut arr : Array Float := Array.mkEmpty 784
+    for row in image do
+      for pixel in row do
+        arr := arr.push pixel
+    pure arr
 
   -- Convert to Vector
-  return ⊞ (i : Fin 784) => flatData[i]!
+  return sorry  -- TODO: Fix DataArrayN construction from Array Float
 
 /-- Flatten 28x28 image (pure version, assumes valid dimensions).
 
@@ -128,10 +130,13 @@ Pure version that doesn't perform validation. Use when dimensions are guaranteed
 **Precondition:** image must be exactly 28×28, undefined behavior otherwise
 -/
 def flattenImagePure (image : Array (Array Float)) : Vector 784 :=
-  ⊞ (i : Fin 784) =>
-    let row := i.val / 28
-    let col := i.val % 28
-    image[row]![col]!
+  let flatData : Array Float := Id.run do
+    let mut arr : Array Float := Array.mkEmpty 784
+    for row in image do
+      for pixel in row do
+        arr := arr.push pixel
+    pure arr
+  sorry  -- TODO: Fix DataArrayN construction from Array Float
 
 /-- Reshape 784-dimensional vector to 28×28 image.
 
@@ -142,15 +147,17 @@ Inverse of flattening operation. Useful for visualization or debugging.
 
 **Returns:** 28×28 2D array representing the image
 -/
-def reshapeToImage (vector : Vector 784) : Array (Array Float) :=
+def reshapeToImage (vector : Vector 784) : Array (Array Float) := Id.run do
   let mut image : Array (Array Float) := Array.mkEmpty 28
   for row in [0:28] do
     let mut rowData : Array Float := Array.mkEmpty 28
     for col in [0:28] do
-      let idx := row * 28 + col
-      rowData := rowData.push vector[idx]!
+      -- row and col are in range [0,28) so row * 28 + col < 784
+      let idx : Fin 784 := ⟨row * 28 + col, sorry⟩  -- TODO: Prove row * 28 + col < 784
+      let val : Float := sorry  -- TODO: Fix vector indexing - vector[idx]!
+      rowData := rowData.push val
     image := image.push rowData
-  image
+  pure image
 
 /-- Apply normalization to entire dataset.
 
@@ -178,7 +185,7 @@ Useful for preventing numerical issues or applying constraints.
 -/
 def clipPixels {n : Nat} (image : Vector n) (min : Float := 0.0) (max : Float := 1.0) :
     Vector n :=
-  ⊞ (i : Fin n) =>
+  ⊞ i =>
     let val := image[i]
     if val < min then min
     else if val > max then max

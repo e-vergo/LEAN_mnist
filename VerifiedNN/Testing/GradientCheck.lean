@@ -149,4 +149,97 @@ def testQuadraticGradient (n : Nat) : IO Unit := do
   IO.println s!"Quadratic gradient check (n={n}): {matches}"
   IO.println s!"Relative error: {error}"
 
+/-- Test gradient of linear function: f(x) = a·x has gradient ∇f = a -/
+def testLinearGradient : IO Unit := do
+  IO.println "\n=== Linear Function Gradient Test ==="
+  let n := 5
+  let a : Vector n := ⊞ (i : Fin n) => (i.val.toFloat + 1.0) * 2.0
+
+  let f : Vector n → Float := fun x =>
+    (Fin n).foldl (init := 0.0) fun sum i => sum + a[i] * x[i]
+
+  let grad_f : Vector n → Vector n := fun _ => a
+
+  let testPoint : Vector n := ⊞ (i : Fin n) => (i.val.toFloat + 1.0) * 0.5
+
+  let matches := checkGradient f grad_f testPoint
+  let error := gradientRelativeError f grad_f testPoint
+
+  IO.println s!"Linear gradient check: {matches}"
+  IO.println s!"Relative error: {error}"
+
+  if matches then
+    IO.println "✓ Linear gradient test PASSED"
+  else
+    IO.println "✗ Linear gradient test FAILED"
+
+/-- Test gradient of polynomial: f(x) = Σ xᵢ² + 3xᵢ + 2 -/
+def testPolynomialGradient : IO Unit := do
+  IO.println "\n=== Polynomial Gradient Test ==="
+  let n := 4
+
+  let f : Vector n → Float := fun x =>
+    (Fin n).foldl (init := 0.0) fun sum i =>
+      sum + x[i] * x[i] + 3.0 * x[i] + 2.0
+
+  -- ∇f(x) = 2x + 3
+  let grad_f : Vector n → Vector n := fun x =>
+    ⊞ (i : Fin n) => 2.0 * x[i] + 3.0
+
+  let testPoint : Vector n := ⊞ (i : Fin n) => (i.val.toFloat - 2.0)
+
+  let matches := checkGradient f grad_f testPoint
+  let error := gradientRelativeError f grad_f testPoint
+
+  IO.println s!"Polynomial gradient check: {matches}"
+  IO.println s!"Relative error: {error}"
+
+  if matches then
+    IO.println "✓ Polynomial gradient test PASSED"
+  else
+    IO.println "✗ Polynomial gradient test FAILED"
+
+/-- Test gradient of product: f(x,y) = x₀·x₁ for 2D vector -/
+def testProductGradient : IO Unit := do
+  IO.println "\n=== Product Gradient Test ==="
+  let n := 2
+
+  let f : Vector n → Float := fun x =>
+    x[⟨0, by omega⟩] * x[⟨1, by omega⟩]
+
+  -- ∇(x₀·x₁) = (x₁, x₀)
+  let grad_f : Vector n → Vector n := fun x =>
+    ⊞ (i : Fin n) =>
+      if i.val == 0 then x[⟨1, by omega⟩]
+      else x[⟨0, by omega⟩]
+
+  let testPoint : Vector n := ⊞[3.0, 4.0]
+
+  let matches := checkGradient f grad_f testPoint
+  let error := gradientRelativeError f grad_f testPoint
+
+  IO.println s!"Product gradient check: {matches}"
+  IO.println s!"Relative error: {error}"
+
+  if matches then
+    IO.println "✓ Product gradient test PASSED"
+  else
+    IO.println "✗ Product gradient test FAILED"
+
+/-- Run all gradient check tests -/
+def runAllGradientTests : IO Unit := do
+  IO.println "=========================================="
+  IO.println "Running Gradient Check Tests"
+  IO.println "=========================================="
+
+  testQuadraticGradient 3
+  testQuadraticGradient 10
+  testLinearGradient
+  testPolynomialGradient
+  testProductGradient
+
+  IO.println "\n=========================================="
+  IO.println "Gradient Check Tests Complete"
+  IO.println "=========================================="
+
 end VerifiedNN.Testing.GradientCheck

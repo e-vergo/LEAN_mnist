@@ -124,9 +124,10 @@ vectorized operations and better cache utilization.
 def DenseLayer.forwardBatchLinear {b m n : Nat}
     (layer : DenseLayer n m)
     (X : Batch b n) : Batch b m :=
-  -- Batched matrix-vector multiplication
+  -- Batched matrix-vector multiplication followed by bias addition
   -- Each row of X is multiplied by weights and bias is added
-  batchMatvec layer.weights X
+  let wx := batchMatvec layer.weights X
+  batchAddVec wx layer.bias
 
 /-- Batched forward pass with optional activation.
 

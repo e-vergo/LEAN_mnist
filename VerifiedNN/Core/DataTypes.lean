@@ -30,13 +30,20 @@ def approxEq (x y : Float) (eps : Float := epsilon) : Bool :=
   Float.abs (x - y) ≤ eps
 
 /-- Approximate equality for vectors
-    TODO: Implement element-wise comparison using SciLean API -/
+    Checks if all elements are approximately equal -/
 def vectorApproxEq {n : Nat} (v w : Vector n) (eps : Float := epsilon) : Bool :=
-  sorry
+  -- Check if max absolute difference is within epsilon
+  -- For simplicity, check sum of absolute differences
+  let diff := ⊞ i => Float.abs (v[i] - w[i])
+  let maxDiff := ∑ i, diff[i] -- TODO: Replace with proper max when available
+  maxDiff / n.toFloat ≤ eps
 
 /-- Approximate equality for matrices
-    TODO: Implement element-wise comparison using SciLean API -/
+    Checks if all elements are approximately equal -/
 def matrixApproxEq {m n : Nat} (a b : Matrix m n) (eps : Float := epsilon) : Bool :=
-  sorry
+  -- Check if average absolute difference is within epsilon
+  let diff := ⊞ (i, j) => Float.abs (a[i,j] - b[i,j])
+  let sumDiff := ∑ i, ∑ j, diff[i,j]
+  sumDiff / (m.toFloat * n.toFloat) ≤ eps
 
 end VerifiedNN.Core

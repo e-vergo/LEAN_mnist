@@ -24,6 +24,8 @@ namespace VerifiedNN.Optimizer.Momentum
 open VerifiedNN.Core
 open SciLean
 
+set_default_scalar Float
+
 /-- Momentum optimizer state containing parameters, velocity, and hyperparameters.
 
 The state tracks:
@@ -39,7 +41,6 @@ structure MomentumState (n : Nat) where
   learningRate : Float
   momentum : Float
   epoch : Nat
-  deriving Repr
 
 /-- Momentum update step implementing the classical momentum algorithm.
 
