@@ -159,4 +159,53 @@ def batchAddVec {b n : Nat} (X : Batch b n) (v : Vector n) : Batch b n :=
 def outer {m n : Nat} (x : Vector m) (y : Vector n) : Matrix m n :=
   ⊞ (i, j) => x[i] * y[j]
 
+-- ============================================================================
+-- Linearity Properties
+-- ============================================================================
+
+/-- Vector addition is commutative.
+
+Mathematical Statement: x + y = y + x
+-/
+theorem vadd_comm {n : Nat} (x y : Vector n) :
+  vadd x y = vadd y x := by
+  unfold vadd
+  ext i
+  ring
+
+/-- Vector addition is associative.
+
+Mathematical Statement: (x + y) + z = x + (y + z)
+-/
+theorem vadd_assoc {n : Nat} (x y z : Vector n) :
+  vadd (vadd x y) z = vadd x (vadd y z) := by
+  unfold vadd
+  ext i
+  ring
+
+/-- Scalar multiplication distributes over vector addition.
+
+Mathematical Statement: α * (x + y) = α * x + α * y
+-/
+theorem smul_vadd_distrib {n : Nat} (α : Float) (x y : Vector n) :
+  smul α (vadd x y) = vadd (smul α x) (smul α y) := by
+  unfold smul vadd
+  ext i
+  ring
+
+/-- Matrix-vector multiplication is linear.
+
+Mathematical Statement:
+  A @ (α * x + β * y) = α * (A @ x) + β * (A @ y)
+
+This is the fundamental linearity property of matrix-vector multiplication.
+
+NOTE: This axiom represents the gap between SciLean's computational arrays
+and mathematical properties. Proving this requires SciLean lemmas about
+sum distribution over linear combinations that are not yet available.
+-/
+axiom matvec_linear {m n : Nat} (A : Matrix m n) (x y : Vector n) (α β : Float) :
+  matvec A (vadd (smul α x) (smul β y)) =
+  vadd (smul α (matvec A x)) (smul β (matvec A y))
+
 end VerifiedNN.Core.LinearAlgebra

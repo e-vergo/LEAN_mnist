@@ -103,10 +103,21 @@ In SciLean, gradients automatically handle the adjoint operation.
 theorem matvec_gradient_wrt_vector {m n : ℕ} (A : Matrix' ℝ m n) :
   ∀ (x : ℝ^n), fderiv ℝ (fun v => A.mulVec v) x = ContinuousLinearMap.mk' ℝ (fun dv => A.mulVec dv) := by
   sorry
-  -- Proof strategy:
+  -- NOTE: This proof cannot be completed because Matrix' is not defined.
+  -- The theorem statement itself has issues:
+  -- 1. Matrix' ℝ m n is not defined - should be Matrix (Fin m) (Fin n) ℝ
+  -- 2. ℝ^n in mathlib is not standard notation - should be (Fin n → ℝ)
+  -- 3. fun_trans/fun_prop tactics are SciLean-specific and don't work with mathlib types
+  --
+  -- To fix this proof, we would need to:
+  -- 1. Define Matrix' or use the correct mathlib Matrix type
+  -- 2. Use correct vector notation
+  -- 3. Use mathlib's fderiv lemmas, not SciLean tactics
+  --
+  -- Proof strategy (for corrected types):
   -- 1. Matrix-vector multiplication is linear, hence equal to its own derivative
-  -- 2. Use fderiv_linear from mathlib
-  -- 3. Show A.mulVec is a continuous linear map
+  -- 2. Use fderiv_linear or IsBoundedLinearMap.fderiv from mathlib
+  -- 3. Show A.mulVec is a continuous linear map (mulVecLin in mathlib)
 
 /-- Matrix-vector multiplication gradient with respect to the matrix.
 
@@ -118,10 +129,15 @@ theorem matvec_gradient_wrt_matrix {m n : ℕ} (x : ℝ^n) :
   fderiv ℝ (fun M => M.mulVec x) A =
     ContinuousLinearMap.mk' ℝ (fun dA => dA.mulVec x) := by
   sorry
-  -- Proof strategy:
+  -- NOTE: Same issues as matvec_gradient_wrt_vector:
+  -- 1. Matrix' ℝ m n is not defined
+  -- 2. ℝ^n is not standard mathlib notation
+  -- 3. fun_trans/fun_prop don't apply to mathlib types
+  --
+  -- Proof strategy (for corrected types):
   -- 1. Fix x, vary A
   -- 2. Matrix multiplication is linear in A
-  -- 3. Apply linearity of fderiv
+  -- 3. Apply linearity of fderiv (use IsBoundedLinearMap.fderiv)
 
 /-- Vector addition is linear, hence its gradient is the identity.
 

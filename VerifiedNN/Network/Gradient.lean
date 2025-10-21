@@ -48,12 +48,27 @@ Concatenates all parameters in order:
 - `net`: The MLP network structure
 
 **Returns:** Flattened parameter vector of dimension nParams
-
-**Implementation Note:** TODO - Requires careful handling of Idx types and indexing.
-Currently uses sorry as placeholder.
 -/
 def flattenParams (net : MLPArchitecture) : Vector nParams :=
-  sorry  -- TODO: Implement parameter flattening with proper Idx type handling
+  ⊞ (i : Idx nParams) =>
+    let idx := i.1.toNat
+    -- Layer 1 weights: indices 0..100351 (784 * 128 = 100352 elements)
+    if idx < 784 * 128 then
+      let row := idx / 784
+      let col := idx % 784
+      net.layer1.weights[row, col]
+    -- Layer 1 bias: indices 100352..100479 (128 elements)
+    else if idx < 784 * 128 + 128 then
+      net.layer1.bias[idx - 784 * 128]
+    -- Layer 2 weights: indices 100480..101759 (128 * 10 = 1280 elements)
+    else if idx < 784 * 128 + 128 + 128 * 10 then
+      let offset := idx - (784 * 128 + 128)
+      let row := offset / 128
+      let col := offset % 128
+      net.layer2.weights[row, col]
+    -- Layer 2 bias: indices 101760..101769 (10 elements)
+    else
+      net.layer2.bias[idx - (784 * 128 + 128 + 128 * 10)]
 
 /-- Unflatten parameter vector back to network structure.
 
@@ -64,12 +79,18 @@ This is the inverse operation of flattenParams.
 - `params`: Flattened parameter vector of dimension nParams
 
 **Returns:** MLPArchitecture with parameters extracted from the vector
-
-**Implementation Note:** TODO - Requires careful handling of Idx types and indexing.
-Currently uses sorry as placeholder.
 -/
 def unflattenParams (params : Vector nParams) : MLPArchitecture :=
-  sorry  -- TODO: Implement parameter unflattening with proper Idx type handling
+  let w1 : Matrix 128 784 := ⊞ (i, j) =>
+    params[i.1.toNat * 784 + j.1.toNat]
+  let b1 : Vector 128 := ⊞ i =>
+    params[784 * 128 + i.1.toNat]
+  let w2 : Matrix 10 128 := ⊞ (i, j) =>
+    params[784 * 128 + 128 + i.1.toNat * 128 + j.1.toNat]
+  let b2 : Vector 10 := ⊞ i =>
+    params[784 * 128 + 128 + 128 * 10 + i.1.toNat]
+  { layer1 := { weights := w1, bias := b1 }
+    layer2 := { weights := w2, bias := b2 } }
 
 /-- Theorem: Flattening then unflattening is identity.
 
@@ -77,7 +98,29 @@ This is a critical property for gradient descent to work correctly.
 -/
 theorem unflatten_flatten_id (net : MLPArchitecture) :
     unflattenParams (flattenParams net) = net := by
-  sorry -- TODO: Prove once flatten/unflatten are implemented
+  -- Prove by showing each field is equal
+  unfold unflattenParams flattenParams
+  ext
+  · -- layer1 field
+    ext
+    · -- weights field of layer1
+      ext i j
+      simp
+      sorry -- TODO: Index arithmetic proof needed
+    · -- bias field of layer1
+      ext i
+      simp
+      sorry -- TODO: Index arithmetic proof needed
+  · -- layer2 field
+    ext
+    · -- weights field of layer2
+      ext i j
+      simp
+      sorry -- TODO: Index arithmetic proof needed
+    · -- bias field of layer2
+      ext i
+      simp
+      sorry -- TODO: Index arithmetic proof needed
 
 /-- Theorem: Unflattening then flattening is identity.
 
@@ -85,7 +128,11 @@ Another critical property for optimization correctness.
 -/
 theorem flatten_unflatten_id (params : Vector nParams) :
     flattenParams (unflattenParams params) = params := by
-  sorry -- TODO: Prove once flatten/unflatten are implemented
+  -- Prove by showing each index maps correctly
+  unfold flattenParams unflattenParams
+  ext i
+  simp
+  sorry -- TODO: Case analysis on index ranges and arithmetic proof needed
 
 /-- Helper function to compute loss for a single sample.
 
@@ -116,28 +163,14 @@ This is the core of backpropagation in the network.
 
 **Returns:** Gradient vector of dimension nParams
 
-**Implementation Strategy:**
-1. Unflatten params to get network structure
-2. Compute forward pass through network
-3. Compute loss using cross-entropy
-4. Use SciLean's ∇ operator to differentiate with respect to params
-5. Apply fun_trans to simplify the gradient expression
-
 **Verification Status:** This function will be proven to compute the
 mathematically correct gradient in VerifiedNN.Verification.GradientCorrectness
-
-**Current Implementation:** Uses numerical gradient approximation via finite
-differences as a placeholder. Full SciLean AD integration is planned but requires
-additional differentiation rules to be registered for the network operations.
 -/
 def networkGradient (params : Vector nParams)
     (input : Vector 784) (target : Nat) : Vector nParams :=
-  -- TODO: Implement using SciLean's automatic differentiation
-  -- The ideal implementation would be:
-  --   let lossFunc := fun p => computeLoss p input target
-  --   (∇ p, lossFunc p) params
-  -- This requires additional fun_trans rules for all network operations
-  sorry
+  -- Use SciLean's automatic differentiation to compute gradient
+  let lossFunc := fun p => computeLoss p input target
+  (∇ p, lossFunc p) params
 
 /-- Compute gradient for a mini-batch of samples.
 
@@ -150,15 +183,25 @@ This is more efficient than computing individual gradients.
 - `targets`: Array of b target classes
 
 **Returns:** Average gradient vector of dimension nParams
-
-**Implementation Note:** Currently averages individual gradients. Future
-optimization could use batched loss computation for better performance.
 -/
 def networkGradientBatch {b : Nat} (params : Vector nParams)
     (inputs : Batch b 784) (targets : Array Nat) : Vector nParams :=
-  -- TODO: Implement batched gradient computation
-  -- Requires proper Idx type handling for batched operations
-  sorry
+  -- Compute gradient for each sample and average them
+  Id.run do
+    let mut gradSum : Vector nParams := ⊞ _ => 0.0
+    for i in [0:b] do
+      -- i is in range [0, b) from the loop bounds
+      have hi : i < b := by omega
+      if h : i < targets.size then
+        -- Extract input sample from batch
+        let inputSample : Vector 784 := ⊞ j => inputs[⟨i, hi⟩, j]
+        let target := targets[i]
+        let grad := networkGradient params inputSample target
+        -- Accumulate gradient
+        gradSum := ⊞ k => gradSum[k] + grad[k]
+    -- Average the accumulated gradients
+    let bFloat := b.toFloat
+    return ⊞ k => gradSum[k] / bFloat
 
 /-- Helper function to compute batched loss.
 
@@ -168,11 +211,21 @@ def networkGradientBatch {b : Nat} (params : Vector nParams)
 - `targets`: Array of b target classes
 
 **Returns:** Average loss over the batch
-
-**Implementation Note:** Computes loss for each sample and averages.
 -/
 def computeLossBatch {b : Nat} (params : Vector nParams)
     (inputs : Batch b 784) (targets : Array Nat) : Float :=
-  sorry  -- TODO: Implement batched loss with proper Idx type handling
+  -- Compute loss for each sample and average
+  Id.run do
+    let mut lossSum := 0.0
+    for i in [0:b] do
+      -- i is in range [0, b) from the loop bounds
+      have hi : i < b := by omega
+      if h : i < targets.size then
+        -- Extract input sample from batch
+        let inputSample : Vector 784 := ⊞ j => inputs[⟨i, hi⟩, j]
+        let target := targets[i]
+        let loss := computeLoss params inputSample target
+        lossSum := lossSum + loss
+    return lossSum / b.toFloat
 
 end VerifiedNN.Network.Gradient

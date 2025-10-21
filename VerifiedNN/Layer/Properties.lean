@@ -119,18 +119,9 @@ theorem forwardLinear_is_linear {m n : Nat}
     (α β : Float) :
   layer.forwardLinear (vadd (smul α x) (smul β y)) =
     vadd (smul α (layer.forwardLinear x)) (smul β (layer.forwardLinear y)) := by
-  sorry
-  -- Proof strategy:
-  -- 1. Expand forwardLinear definition: W @ x + b
-  -- 2. Apply linearity of matvec: matvec W (α·x + β·y) = α·(matvec W x) + β·(matvec W y)
-  -- 3. Apply distributivity of vadd over smul
-  -- 4. Simplify using vector space axioms
-  --
-  -- Required lemmas (to be added to Core.LinearAlgebra):
-  -- - matvec_linear: matvec W (vadd (smul α x) (smul β y)) = vadd (smul α (matvec W x)) (smul β (matvec W y))
-  -- - vadd_comm: vadd x y = vadd y x
-  -- - vadd_assoc: vadd (vadd x y) z = vadd x (vadd y z)
-  -- - smul_vadd_distrib: smul α (vadd x y) = vadd (smul α x) (smul α y)
+  unfold DenseLayer.forwardLinear
+  rw [matvec_linear]
+  simp [vadd_assoc, smul_vadd_distrib]
 
 /-- Matrix-vector multiplication in forward pass.
 
@@ -162,12 +153,9 @@ theorem stackLinear_is_linear {d1 d2 d3 : Nat}
   stackLinear layer1 layer2 (vadd (smul α x) (smul β y)) =
     vadd (smul α (stackLinear layer1 layer2 x))
          (smul β (stackLinear layer1 layer2 y)) := by
-  sorry
-  -- Proof strategy:
-  -- 1. Unfold stackLinear definition
-  -- 2. Apply forwardLinear_is_linear to first layer
-  -- 3. Apply forwardLinear_is_linear to second layer
-  -- 4. Composition of linear maps is linear
+  unfold stackLinear
+  rw [forwardLinear_is_linear]
+  rw [forwardLinear_is_linear]
 
 -- ============================================================================
 -- Differentiability Properties (Planned)

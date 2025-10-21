@@ -109,11 +109,8 @@ If A is an m×n matrix and x is an n-vector, then A*x is an m-vector.
 -/
 theorem matvec_output_dimension {m n : Nat} (A : Matrix m n) (x : Vector n) :
   SciLean.DataArrayN.size (matvec A x) = m := by
-  sorry
-  -- Proof strategy:
-  -- 1. matvec returns a Vector m by type signature
-  -- 2. Apply vector_size_correct
-  -- 3. Type checking ensures dimensions match
+  -- matvec returns Vector m by type signature
+  apply vector_size_correct
 
 /-- Vector addition preserves dimension.
 
@@ -121,10 +118,8 @@ Adding two n-vectors produces an n-vector.
 -/
 theorem vadd_output_dimension {n : Nat} (x y : Vector n) :
   SciLean.DataArrayN.size (vadd x y) = n := by
-  sorry
-  -- Proof strategy:
-  -- 1. vadd returns Vector n by type signature
-  -- 2. Apply vector_size_correct
+  -- vadd returns Vector n by type signature
+  apply vector_size_correct
 
 /-- Scalar multiplication preserves vector dimension.
 
@@ -132,10 +127,8 @@ Multiplying an n-vector by a scalar produces an n-vector.
 -/
 theorem smul_output_dimension {n : Nat} (c : Float) (x : Vector n) :
   SciLean.DataArrayN.size (smul c x) = n := by
-  sorry
-  -- Proof strategy:
-  -- 1. smul returns Vector n by type signature
-  -- 2. Apply vector_size_correct
+  -- smul returns Vector n by type signature
+  apply vector_size_correct
 
 /-! ## Layer Operation Type Safety -/
 
@@ -147,11 +140,8 @@ theorem dense_layer_output_dimension {inDim outDim : Nat}
     (layer : DenseLayer inDim outDim) (x : Vector inDim)
     (activation : Vector outDim → Vector outDim := id) :
   SciLean.DataArrayN.size (layer.forward x activation) = outDim := by
-  sorry
-  -- Proof strategy:
-  -- 1. layer.forward returns Vector outDim by type signature
-  -- 2. activation preserves dimension (Vector outDim → Vector outDim)
-  -- 3. Apply vector_size_correct
+  -- layer.forward returns Vector outDim by type signature
+  apply vector_size_correct
 
 /-- Dense layer forward pass maintains type consistency.
 
@@ -178,10 +168,8 @@ theorem dense_layer_batch_output_dimension {b inDim outDim : Nat}
     (activation : Batch b outDim → Batch b outDim := id) :
   let output := layer.forwardBatch X activation
   (SciLean.DataArrayN.size output.1 = b) ∧ (SciLean.DataArrayN.size output.2 = outDim) := by
-  sorry
-  -- Proof strategy:
-  -- 1. forwardBatch returns Batch b outDim by type signature
-  -- 2. Apply batch_size_correct
+  -- forwardBatch returns Batch b outDim by type signature
+  apply batch_size_correct
 
 /-! ## Layer Composition Type Safety -/
 
@@ -200,11 +188,8 @@ theorem layer_composition_type_safe {d1 d2 d3 : Nat}
     (act1 : Vector d2 → Vector d2 := id)
     (act2 : Vector d3 → Vector d3 := id) :
   SciLean.DataArrayN.size (stack layer1 layer2 x act1 act2) = d3 := by
-  sorry
-  -- Proof strategy:
-  -- 1. stack returns Vector d3 by type signature
-  -- 2. Intermediate dimension d2 matches by construction
-  -- 3. Apply vector_size_correct
+  -- stack returns Vector d3 by type signature
+  apply vector_size_correct
 
 /-- Sequential layer composition maintains dimension invariants.
 
@@ -219,11 +204,8 @@ theorem triple_layer_composition_type_safe {d1 d2 d3 d4 : Nat}
     (act2 : Vector d3 → Vector d3 := id)
     (act3 : Vector d4 → Vector d4 := id) :
   SciLean.DataArrayN.size (stack3 layer1 layer2 layer3 x act1 act2 act3) = d4 := by
-  sorry
-  -- Proof strategy:
-  -- 1. stack3 returns Vector d4 by type signature
-  -- 2. Each intermediate composition is well-typed
-  -- 3. Apply vector_size_correct
+  -- stack3 returns Vector d4 by type signature
+  apply vector_size_correct
 
 /-- Batched layer composition preserves batch and output dimensions.
 
@@ -237,10 +219,8 @@ theorem batch_layer_composition_type_safe {b d1 d2 d3 : Nat}
     (act2 : Batch b d3 → Batch b d3 := id) :
   let output := stackBatch layer1 layer2 X act1 act2
   (SciLean.DataArrayN.size output.1 = b) ∧ (SciLean.DataArrayN.size output.2 = d3) := by
-  sorry
-  -- Proof strategy:
-  -- 1. stackBatch returns Batch b d3 by type signature
-  -- 2. Apply batch_size_correct
+  -- stackBatch returns Batch b d3 by type signature
+  apply batch_size_correct
 
 /-! ## Network Architecture Type Safety -/
 
@@ -254,10 +234,8 @@ theorem mlp_output_dimension {inDim hiddenDim outDim : Nat}
     (x : Vector inDim) :
   let network := stack layer1 layer2 x
   SciLean.DataArrayN.size network = outDim := by
-  sorry
-  -- Proof strategy:
-  -- 1. Apply layer_composition_type_safe
-  -- 2. Final layer outputs Vector outDim
+  -- Apply layer_composition_type_safe
+  apply layer_composition_type_safe
 
 /-! ## Parameter Flattening and Unflattening -/
 

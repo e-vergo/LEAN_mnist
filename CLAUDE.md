@@ -31,6 +31,139 @@ OpenBLAS: system package (for performance)
 Platform: Linux/macOS preferred (Windows support depends on SciLean)
 ```
 
+## MCP Integration (lean-lsp-mcp)
+
+This project uses the **lean-lsp-mcp** Model Context Protocol server to enable AI-assisted development with deep Lean language awareness. The MCP server provides real-time access to LSP diagnostics, goal states, term information, and external theorem search tools.
+
+### Setup & Configuration
+
+The MCP server is configured in `~/.claude.json` and automatically starts when using Claude Code:
+
+```bash
+# One-time setup (already done for this project)
+claude mcp add lean-lsp uvx lean-lsp-mcp -e LEAN_PROJECT_PATH=/Users/eric/LEAN_mnist
+
+# Verify MCP server is connected
+claude mcp list
+
+# Restart Claude Code to activate the MCP server
+```
+
+**Prerequisites:**
+- `uv` package manager installed (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
+- Project built at least once (`lake build`) to avoid LSP timeouts
+- `ripgrep` (`rg`) for local search functionality
+
+### Available MCP Tools
+
+The lean-lsp-mcp server provides 15 specialized tools for Lean development:
+
+#### File & LSP Interactions
+1. **lean_file_contents** - Get file contents with optional line number annotations
+2. **lean_diagnostic_messages** - Get all diagnostics (infos, warnings, errors) for a file
+3. **lean_goal** - Get proof goal at a specific location (line or line & column)
+4. **lean_term_goal** - Get term goal at a specific position (line & column)
+5. **lean_hover_info** - Retrieve hover documentation for symbols, terms, and expressions
+6. **lean_declaration_file** - Get the file where a symbol/term is declared
+7. **lean_completions** - Code auto-completion: find available identifiers or imports
+8. **lean_run_code** - Run/compile an independent Lean code snippet and return results
+9. **lean_multi_attempt** - Attempt multiple code snippets and return goal states/diagnostics
+
+#### Search Tools
+10. **lean_local_search** - Search definitions and theorems in local project and stdlib (requires `rg`)
+
+#### External Search Tools (rate-limited: 3 requests per 30 seconds)
+11. **lean_leansearch** - Natural language search via leansearch.net (mixed queries, Lean terms)
+12. **lean_loogle** - Search via loogle.lean-lang.org (by name, subexpression, type, conclusion)
+13. **lean_state_search** - Search applicable theorems for current goal via premise-search.com
+14. **lean_hammer_premise** - Find relevant premises using Lean Hammer Premise Search
+
+#### Project Management
+15. **lean_build** - Rebuild project and **restart the Lean LSP server**
+
+### Managing Lean Language Servers
+
+**IMPORTANT:** The Lean LSP can spawn multiple server processes, consuming significant memory and CPU. Carefully manage server instances to avoid resource exhaustion.
+
+#### Best Practices
+```bash
+# Check running Lean processes
+pgrep -af lean
+
+# Kill all Lean language servers (if unresponsive or consuming too much memory)
+pkill -f "lean --server"
+
+# Kill all Lake processes
+pkill -f lake
+
+# Restart LSP via MCP (preferred method when working through Claude Code)
+# Use the lean_build MCP tool instead of manual pkill
+```
+
+#### When to Restart the LSP
+- After major code changes that affect many files
+- When diagnostics become stale or incorrect
+- If the LSP becomes unresponsive or slow
+- After `lake update` or dependency changes
+- When memory usage grows excessively (check with `htop` or Activity Monitor)
+
+#### Memory Management Tips
+- Build the project manually before starting MCP (`lake build`) to cache dependencies
+- Use `lake exe cache get` to download precompiled mathlib (avoids expensive rebuilds)
+- Limit concurrent file analysis by working on one module at a time
+- Restart the LSP periodically during long coding sessions
+- Close unused Lean files in your editor to reduce LSP load
+
+### Workflow Integration
+
+#### During Proof Development
+1. Use **lean_goal** to inspect current proof state
+2. Use **lean_leansearch** or **lean_loogle** to find relevant theorems
+3. Use **lean_completions** to discover available tactics/lemmas
+4. Use **lean_diagnostic_messages** to check for errors
+5. Use **lean_hover_info** to understand term types and documentation
+
+#### During Implementation
+1. Use **lean_file_contents** to review existing code
+2. Use **lean_local_search** to find similar patterns in the codebase
+3. Use **lean_run_code** to test code snippets before integration
+4. Use **lean_multi_attempt** to explore multiple implementation approaches
+5. Use **lean_declaration_file** to navigate to dependencies
+
+#### Debugging & Troubleshooting
+1. Check **lean_diagnostic_messages** for detailed error information
+2. Use **lean_goal** to verify proof state matches expectations
+3. Use **lean_term_goal** for term mode elaboration issues
+4. Use **lean_build** to rebuild and restart LSP if diagnostics are stale
+5. Use manual `pkill -f lean` if LSP becomes completely unresponsive
+
+### Rate Limiting & External Services
+
+External search tools (leansearch, loogle, state_search, hammer_premise) are rate-limited to **3 requests per 30 seconds**. Plan queries strategically and prefer local search when possible.
+
+### Configuration Files
+
+- **MCP Config:** `~/.claude.json` - Global MCP server configuration
+- **LSP Logs:** Check logs if the MCP server fails to start (location varies by system)
+- **Verify configuration:** Run `claude mcp list` to see configured servers
+
+### Troubleshooting
+
+**Problem:** MCP server timeout on startup
+**Solution:** Build the project first (`lake build`), then restart Claude Code
+
+**Problem:** Diagnostics not updating
+**Solution:** Use `lean_build` MCP tool to restart LSP
+
+**Problem:** Multiple Lean servers consuming memory
+**Solution:** `pkill -f "lean --server"` then use `lean_build` to restart cleanly
+
+**Problem:** Rate limit errors on external search
+**Solution:** Wait 30 seconds or use `lean_local_search` instead
+
+**Problem:** MCP tools not available in Claude Code
+**Solution:** Restart Claude Code after adding MCP configuration
+
 ## Build Commands
 
 ```bash
@@ -267,11 +400,18 @@ Development follows an iterative pattern focused on building working implementat
 Note: Code with incomplete proofs is acceptable during development—mark with TODO comments explaining what needs verification.
 
 ### Debugging Proofs
-- Use `#check` to inspect types
-- Use `#print` to see definitions
-- Use `trace.Meta.Tactic.simp` for simp debugging
-- Use `set_option trace.fun_trans true` for AD debugging
-- Check `sorry` locations: `grep -r "sorry" VerifiedNN/`
+- **MCP Tools (Preferred):**
+  - Use `lean_goal` to inspect proof state at specific locations
+  - Use `lean_diagnostic_messages` for detailed error analysis
+  - Use `lean_hover_info` to check types and documentation
+  - Use `lean_term_goal` for term mode elaboration issues
+- **In-Code Debugging:**
+  - Use `#check` to inspect types
+  - Use `#print` to see definitions
+  - Use `trace.Meta.Tactic.simp` for simp debugging
+  - Use `set_option trace.fun_trans true` for AD debugging
+- **Code Search:**
+  - Check `sorry` locations: Use `lean_local_search` or `grep -r "sorry" VerifiedNN/`
 
 ### Performance Profiling
 ```lean
@@ -363,20 +503,36 @@ These represent the ultimate standard for production-quality code. During develo
 
 ## Critical Reminders for Claude Code
 
+### Using MCP Tools (First Priority)
+When working with Lean code in this project, **always leverage the MCP tools** as your primary interface:
+
+- **Before editing:** Use `lean_file_contents` to review current implementation
+- **During proofs:** Use `lean_goal` to inspect proof states at specific lines
+- **For errors:** Use `lean_diagnostic_messages` to get detailed error information
+- **Finding theorems:** Use `lean_leansearch` (natural language) or `lean_loogle` (type search) before searching manually
+- **Understanding code:** Use `lean_hover_info` and `lean_declaration_file` to navigate definitions
+- **Testing ideas:** Use `lean_run_code` or `lean_multi_attempt` to experiment before committing changes
+- **After changes:** Use `lean_build` to rebuild and restart LSP for fresh diagnostics
+
+**Memory management:** Monitor Lean server processes (`pgrep -af lean`) and restart when necessary to avoid resource exhaustion.
+
 ### During Active Development
 - Incomplete proofs (`sorry`) are acceptable with TODO comments explaining what needs verification
 - Focus on building working implementations before perfecting proofs
 - Iterate on design before committing to formal verification
 - Document verification scope clearly in docstrings
 - Flag areas where verification is aspirational vs. complete
+- Use MCP search tools (`lean_local_search`, `lean_leansearch`) to discover existing patterns before implementing from scratch
 
 ### When in Doubt
+- **First:** Use `lean_leansearch` or `lean_loogle` to search for relevant theorems/definitions
+- **Second:** Use `lean_local_search` to find similar code in this codebase
 - Consult SciLean examples and documentation
-- Check mathlib for existing analysis lemmas
+- Check mathlib for existing analysis lemmas via `lean_hover_info` and `lean_declaration_file`
 - Reference [verified-nn-spec.md](verified-nn-spec.md) for detailed implementation guidance
 - Ask on Lean Zulip #scientific-computing (Tomáš Skřivan, SciLean author, is responsive)
 
 ---
 
-**Last Updated:** 2024-10-20
+**Last Updated:** 2025-10-21
 **Maintained by:** Project contributors

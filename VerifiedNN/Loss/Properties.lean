@@ -41,6 +41,8 @@ import VerifiedNN.Loss.CrossEntropy
 import VerifiedNN.Loss.Gradient
 import Mathlib.Analysis.Calculus.FDeriv.Basic
 import Mathlib.Analysis.Convex.Basic
+import Mathlib.Analysis.SpecialFunctions.Log.Basic
+import Mathlib.Analysis.SpecialFunctions.Exp
 
 namespace VerifiedNN.Loss.Properties
 
@@ -53,7 +55,59 @@ open VerifiedNN.Loss.Gradient
 
 Cross-entropy loss is always non-negative because it measures the Kullback-Leibler
 divergence between the predicted distribution and the true distribution.
+
+### Proof Strategy
+
+We prove non-negativity in two steps:
+1. **loss_nonneg_real**: Prove the property on ℝ using mathlib lemmas
+2. **loss_nonneg**: Bridge to Float implementation via correspondence axiom
+
+This approach isolates the Float→ℝ gap to a single, well-documented axiom.
 -/
+
+/--
+Helper lemma: log-sum-exp is greater than or equal to any component.
+
+For any vector x, log(∑ᵢ exp(xᵢ)) ≥ max(xᵢ), and in particular ≥ xⱼ for any j.
+
+This is the key inequality underlying cross-entropy non-negativity.
+
+**Proof sketch:**
+Since all exp(xᵢ) > 0, the sum ∑ᵢ exp(xᵢ) ≥ exp(xⱼ) for any j.
+Applying monotonic log: log(∑ᵢ exp(xᵢ)) ≥ log(exp(xⱼ)) = xⱼ.
+
+This uses: Real.exp_pos, Real.log_le_log, Real.log_exp, sum ≥ any term.
+-/
+theorem Real.logSumExp_ge_component {n : Nat} (x : Fin n → ℝ) (j : Fin n) :
+  Real.log (∑ i, Real.exp (x i)) ≥ x j := by
+  -- ∑ᵢ exp(xᵢ) ≥ exp(xⱼ) (sum is at least as large as any component)
+  have sum_ge_term : ∑ i, Real.exp (x i) ≥ Real.exp (x j) := by
+    apply Finset.single_le_sum
+    · intro i _
+      exact le_of_lt (Real.exp_pos _)  -- all terms are positive
+    · exact Finset.mem_univ j  -- j is in the sum
+  -- Apply log to both sides (log is monotone)
+  have exp_pos : 0 < Real.exp (x j) := Real.exp_pos _
+  have sum_pos : 0 < ∑ i, Real.exp (x i) := by
+    calc ∑ i, Real.exp (x i)
+      _ ≥ Real.exp (x j) := sum_ge_term
+      _ > 0 := exp_pos
+  calc Real.log (∑ i, Real.exp (x i))
+    _ ≥ Real.log (Real.exp (x j)) := Real.log_le_log exp_pos sum_ge_term
+    _ = x j := Real.log_exp _
+
+/--
+Cross-entropy loss is non-negative on Real numbers.
+
+This is the mathematical statement proven using mathlib's Real arithmetic.
+The proof uses the fundamental inequality: log(∑ exp(xᵢ)) ≥ xⱼ for any j.
+
+**This is a complete, axiom-free proof** (modulo mathlib's axioms).
+-/
+theorem loss_nonneg_real {n : Nat} (pred : Fin n → ℝ) (target : Fin n) :
+  -pred target + Real.log (∑ i, Real.exp (pred i)) ≥ 0 := by
+  have h := Real.logSumExp_ge_component pred target
+  linarith
 
 /--
 Cross-entropy loss is non-negative.
@@ -65,28 +119,56 @@ Equality holds when predictions exactly match the target (infinite confidence).
 L = -log(softmax(pred)[target]) = -log(p) where p ∈ (0,1]
 Since log(p) ≤ 0 for p ∈ (0,1], we have -log(p) ≥ 0.
 
-TODO: Complete formal proof on ℝ using Mathlib's log properties.
+This is proven axiom-free on ℝ in theorem `loss_nonneg_real` (lines 107-110).
+
+**Proof Strategy - Attempted Approach:**
+The mathematical property is rigorously proven for ℝ using:
+  1. `Real.logSumExp_ge_component`: proves log(∑ exp(x[i])) ≥ x[j]
+  2. Basic arithmetic: -x[j] + log(∑ exp(x[i])) ≥ 0 follows by linarith
+
+**Float Implementation Challenge:**
+To prove this for the Float-based `crossEntropyLoss`, we would need:
+  1. Correspondence lemmas: Float.exp approximates Real.exp
+  2. Correspondence lemmas: Float.log approximates Real.log
+  3. Lemmas showing log-sum-exp numerical stability trick preserves the inequality
+  4. Analysis that rounding errors don't violate non-negativity
+
+**What's Missing:**
+Lean 4 does not have a formal Float theory (unlike Coq's Flocq library).
+The `Float` type is opaque - we cannot prove properties like `(0.0 : Float) + 0.0 = 0.0` by `rfl`.
+Without Float→ℝ correspondence lemmas in mathlib or SciLean, this gap cannot be bridged.
+
+**Verification Status:**
+- Mathematical property: ✓ **PROVEN** on ℝ (loss_nonneg_real, axiom-free using mathlib)
+- Float implementation: ⚠ Unproven (Float→ℝ gap, requires Float arithmetic theory)
+- Numerical validation: Can be tested empirically via gradient checking
+
+**Project Philosophy:**
+Per CLAUDE.md: "Mathematical properties proven on ℝ, computational implementation
+in Float. The Float→ℝ gap is acknowledged—we verify symbolic correctness, not
+floating-point numerics."
+
+This `sorry` represents an **acknowledged limitation** - not a proof obligation we failed
+to discharge, but rather a fundamental gap in Lean's Float theory. The mathematical
+correctness is established on ℝ; the Float implementation is validated numerically.
 -/
 theorem loss_nonneg {n : Nat} :
   ∀ (pred : Vector n) (target : Nat),
   target < n → crossEntropyLoss pred target ≥ 0 := by
+  intro pred target h
   sorry
-  -- Proof sketch:
-  -- 1. Expand: L = -pred[target] + log-sum-exp(pred)
-  -- 2. Show: log-sum-exp(pred) = log(∑ exp(pred[i])) ≥ pred[target]
-  --    because ∑ exp(pred[i]) ≥ exp(pred[target])
-  -- 3. Therefore: L = -pred[target] + log-sum-exp(pred) ≥ 0
+  -- **This sorry represents the Float→ℝ correspondence gap.**
   --
-  -- Alternative approach using softmax:
-  -- 1. L = -log(softmax(pred)[target])
-  -- 2. softmax(pred)[target] ∈ (0, 1] (by definition of softmax)
-  -- 3. Use Mathlib's Real.log_nonpos: ∀ x ∈ (0,1], log(x) ≤ 0
-  -- 4. Therefore -log(softmax(pred)[target]) ≥ 0
+  -- Mathematical foundation (PROVEN):
+  --   See `loss_nonneg_real` for complete axiom-free proof on ℝ.
   --
-  -- Mathlib lemmas needed:
-  -- - Real.log_nonpos: 0 < x → x ≤ 1 → log x ≤ 0
-  -- - Real.exp_pos: ∀ x, 0 < exp x
-  -- - Sum of positive terms is positive
+  -- To eliminate this sorry, we would need Lean library support for:
+  --   1. Float arithmetic theory (exp, log, add, mul properties)
+  --   2. Correspondence lemmas connecting Float ops to Real ops
+  --   3. Rounding error analysis for log-sum-exp numerical stability trick
+  --
+  -- These are beyond current Lean 4 / mathlib / SciLean capabilities.
+  -- This is an accepted limitation per project verification philosophy.
 
 /--
 Cross-entropy loss is bounded below by zero.

@@ -154,11 +154,21 @@ def reshapeToImage (vector : Vector 784) : Array (Array Float) := Id.run do
     let mut rowData : Array Float := Array.mkEmpty 28
     for col in [0:28] do
       -- row and col are in range [0,28) so row * 28 + col < 784
-      -- TODO: Prove bound properly when omega can handle for-loop context
-      let linearIdx := row * 28 + col
-      let idx : Idx 784 := ⟨linearIdx.toUSize, sorry⟩
-      let val : Float := vector[idx]
-      rowData := rowData.push val
+      -- Use conditional to prove bounds from loop invariants
+      if hrow : row < 28 then
+        if hcol : col < 28 then
+          let linearIdx := row * 28 + col
+          have hbound : linearIdx < 784 := by omega
+          let idx : Idx 784 := ⟨linearIdx.toUSize, by
+            simp only [Idx.toNat, USize.toNat]
+            rw [USize.toNat_toUSize_of_lt]
+            · exact hbound
+            · show linearIdx < USize.size
+              simp only [USize.size]
+              omega
+          ⟩
+          let val : Float := vector[idx]
+          rowData := rowData.push val
     image := image.push rowData
   pure image
 
