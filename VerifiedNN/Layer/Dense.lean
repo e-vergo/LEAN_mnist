@@ -1,5 +1,5 @@
 /-
-# Dense Layer
+Dense Layer
 
 Dense (fully-connected) layer implementation with type-safe dimensions.
 
@@ -7,21 +7,27 @@ This module implements dense (fully-connected) layers with support for both
 single-sample and batched forward passes. The implementation leverages dependent
 types to ensure dimension compatibility at compile time.
 
-**Verification Status:**
+Verification Status:
 - Forward pass implementation: Working (uses SciLean primitives)
 - Type safety: Enforced via dependent types
 - Differentiability: Planned (requires Core.LinearAlgebra completion)
 
-**Implementation Notes:**
+Implementation Notes:
 - Forward pass computes: output = activation(weights @ input + bias)
 - Batched operations process multiple samples efficiently
 - Uses SciLean's DataArrayN for performance
+
+Performance:
+- Hot-path functions marked with @[inline] for optimization
+- Batched operations preferred for training to maximize throughput
 -/
 
 import VerifiedNN.Core.DataTypes
 import VerifiedNN.Core.LinearAlgebra
 import VerifiedNN.Core.Activation
 import SciLean
+import Mathlib.Analysis.Calculus.FDeriv.Basic
+import Mathlib.Analysis.Calculus.Deriv.Basic
 
 namespace VerifiedNN.Layer
 
@@ -59,15 +65,16 @@ structure DenseLayer (inDim outDim : Nat) where
 
 Computes the linear transformation: output = W @ x + b
 
-**Parameters:**
+Parameters:
 - `layer`: Dense layer with dimensions (n → m)
 - `x`: Input vector of dimension n
 
-**Returns:** Output vector of dimension m
+Returns: Output vector of dimension m
 
-**Note:** This is the pre-activation output. For typical neural network layers,
+Note: This is the pre-activation output. For typical neural network layers,
 apply an activation function (e.g., ReLU) to the result.
 -/
+@[inline]
 def DenseLayer.forwardLinear {m n : Nat} (layer : DenseLayer n m) (x : Vector n) : Vector m :=
   -- Linear transformation: Wx + b
   -- Note: This depends on LinearAlgebra implementations
@@ -78,15 +85,16 @@ def DenseLayer.forwardLinear {m n : Nat} (layer : DenseLayer n m) (x : Vector n)
 
 Computes: output = activation(W @ x + b)
 
-**Parameters:**
+Parameters:
 - `layer`: Dense layer with dimensions (n → m)
 - `x`: Input vector of dimension n
 - `activation`: Optional activation function to apply (default: identity)
 
-**Returns:** Output vector of dimension m
+Returns: Output vector of dimension m
 
-**Verification:** Type system ensures dimension compatibility.
+Verification: Type system ensures dimension compatibility.
 -/
+@[inline]
 def DenseLayer.forward {m n : Nat}
     (layer : DenseLayer n m)
     (x : Vector n)
@@ -98,12 +106,13 @@ def DenseLayer.forward {m n : Nat}
 
 Convenience function for: ReLU(W @ x + b)
 
-**Parameters:**
+Parameters:
 - `layer`: Dense layer with dimensions (n → m)
 - `x`: Input vector of dimension n
 
-**Returns:** Output vector of dimension m with ReLU applied element-wise
+Returns: Output vector of dimension m with ReLU applied element-wise
 -/
+@[inline]
 def DenseLayer.forwardReLU {m n : Nat} (layer : DenseLayer n m) (x : Vector n) : Vector m :=
   layer.forward x reluVec
 
@@ -112,15 +121,16 @@ def DenseLayer.forwardReLU {m n : Nat} (layer : DenseLayer n m) (x : Vector n) :
 Processes multiple input samples in parallel for efficiency.
 Computes: output[i] = W @ X[i] + b for each sample i
 
-**Parameters:**
+Parameters:
 - `layer`: Dense layer with dimensions (n → m)
 - `X`: Batch of b input vectors, each of dimension n
 
-**Returns:** Batch of b output vectors, each of dimension m
+Returns: Batch of b output vectors, each of dimension m
 
-**Performance:** More efficient than processing samples individually due to
+Performance: More efficient than processing samples individually due to
 vectorized operations and better cache utilization.
 -/
+@[inline]
 def DenseLayer.forwardBatchLinear {b m n : Nat}
     (layer : DenseLayer n m)
     (X : Batch b n) : Batch b m :=
@@ -133,13 +143,14 @@ def DenseLayer.forwardBatchLinear {b m n : Nat}
 
 Applies the layer transformation to a batch of inputs with optional activation.
 
-**Parameters:**
+Parameters:
 - `layer`: Dense layer with dimensions (n → m)
 - `X`: Batch of b input vectors, each of dimension n
 - `activation`: Optional activation function (default: identity)
 
-**Returns:** Batch of b output vectors, each of dimension m
+Returns: Batch of b output vectors, each of dimension m
 -/
+@[inline]
 def DenseLayer.forwardBatch {b m n : Nat}
     (layer : DenseLayer n m)
     (X : Batch b n)
@@ -151,31 +162,56 @@ def DenseLayer.forwardBatch {b m n : Nat}
 
 Convenience function for batched ReLU layer.
 
-**Parameters:**
+Parameters:
 - `layer`: Dense layer with dimensions (n → m)
 - `X`: Batch of b input vectors, each of dimension n
 
-**Returns:** Batch of b output vectors with ReLU applied
+Returns: Batch of b output vectors with ReLU applied
 -/
+@[inline]
 def DenseLayer.forwardBatchReLU {b m n : Nat}
     (layer : DenseLayer n m)
     (X : Batch b n) : Batch b m :=
   layer.forwardBatch X reluBatch
 
--- Differentiability proofs (to be added when Core modules are complete)
+-- ============================================================================
+-- Example Usage
+-- ============================================================================
+
+/-- Example: Creating a dense layer for MNIST hidden layer (784 → 128).
+
+This demonstrates the typical pattern for creating layers. In practice,
+use Network.Initialization for proper weight initialization.
+-/
+example : DenseLayer 784 128 := {
+  weights := ⊞ (_ : Idx 128) (_ : Idx 784) => 0.01  -- Placeholder initialization
+  bias := ⊞ (_ : Idx 128) => 0.0
+}
+
+/-- Example: Forward pass maintains type-level dimensions.
+
+The type system guarantees that passing a 784-dimensional vector
+through a (784 → 128) layer produces a 128-dimensional output.
+-/
+example (layer : DenseLayer 784 128) (input : Vector 784) :
+  ∃ (output : Vector 128), output = layer.forwardReLU input := by
+  exists layer.forwardReLU input
+
+-- ============================================================================
+-- Planned Verification (see VerifiedNN/Verification/GradientCorrectness.lean)
+-- ============================================================================
+
+-- TODO: Add differentiability proofs when Core.LinearAlgebra is verified
 -- These will establish that the forward pass is differentiable with respect to:
 -- 1. Input vector x
 -- 2. Weight matrix W
 -- 3. Bias vector b
-
--- @[fun_prop]
--- theorem DenseLayer.forward_differentiable {m n : Nat} (layer : DenseLayer n m) :
---   Differentiable Float (fun x => layer.forward x) := by
---   sorry
-
--- @[fun_trans]
--- theorem DenseLayer.forward_fderiv {m n : Nat} (layer : DenseLayer n m) :
---   fderiv Float (fun x => layer.forward x) = fun x dx => layer.weights @ dx := by
---   sorry
+--
+-- Planned theorems:
+-- - forward_differentiable: Prove forward pass is differentiable
+-- - forward_fderiv: Prove gradient matches analytical derivative
+-- - forward_continuous: Prove forward pass is continuous
+--
+-- See verified-nn-spec.md Section 5.1 for verification requirements
 
 end VerifiedNN.Layer

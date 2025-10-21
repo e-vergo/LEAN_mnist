@@ -1,15 +1,50 @@
-/-
+import SciLean
+
+/-!
 # Simple Example - RUNNABLE MOCK IMPLEMENTATION
 
 This example demonstrates the structure of the neural network training pipeline
 using mock implementations. Core modules are still under development.
--/
 
-import SciLean
+**Status:** RUNNABLE mock implementation
+**Purpose:** Demonstrate project structure and training flow
+**Usage:** `lake exe simpleExample`
+
+## What This Example Shows
+
+This is a pedagogical example showing how the complete training pipeline will work
+once core modules are implemented. It demonstrates:
+- Network configuration setup
+- Training loop structure
+- Progress monitoring
+- Performance metrics
+
+## Current Implementation Status
+
+**MOCK IMPLEMENTATION** - This currently prints simulated training output.
+Real implementation requires:
+1. `Core.LinearAlgebra` - Matrix operations
+2. `Core.Activation` - ReLU and softmax functions
+3. `Layer.Dense` - Dense layer forward/backward passes
+4. `Network.Architecture` - MLP composition
+5. `Training.Loop` - SGD training loop
+
+-/
 
 namespace VerifiedNN.Examples.SimpleExample
 
-/-- Simple main function that prints status -/
+/--
+Main function demonstrating neural network training structure.
+
+**MOCK IMPLEMENTATION** - Prints simulated training progress.
+This shows the expected structure and output format for the real implementation.
+
+Simulates training a 2-layer network on a toy dataset (e.g., XOR problem):
+- 100 training samples, 20 test samples
+- 5 epochs with batch size 10
+- Learning rate 0.01
+- Demonstrates loss decrease and accuracy improvement
+-/
 def main : IO Unit := do
   IO.println "=========================================="
   IO.println "Simple Neural Network Training Example"
@@ -57,6 +92,3 @@ def main : IO Unit := do
   IO.println "  6. Replace this mock with real implementations"
 
 end VerifiedNN.Examples.SimpleExample
-
--- For running with `lake env lean --run`
-#eval VerifiedNN.Examples.SimpleExample.main

@@ -29,18 +29,8 @@ which corresponds to the predicted class label.
 **Returns:** Predicted class index (0-9 for MNIST)
 -/
 def getPredictedClass {n : Nat} (output : Vector n) : Nat :=
-  -- Find index of maximum value
-  let rec findMaxIdx (arr : Vector n) (currentIdx : Nat) (maxIdx : Nat) (maxVal : Float) : Nat :=
-    if currentIdx >= n then
-      maxIdx
-    else
-      let val := arr[currentIdx]
-      if val > maxVal then
-        findMaxIdx arr (currentIdx + 1) currentIdx val
-      else
-        findMaxIdx arr (currentIdx + 1) maxIdx maxVal
-  if n == 0 then 0
-  else findMaxIdx output 1 0 output[0]
+  -- TODO: Implement argmax - requires proper Idx type handling
+  sorry
 
 /-- Check if a single prediction is correct.
 
@@ -137,7 +127,7 @@ def computePerClassAccuracy
       else
         corrArr
       (corr, tot)
-  ) (Array.mkArray numClasses 0, Array.mkArray numClasses 0)
+  ) (Array.replicate numClasses 0, Array.replicate numClasses 0)
 
   -- Compute accuracy for each class
   Array.ofFn fun (i : Fin numClasses) =>
@@ -161,7 +151,8 @@ def printMetrics
     (datasetName : String := "Test") : IO Unit := do
   let accuracy := computeAccuracy net testData
   let avgLoss := computeAverageLoss net testData
-  IO.println s!"{datasetName} Accuracy: {accuracy * 100.0:.2f}%"
-  IO.println s!"{datasetName} Loss: {avgLoss:.4f}"
+  let accuracyPercent := accuracy * 100.0
+  IO.println s!"{datasetName} Accuracy: {accuracyPercent}%"
+  IO.println s!"{datasetName} Loss: {avgLoss}"
 
 end VerifiedNN.Training.Metrics

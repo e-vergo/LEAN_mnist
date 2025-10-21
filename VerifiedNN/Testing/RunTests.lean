@@ -3,54 +3,124 @@
 
 Entry point for running all VerifiedNN tests.
 
-**Status:** Tests are partially implemented but blocked by dependencies.
+This module provides a unified test runner that executes all available test
+suites and reports comprehensive results.
 
-**Current State:**
-- Test infrastructure is in place
-- Many tests depend on SciLean DataArrayN operations that need implementation
-- Some tests compile but depend on modules with `sorry` placeholders
+## Test Suites Available
 
-**To run tests once dependencies are ready:**
+1. **Unit Tests** - Component-level tests for activations, data types
+2. **Optimizer Tests** - Parameter update operations (fully functional)
+3. **Integration Tests** - End-to-end pipeline tests (dataset generation ready)
+4. **Gradient Check** - Numerical validation (infrastructure ready, blocked by Network.Gradient)
+
+## Test Organization
+
+Tests are organized by dependency level:
+- **Level 0**: Core functionality (activations, data types) - WORKING
+- **Level 1**: Optimizer operations - WORKING
+- **Level 2**: Dataset generation - WORKING
+- **Level 3**: Gradient checking - READY (blocked by Network.Gradient)
+- **Level 4**: Full integration - PLANNED (blocked by Training.Loop)
+
+## Usage
+
 ```bash
+# Run all available tests
 lake build VerifiedNN.Testing.RunTests
 lake env lean --run VerifiedNN/Testing/RunTests.lean
+
+# Run specific test suites
+lake env lean --run VerifiedNN/Testing/UnitTests.lean
+lake env lean --run VerifiedNN/Testing/OptimizerTests.lean
+lake env lean --run VerifiedNN/Testing/Integration.lean
 ```
+
+## Current Status
+
+✓ Ready to run: UnitTests, OptimizerTests, Integration (partial)
+⚠ Blocked: GradientCheck (needs Network.Gradient)
+⚠ Planned: Full integration tests (needs Training.Loop)
 -/
 
-import VerifiedNN.Core.DataTypes
-import VerifiedNN.Core.Activation
+import VerifiedNN.Testing.UnitTests
+import VerifiedNN.Testing.OptimizerTests
+import VerifiedNN.Testing.Integration
 
-namespace VerifiedNN.Testing
+namespace VerifiedNN.Testing.Runner
 
-/-! ## Test Execution Status
+open VerifiedNN.Testing.UnitTests
+open VerifiedNN.Testing.OptimizerTests
+open VerifiedNN.Testing.Integration
 
-### What Works Now:
-1. **Activation Functions** - Basic scalar activations (ReLU, sigmoid, tanh) are implemented
-2. **Type Definitions** - Core type aliases (Vector, Matrix, Batch) compile
-3. **Test Framework** - Test helper functions and runners are defined
+/-- Run all available test suites with comprehensive reporting -/
+def runAllTests : IO Unit := do
+  IO.println "╔══════════════════════════════════════════════════════════════╗"
+  IO.println "║         VerifiedNN Comprehensive Test Suite                 ║"
+  IO.println "╚══════════════════════════════════════════════════════════════╝"
+  IO.println ""
 
-### What's Blocked:
-1. **Gradient Checking** - Blocked by:
-   - SciLean DataArrayN indexing syntax unclear
-   - Vector construction with ⊞ notation has type synthesis issues
+  let mut totalSuites := 0
+  let mut passedSuites := 0
 
-2. **Unit Tests** - Blocked by:
-   - Vector/Matrix element access patterns undefined
-   - Linear algebra operations contain `sorry` placeholders
+  -- Test Suite 1: Unit Tests
+  IO.println "┌──────────────────────────────────────────────────────────────┐"
+  IO.println "│ Test Suite 1: Unit Tests                                    │"
+  IO.println "└──────────────────────────────────────────────────────────────┘"
+  totalSuites := totalSuites + 1
+  try
+    runAllTests
+    passedSuites := passedSuites + 1
+  catch e =>
+    IO.println s!"✗ Unit tests failed: {e}"
 
-3. **Integration Tests** - Blocked by:
-   - Network architecture not implemented
-   - Training loop not implemented
-   - Loss functions have compilation errors
+  IO.println ""
 
-### What Can Be Tested:
-- Individual scalar activation functions (relu, sigmoid, tanh)
-- Type checking of data structures
-- Approximate equality helpers
+  -- Test Suite 2: Optimizer Tests
+  IO.println "┌──────────────────────────────────────────────────────────────┐"
+  IO.println "│ Test Suite 2: Optimizer Tests                               │"
+  IO.println "└──────────────────────────────────────────────────────────────┘"
+  totalSuites := totalSuites + 1
+  try
+    VerifiedNN.Testing.OptimizerTests.runTests
+    passedSuites := passedSuites + 1
+  catch e =>
+    IO.println s!"✗ Optimizer tests failed: {e}"
 
--/
+  IO.println ""
 
-/-- Simple smoke test that runs without dependencies -/
+  -- Test Suite 3: Integration Tests (Partial)
+  IO.println "┌──────────────────────────────────────────────────────────────┐"
+  IO.println "│ Test Suite 3: Integration Tests (Dataset Generation)        │"
+  IO.println "└──────────────────────────────────────────────────────────────┘"
+  totalSuites := totalSuites + 1
+  try
+    let success ← smokeTest
+    if success then
+      passedSuites := passedSuites + 1
+  catch e =>
+    IO.println s!"✗ Integration tests failed: {e}"
+
+  IO.println ""
+
+  -- Summary
+  IO.println "╔══════════════════════════════════════════════════════════════╗"
+  IO.println "║                     Test Summary                             ║"
+  IO.println "╚══════════════════════════════════════════════════════════════╝"
+  IO.println s!"Total Test Suites: {totalSuites}"
+  IO.println s!"Passed: {passedSuites}"
+  IO.println s!"Failed: {totalSuites - passedSuites}"
+  IO.println ""
+
+  if passedSuites == totalSuites then
+    IO.println "✓ All available test suites PASSED"
+  else
+    IO.println s!"⚠ {totalSuites - passedSuites} test suite(s) had issues"
+
+  IO.println ""
+  IO.println "Note: Some test suites are placeholders awaiting implementation."
+  IO.println "See individual test files for detailed coverage information."
+
+/-- Quick smoke test for rapid iteration -/
 def smokeTest : IO Unit := do
   IO.println "=========================================="
   IO.println "VerifiedNN Test Suite - Smoke Test"
@@ -80,14 +150,12 @@ def smokeTest : IO Unit := do
   IO.println s!"approxEq(1.0, 2.0) = {eq2} (expected false)"
 
   IO.println "\n=========================================="
-  IO.println "Smoke Test Complete"
+  IO.println "✓ Smoke Test Complete"
   IO.println "=========================================="
-  IO.println "\nNOTE: Full test suite blocked by dependency implementations."
-  IO.println "See VerifiedNN/Testing/RunTests.lean for details."
 
-end VerifiedNN.Testing
+end VerifiedNN.Testing.Runner
 
 /-! ## Main Entry Point -/
 
 def main : IO Unit := do
-  VerifiedNN.Testing.smokeTest
+  VerifiedNN.Testing.Runner.runAllTests

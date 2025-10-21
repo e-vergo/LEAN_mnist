@@ -47,7 +47,6 @@ structure TrainState where
   optimState : SGDState nParams
   currentEpoch : Nat
   totalBatchesSeen : Nat
-  deriving Repr
 
 /-- Initialize training state from a network and configuration.
 
@@ -139,7 +138,7 @@ partial def trainOneEpoch
     -- Print progress periodically
     if (batchIdx + 1) % config.printEveryNBatches == 0 then
       let batchLoss := computeAverageLoss currentState.net batch
-      IO.println s!"Epoch {currentState.currentEpoch + 1}, Batch {batchIdx + 1}/{batches.size}: Loss = {batchLoss:.4f}"
+      IO.println s!"Epoch {currentState.currentEpoch + 1}, Batch {batchIdx + 1}/{batches.size}: Loss = {batchLoss}"
 
   -- Update epoch counter
   currentState := { currentState with

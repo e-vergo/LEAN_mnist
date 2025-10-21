@@ -46,7 +46,10 @@ following the standard SGD update rule.
 **Returns:** Updated SGD state with new parameters θ_{t+1}
 
 **Dimension safety:** Type system ensures gradient and parameters have matching dimensions.
+
+**Performance:** Marked inline for hot-path optimization.
 -/
+@[inline]
 def sgdStep {n : Nat} (state : SGDState n) (gradient : Vector n) : SGDState n :=
   { state with
     params := state.params - state.learningRate • gradient
@@ -64,7 +67,10 @@ the gradient is rescaled to have norm maxNorm while preserving direction.
 - `maxNorm`: Maximum allowed gradient norm
 
 **Returns:** Updated SGD state with clipped gradient applied
+
+**Performance:** Marked inline for hot-path optimization.
 -/
+@[inline]
 def sgdStepClipped {n : Nat} (state : SGDState n) (gradient : Vector n) (maxNorm : Float) : SGDState n :=
   let gradNorm := ‖gradient‖₂²
   let scaleFactor := if gradNorm > maxNorm * maxNorm then

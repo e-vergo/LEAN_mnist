@@ -16,6 +16,56 @@ correctness. They ensure the full pipeline from data to trained model works.
 
 **Verification Status:** These are computational validation tests. They verify
 that the implementation behaves as expected but do not constitute formal proofs.
+
+## Test Coverage Summary
+
+### Dataset Generation
+- ✓ generateSyntheticDataset: deterministic pattern-based data
+- ✓ generateOverfitDataset: small fixed dataset for overfitting tests
+- ✓ testDatasetGeneration: validates dataset structure and distribution
+
+### Integration Test Suites (Planned)
+- ⚠ testNetworkCreation: blocked by Network.Architecture implementation
+- ⚠ testGradientComputation: blocked by Network.Gradient implementation
+- ⚠ testTrainingOnTinyDataset: blocked by Training.Loop implementation
+- ⚠ testOverfitting: blocked by full training pipeline
+- ⚠ testGradientFlow: blocked by GradientCheck integration
+- ⚠ testBatchProcessing: blocked by Training.Batch implementation
+
+### Helper Functions
+- ✓ checkLossDecreased: validates loss improvement
+- ✓ computeAccuracy: prediction accuracy computation
+- ✓ smokeTest: minimal integration sanity check
+
+## Current Status
+
+| Test Suite | Status | Blocking Dependency |
+|------------|--------|---------------------|
+| Dataset Generation | ✓ Working | None |
+| Network Creation | ⚠ Placeholder | Network.Architecture |
+| Gradient Computation | ⚠ Placeholder | Network.Gradient |
+| Training on Tiny Dataset | ⚠ Placeholder | Training.Loop |
+| Overfitting Test | ⚠ Placeholder | Full training pipeline |
+| Gradient Flow | ⚠ Placeholder | GradientCheck + Network |
+| Batch Processing | ⚠ Placeholder | Training.Batch |
+
+## Development Approach
+
+Integration tests are written as placeholders that:
+1. Document expected behavior
+2. Print informative messages about blocking dependencies
+3. Return `true` to avoid breaking the test runner
+4. Will be filled in as components become available
+
+## Usage
+
+```bash
+# Build tests
+lake build VerifiedNN.Testing.Integration
+
+# Run available tests
+lake env lean --run VerifiedNN/Testing/Integration.lean
+```
 -/
 
 import VerifiedNN.Network.Architecture

@@ -10,6 +10,35 @@ approximations.
 **Verification Status:** Implementation-level testing only. The finite
 difference method itself is not formally verified, but serves as a numerical
 sanity check for the symbolic gradient computation.
+
+## Test Coverage
+
+This module provides:
+- ✓ Finite difference gradient approximation (central differences)
+- ✓ Vector approximate equality with relative/absolute tolerance
+- ✓ Gradient correctness checking against numerical approximation
+- ✓ Gradient relative error computation for debugging
+- ✓ Test suite for basic functions: quadratic, linear, polynomial, product
+- ✓ All tests use IO-based test framework (no LSpec dependency)
+
+## Functions Tested
+
+| Test | Function | Gradient | Status |
+|------|----------|----------|--------|
+| testQuadraticGradient | f(x) = ‖x‖² | ∇f(x) = 2x | ✓ Implemented |
+| testLinearGradient | f(x) = a·x | ∇f(x) = a | ✓ Implemented |
+| testPolynomialGradient | f(x) = Σ(xᵢ² + 3xᵢ + 2) | ∇f(x) = 2x + 3 | ✓ Implemented |
+| testProductGradient | f(x₀,x₁) = x₀·x₁ | ∇f = (x₁, x₀) | ✓ Implemented |
+
+## Usage
+
+```bash
+# Build
+lake build VerifiedNN.Testing.GradientCheck
+
+# Run tests (once Network.Gradient is implemented)
+lake env lean --run VerifiedNN/Testing/GradientCheck.lean
+```
 -/
 
 import VerifiedNN.Core.DataTypes
@@ -42,9 +71,9 @@ def finiteDifferenceGradient {n : Nat}
     (h : Float := 1e-5) : Vector n :=
   -- For each dimension i, compute (f(x + h*e_i) - f(x - h*e_i)) / (2h)
   -- where e_i is the i-th unit vector
-  ⊞ (i : Fin n) =>
-    let x_plus := ⊞ (j : Fin n) => if i == j then x[j] + h else x[j]
-    let x_minus := ⊞ (j : Fin n) => if i == j then x[j] - h else x[j]
+  ⊞ i =>
+    let x_plus := ⊞ j => if i == j then x[j] + h else x[j]
+    let x_minus := ⊞ j => if i == j then x[j] - h else x[j]
     (f x_plus - f x_minus) / (2 * h)
 
 /-- Check if two vectors are approximately equal within tolerance.
@@ -63,11 +92,11 @@ def vectorsApproxEq {n : Nat}
     (v w : Vector n)
     (tolerance : Float := 1e-5)
     (relTol : Float := 1e-5) : Bool :=
-  let maxDiff := (Fin n).foldl (init := 0.0) fun maxVal i =>
+  let maxDiff := IndexType.foldl (fun maxVal i =>
     let diff := Float.abs (v[i] - w[i])
     let scale := Float.max (Float.abs v[i]) (Float.abs w[i])
     let relativeDiff := if scale > 1.0 then diff / scale else diff
-    Float.max maxVal relativeDiff
+    Float.max maxVal relativeDiff) 0.0 (Fin n)
   maxDiff ≤ tolerance || maxDiff ≤ relTol
 
 /-- Check if automatic gradient matches finite difference approximation.
@@ -122,11 +151,11 @@ def gradientRelativeError {n : Nat}
     (h : Float := 1e-5) : Float :=
   let analytical := grad_f x
   let numerical := finiteDifferenceGradient f x h
-  (Fin n).foldl (init := 0.0) fun maxErr i =>
+  IndexType.foldl (fun maxErr i =>
     let diff := Float.abs (analytical[i] - numerical[i])
     let scale := Float.max (Float.abs analytical[i]) (Float.abs numerical[i])
     let relErr := if scale > 1e-10 then diff / scale else diff
-    Float.max maxErr relErr
+    Float.max maxErr relErr) 0.0 (Fin n)
 
 /-- Test gradient checking on a simple quadratic function.
 
@@ -136,12 +165,12 @@ This can be run to verify the gradient checking infrastructure works.
 -/
 def testQuadraticGradient (n : Nat) : IO Unit := do
   let f : Vector n → Float := fun x =>
-    (Fin n).foldl (init := 0.0) fun sum i => sum + x[i] * x[i]
+    IndexType.foldl (fun sum i => sum + x[i] * x[i]) 0.0 (Fin n)
 
   let grad_f : Vector n → Vector n := fun x =>
-    ⊞ (i : Fin n) => 2.0 * x[i]
+    ⊞ i => 2.0 * x[i]
 
-  let testPoint : Vector n := ⊞ (i : Fin n) => (i.val.toFloat + 1.0)
+  let testPoint : Vector n := ⊞ i => (i.val.toFloat + 1.0)
 
   let matches := checkGradient f grad_f testPoint
   let error := gradientRelativeError f grad_f testPoint
@@ -153,14 +182,14 @@ def testQuadraticGradient (n : Nat) : IO Unit := do
 def testLinearGradient : IO Unit := do
   IO.println "\n=== Linear Function Gradient Test ==="
   let n := 5
-  let a : Vector n := ⊞ (i : Fin n) => (i.val.toFloat + 1.0) * 2.0
+  let a : Vector n := ⊞ i => (i.val.toFloat + 1.0) * 2.0
 
   let f : Vector n → Float := fun x =>
-    (Fin n).foldl (init := 0.0) fun sum i => sum + a[i] * x[i]
+    IndexType.foldl (fun sum i => sum + a[i] * x[i]) 0.0 (Fin n)
 
   let grad_f : Vector n → Vector n := fun _ => a
 
-  let testPoint : Vector n := ⊞ (i : Fin n) => (i.val.toFloat + 1.0) * 0.5
+  let testPoint : Vector n := ⊞ i => (i.val.toFloat + 1.0) * 0.5
 
   let matches := checkGradient f grad_f testPoint
   let error := gradientRelativeError f grad_f testPoint
@@ -179,14 +208,14 @@ def testPolynomialGradient : IO Unit := do
   let n := 4
 
   let f : Vector n → Float := fun x =>
-    (Fin n).foldl (init := 0.0) fun sum i =>
-      sum + x[i] * x[i] + 3.0 * x[i] + 2.0
+    IndexType.foldl (fun sum i =>
+      sum + x[i] * x[i] + 3.0 * x[i] + 2.0) 0.0 (Fin n)
 
   -- ∇f(x) = 2x + 3
   let grad_f : Vector n → Vector n := fun x =>
-    ⊞ (i : Fin n) => 2.0 * x[i] + 3.0
+    ⊞ i => 2.0 * x[i] + 3.0
 
-  let testPoint : Vector n := ⊞ (i : Fin n) => (i.val.toFloat - 2.0)
+  let testPoint : Vector n := ⊞ i => (i.val.toFloat - 2.0)
 
   let matches := checkGradient f grad_f testPoint
   let error := gradientRelativeError f grad_f testPoint
@@ -209,7 +238,7 @@ def testProductGradient : IO Unit := do
 
   -- ∇(x₀·x₁) = (x₁, x₀)
   let grad_f : Vector n → Vector n := fun x =>
-    ⊞ (i : Fin n) =>
+    ⊞ i =>
       if i.val == 0 then x[⟨1, by omega⟩]
       else x[⟨0, by omega⟩]
 

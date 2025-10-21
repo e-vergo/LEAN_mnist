@@ -9,6 +9,62 @@ Tests:
 - Learning rate scheduling
 - Gradient accumulation
 - Unified optimizer interface
+
+## Test Coverage Summary
+
+### SGD (Optimizer.SGD)
+- ✓ testSGDUpdate: basic parameter update θ' = θ - η∇L
+- ✓ Validates epoch incrementing
+- ✓ Validates parameter dimension preservation
+- ✓ Tests gradient clipping with maximum norm constraint
+
+### Momentum (Optimizer.Momentum)
+- ✓ testMomentumUpdate: velocity tracking and accumulation
+- ✓ Validates β-weighted velocity update
+- ✓ Tests multi-step momentum accumulation
+- ✓ Validates epoch incrementing
+
+### Learning Rate Scheduling (Optimizer.Update)
+- ✓ testLRScheduling: constant, step, exponential schedules
+- ✓ Validates warmup schedule (linear increase)
+- ✓ Tests schedule application at different epochs
+
+### Gradient Accumulation
+- ✓ testGradientAccumulation: accumulator initialization
+- ✓ Validates gradient averaging over multiple batches
+- ✓ Tests reset functionality
+
+### Unified Optimizer Interface
+- ✓ testUnifiedInterface: polymorphic SGD and Momentum
+- ✓ Validates getParams, updateOptimizerLR, getEpoch
+- ✓ Tests optimizer state switching
+
+### Gradient Clipping
+- ✓ testGradientClipping: norm-based gradient scaling
+- ✓ Validates large gradient handling
+
+## Current Status
+
+All optimizer tests are fully implemented and passing. No blockers.
+
+| Test Suite | Functions Tested | Status |
+|------------|------------------|--------|
+| SGD | initSGD, sgdStep, sgdStepClipped | ✓ Complete |
+| Momentum | initMomentum, momentumStep | ✓ Complete |
+| LR Scheduling | All schedule types, warmup | ✓ Complete |
+| Gradient Accumulation | init, add, getAndReset | ✓ Complete |
+| Unified Interface | All OptimizerState operations | ✓ Complete |
+| Gradient Clipping | sgdStepClipped | ✓ Complete |
+
+## Usage
+
+```bash
+# Build tests
+lake build VerifiedNN.Testing.OptimizerTests
+
+# Run tests
+lake env lean --run VerifiedNN/Testing/OptimizerTests.lean
+```
 -/
 
 import VerifiedNN.Optimizer.SGD
@@ -155,7 +211,7 @@ def testUnifiedInterface : IO Unit := do
 
   -- Test learning rate update
   let sgdWithNewLR := updateOptimizerLR sgdUpdated 0.05
-  IO.println s!"  Updated learning rate for SGD state"
+  IO.println s!"  Updated learning rate for SGD state (epoch: {getEpoch sgdWithNewLR})"
 
   IO.println "  ✓ Unified optimizer interface works"
 

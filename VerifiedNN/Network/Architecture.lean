@@ -6,12 +6,14 @@ MLP architecture definition and forward pass implementation.
 
 import VerifiedNN.Layer.Dense
 import VerifiedNN.Core.Activation
+import SciLean
 
 namespace VerifiedNN.Network
 
 open VerifiedNN.Core
 open VerifiedNN.Layer
 open VerifiedNN.Core.Activation
+open SciLean
 
 /-- MLP architecture: 784 -> 128 -> 10 -/
 structure MLPArchitecture where
@@ -38,6 +40,21 @@ def MLPArchitecture.forward (net : MLPArchitecture) (x : Vector 784) : Vector 10
   let logits := net.layer2.forward activated  -- Dense layer: 128 -> 10
   softmax logits                       -- Softmax for probabilities
 
+/-- Batched softmax activation.
+
+Applies softmax to each row of a batch independently.
+
+**Parameters:**
+- `X`: Batch of b vectors, each of dimension n
+
+**Returns:** Batch of b probability distributions, each of dimension n
+-/
+def softmaxBatch {b n : Nat} (X : Batch b n) : Batch b n :=
+  ⊞ (k, j) =>
+    -- Extract row k, apply softmax, get element j
+    let row : Vector n := ⊞ j' => X[k, j']
+    (softmax row)[j]
+
 /-- Batched forward pass.
 
 Processes a batch of inputs through the network in parallel.
@@ -53,9 +70,19 @@ def MLPArchitecture.forwardBatch {b : Nat} (net : MLPArchitecture) (X : Batch b 
   let hidden := net.layer1.forwardBatch X  -- Batched dense layer: (b, 784) -> (b, 128)
   let activated := reluBatch hidden         -- Batched ReLU activation
   let logits := net.layer2.forwardBatch activated  -- Batched dense layer: (b, 128) -> (b, 10)
-  -- TODO: Implement batched softmax when available
-  -- For now, this is a placeholder that assumes row-wise softmax
-  sorry -- Requires batched softmax implementation
+  softmaxBatch logits  -- Row-wise softmax for each sample
+
+/-- Find the index of the maximum element in a vector (argmax).
+
+**Parameters:**
+- `v`: Input vector of dimension n
+
+**Returns:** Index of the maximum element (0-indexed)
+
+**Implementation Note:** TODO: Implement proper argmax. Currently uses sorry.
+-/
+def argmax {n : Nat} (v : Vector n) : Nat :=
+  sorry  -- TODO: Implement argmax - requires proper Idx type handling
 
 /-- Predict class from network output.
 
@@ -70,8 +97,7 @@ which corresponds to the predicted class (0-9 for MNIST).
 -/
 def MLPArchitecture.predict (net : MLPArchitecture) (x : Vector 784) : Nat :=
   let output := net.forward x
-  -- TODO: Implement argmax to find the index of maximum value
-  sorry -- Requires argmax implementation
+  argmax output
 
 /-- Compute network output logits (before softmax).
 
@@ -96,9 +122,10 @@ def MLPArchitecture.forwardLogits (net : MLPArchitecture) (x : Vector 784) : Vec
 - `X`: Batch of b input vectors, each of dimension 784
 
 **Returns:** Array of predicted class indices
+
+**Implementation Note:** TODO - Requires proper Idx type handling for batched operations.
 -/
 def MLPArchitecture.predictBatch {b : Nat} (net : MLPArchitecture) (X : Batch b 784) : Array Nat :=
-  -- TODO: Implement batched prediction using argmax on each row
-  sorry -- Requires batched argmax implementation
+  sorry  -- TODO: Implement batched prediction with proper Idx type handling
 
 end VerifiedNN.Network

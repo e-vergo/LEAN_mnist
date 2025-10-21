@@ -56,7 +56,10 @@ Update rules:
 
 **Note:** This is "classical momentum" where the velocity is updated before
 applying to parameters. An alternative is Nesterov momentum which looks ahead.
+
+**Performance:** Marked inline for hot-path optimization.
 -/
+@[inline]
 def momentumStep {n : Nat} (state : MomentumState n) (gradient : Vector n) : MomentumState n :=
   let newVelocity := state.momentum • state.velocity + gradient
   { state with
@@ -75,7 +78,10 @@ Clips gradient norm before incorporating into velocity accumulation.
 - `maxNorm`: Maximum allowed gradient norm
 
 **Returns:** Updated state with clipped gradient applied
+
+**Performance:** Marked inline for hot-path optimization.
 -/
+@[inline]
 def momentumStepClipped {n : Nat} (state : MomentumState n) (gradient : Vector n) (maxNorm : Float) : MomentumState n :=
   let gradNorm := ‖gradient‖₂²
   let scaleFactor := if gradNorm > maxNorm * maxNorm then

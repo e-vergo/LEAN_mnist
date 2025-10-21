@@ -107,7 +107,7 @@ def flattenImage (image : Array (Array Float)) : IO (Vector 784) := do
       IO.eprintln s!"Warning: expected 28 columns, got {row.size}"
       return sorry  -- TODO: Return zero vector
 
-  -- Flatten in row-major order to array then vector
+  -- Flatten in row-major order and convert to vector using SciLean notation
   let flatData : Array Float ← do
     let mut arr : Array Float := Array.mkEmpty 784
     for row in image do
@@ -115,8 +115,8 @@ def flattenImage (image : Array (Array Float)) : IO (Vector 784) := do
         arr := arr.push pixel
     pure arr
 
-  -- Convert to Vector
-  return sorry  -- TODO: Fix DataArrayN construction from Array Float
+  -- Convert Array Float to Vector using indexed constructor
+  return ⊞ (i : Idx 784) => flatData[i.1]!
 
 /-- Flatten 28x28 image (pure version, assumes valid dimensions).
 
@@ -136,7 +136,8 @@ def flattenImagePure (image : Array (Array Float)) : Vector 784 :=
       for pixel in row do
         arr := arr.push pixel
     pure arr
-  sorry  -- TODO: Fix DataArrayN construction from Array Float
+  -- Convert Array Float to Vector using indexed constructor
+  ⊞ (i : Idx 784) => flatData[i.1]!
 
 /-- Reshape 784-dimensional vector to 28×28 image.
 
@@ -153,8 +154,10 @@ def reshapeToImage (vector : Vector 784) : Array (Array Float) := Id.run do
     let mut rowData : Array Float := Array.mkEmpty 28
     for col in [0:28] do
       -- row and col are in range [0,28) so row * 28 + col < 784
-      let idx : Fin 784 := ⟨row * 28 + col, sorry⟩  -- TODO: Prove row * 28 + col < 784
-      let val : Float := sorry  -- TODO: Fix vector indexing - vector[idx]!
+      -- TODO: Prove bound properly when omega can handle for-loop context
+      let linearIdx := row * 28 + col
+      let idx : Idx 784 := ⟨linearIdx.toUSize, sorry⟩
+      let val : Float := vector[idx]
       rowData := rowData.push val
     image := image.push rowData
   pure image
@@ -202,8 +205,9 @@ random number generation. Current implementation returns input unchanged.
 
 **Returns:** Image with added noise
 -/
-def addGaussianNoise {n : Nat} (image : Vector n) (stddev : Float := 0.01) : Vector n :=
+def addGaussianNoise {n : Nat} (image : Vector n) (_stddev : Float := 0.01) : Vector n :=
   -- TODO: Implement with proper RNG in IO monad
+  -- Currently returns input unchanged until RNG is implemented
   image
 
 end VerifiedNN.Data.Preprocessing

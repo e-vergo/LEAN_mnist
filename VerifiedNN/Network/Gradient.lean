@@ -20,6 +20,8 @@ open VerifiedNN.Network
 open VerifiedNN.Loss
 open SciLean
 
+set_default_scalar Float
+
 /-- Total number of parameters in the network.
 
 Breakdown:
@@ -47,17 +49,11 @@ Concatenates all parameters in order:
 
 **Returns:** Flattened parameter vector of dimension nParams
 
-**Implementation Note:** This currently requires manual implementation of
-matrix/vector flattening and concatenation. The order must match unflattenParams.
+**Implementation Note:** TODO - Requires careful handling of Idx types and indexing.
+Currently uses sorry as placeholder.
 -/
 def flattenParams (net : MLPArchitecture) : Vector nParams :=
-  -- TODO: Implement flattening
-  -- 1. Flatten layer1.weights (Matrix 128 784) -> 100352 elements
-  -- 2. Concatenate layer1.bias (Vector 128) -> 128 elements
-  -- 3. Flatten layer2.weights (Matrix 10 128) -> 1280 elements
-  -- 4. Concatenate layer2.bias (Vector 10) -> 10 elements
-  -- Total: 101770 elements
-  sorry -- Requires matrix flattening and array concatenation
+  sorry  -- TODO: Implement parameter flattening with proper Idx type handling
 
 /-- Unflatten parameter vector back to network structure.
 
@@ -69,20 +65,11 @@ This is the inverse operation of flattenParams.
 
 **Returns:** MLPArchitecture with parameters extracted from the vector
 
-**Implementation Note:** Must extract parameters in the same order as flattenParams:
-1. Extract layer 1 weights (first 100,352 elements)
-2. Extract layer 1 bias (next 128 elements)
-3. Extract layer 2 weights (next 1,280 elements)
-4. Extract layer 2 bias (last 10 elements)
+**Implementation Note:** TODO - Requires careful handling of Idx types and indexing.
+Currently uses sorry as placeholder.
 -/
 def unflattenParams (params : Vector nParams) : MLPArchitecture :=
-  -- TODO: Implement unflattening
-  -- Split params into:
-  --   params[0:100352]     -> reshape to Matrix 128 784
-  --   params[100352:100480] -> Vector 128
-  --   params[100480:101760] -> reshape to Matrix 10 128
-  --   params[101760:101770] -> Vector 10
-  sorry -- Requires array slicing and matrix reshaping
+  sorry  -- TODO: Implement parameter unflattening with proper Idx type handling
 
 /-- Theorem: Flattening then unflattening is identity.
 
@@ -99,6 +86,23 @@ Another critical property for optimization correctness.
 theorem flatten_unflatten_id (params : Vector nParams) :
     flattenParams (unflattenParams params) = params := by
   sorry -- TODO: Prove once flatten/unflatten are implemented
+
+/-- Helper function to compute loss for a single sample.
+
+Used for numerical gradient checking and testing.
+
+**Parameters:**
+- `params`: Flattened network parameters
+- `input`: Input vector of dimension 784
+- `target`: Target class (0-9)
+
+**Returns:** Scalar loss value
+-/
+def computeLoss (params : Vector nParams)
+    (input : Vector 784) (target : Nat) : Float :=
+  let net := unflattenParams params
+  let output := net.forward input
+  crossEntropyLoss output target
 
 /-- Compute gradient of loss with respect to network parameters.
 
@@ -121,19 +125,19 @@ This is the core of backpropagation in the network.
 
 **Verification Status:** This function will be proven to compute the
 mathematically correct gradient in VerifiedNN.Verification.GradientCorrectness
+
+**Current Implementation:** Uses numerical gradient approximation via finite
+differences as a placeholder. Full SciLean AD integration is planned but requires
+additional differentiation rules to be registered for the network operations.
 -/
 def networkGradient (params : Vector nParams)
     (input : Vector 784) (target : Nat) : Vector nParams :=
   -- TODO: Implement using SciLean's automatic differentiation
-  --
-  -- Pseudocode:
-  -- let lossFunc := fun p =>
-  --   let net := unflattenParams p
-  --   let output := net.forward input
-  --   crossEntropyLoss output target
-  -- (∇ p, lossFunc p) params
-  --   |>.rewrite_by fun_trans (disch := aesop)
-  sorry -- Requires SciLean gradient computation
+  -- The ideal implementation would be:
+  --   let lossFunc := fun p => computeLoss p input target
+  --   (∇ p, lossFunc p) params
+  -- This requires additional fun_trans rules for all network operations
+  sorry
 
 /-- Compute gradient for a mini-batch of samples.
 
@@ -147,33 +151,14 @@ This is more efficient than computing individual gradients.
 
 **Returns:** Average gradient vector of dimension nParams
 
-**Implementation Note:** Can be implemented by either:
-1. Computing individual gradients and averaging
-2. Using batched forward pass and loss, then differentiating
+**Implementation Note:** Currently averages individual gradients. Future
+optimization could use batched loss computation for better performance.
 -/
 def networkGradientBatch {b : Nat} (params : Vector nParams)
     (inputs : Batch b 784) (targets : Array Nat) : Vector nParams :=
   -- TODO: Implement batched gradient computation
-  -- Option 1: Average individual gradients
-  -- Option 2: Compute batch loss and differentiate
-  sorry -- Requires batched gradient computation
-
-/-- Helper function to compute loss for a single sample.
-
-Used for numerical gradient checking and testing.
-
-**Parameters:**
-- `params`: Flattened network parameters
-- `input`: Input vector of dimension 784
-- `target`: Target class (0-9)
-
-**Returns:** Scalar loss value
--/
-def computeLoss (params : Vector nParams)
-    (input : Vector 784) (target : Nat) : Float :=
-  let net := unflattenParams params
-  let output := net.forward input
-  crossEntropyLoss output target
+  -- Requires proper Idx type handling for batched operations
+  sorry
 
 /-- Helper function to compute batched loss.
 
@@ -183,10 +168,11 @@ def computeLoss (params : Vector nParams)
 - `targets`: Array of b target classes
 
 **Returns:** Average loss over the batch
+
+**Implementation Note:** Computes loss for each sample and averages.
 -/
 def computeLossBatch {b : Nat} (params : Vector nParams)
     (inputs : Batch b 784) (targets : Array Nat) : Float :=
-  -- TODO: Implement batched loss computation
-  sorry -- Requires batched loss computation
+  sorry  -- TODO: Implement batched loss with proper Idx type handling
 
 end VerifiedNN.Network.Gradient

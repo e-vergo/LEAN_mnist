@@ -37,10 +37,20 @@ Uses log-sum-exp trick for numerical stability.
   softmax(x)[i] = exp(x[i]) / Σⱼ exp(x[j])
                 = exp(x[i] - log-sum-exp(x))
 
+**Numerical Stability:**
+Using log-sum-exp prevents overflow when computing exp(x[i]) for large values.
+The subtraction x[i] - lse ensures all exponents are non-positive, preventing overflow.
+
 **Parameters:**
 - `x`: Input logits
 
 **Returns:** Probability distribution (sums to 1.0)
+
+**Properties:**
+- All elements are in [0, 1]
+- Elements sum to 1.0 (within floating-point precision)
+- Largest logit gets highest probability
+- Translation invariant: softmax(x + c) = softmax(x) for any constant c
 
 **Note:** This is a helper function for gradient computation. For activation functions,
 see Core/Activation.lean.
@@ -137,25 +147,44 @@ def regularizedLossGradient {n : Nat}
   ⊞ (i : Idx n) => ceGrad[i] + lambda * predictions[i]
 
 /-
-TODO: Register cross-entropy loss as differentiable.
+## Formal Verification TODOs
 
-This allows SciLean's automatic differentiation to compute gradients.
+These theorems establish the mathematical correctness of the gradient computation.
+They are currently commented out due to type system integration challenges between
+Float (computational) and ℝ (mathematical) domains.
 
-Complete formal verification that computed gradient matches analytical gradient.
+**Verification Strategy:**
+1. First, prove differentiability of cross-entropy on ℝ
+2. Then, prove the analytical gradient formula matches fderiv
+3. Finally, show that SciLean's automatic differentiation computes this correctly
+
+**Current Status:**
+The analytical gradient formula is mathematically correct (classical result).
+Formal proof pending resolution of Float/ℝ type correspondence.
+
+**References:**
+- Bishop, Pattern Recognition and Machine Learning (2006), Section 4.3.4
+- Murphy, Machine Learning: A Probabilistic Perspective (2012), Section 8.2.3
 -/
+
 -- @[fun_prop]
 -- theorem crossEntropyLoss_differentiable {n : Nat} (target : Nat) :
 --   Differentiable ℝ (fun (predictions : ℝ^n) => crossEntropyLoss predictions target) := by
 --   sorry
+--   -- Proof sketch:
+--   -- 1. Show log-sum-exp is differentiable (composition of differentiable functions)
+--   -- 2. Show target logit extraction is differentiable (linear)
+--   -- 3. Composition of differentiable functions is differentiable
 
-/-
-TODO: Verify that analytical gradient matches automatic differentiation.
-
-Prove that lossGradient equals the Frechet derivative of crossEntropyLoss.
--/
 -- @[fun_trans]
 -- theorem crossEntropyLoss_fderiv {n : Nat} (target : Nat) (predictions : Vector n) :
 --   fderiv ℝ (fun p => crossEntropyLoss p target) predictions = lossGradient predictions target := by
 --   sorry
+--   -- Proof sketch:
+--   -- 1. Expand fderiv of L = -z[target] + log-sum-exp(z)
+--   -- 2. ∂L/∂z[i] = -1{i=target} + ∂(log-sum-exp)/∂z[i]
+--   -- 3. ∂(log-sum-exp)/∂z[i] = exp(z[i]) / sum(exp(z[j])) = softmax(z)[i]
+--   -- 4. Therefore ∂L/∂z[i] = softmax(z)[i] - 1{i=target}
+--   -- 5. This matches lossGradient definition
 
 end VerifiedNN.Loss.Gradient

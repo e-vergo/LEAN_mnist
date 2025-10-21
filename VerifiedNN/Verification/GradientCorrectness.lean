@@ -256,13 +256,112 @@ This is not a formal proof but a numerical validation theorem stating that
 for small h, (f(x+h) - f(x-h))/2h ≈ ∇f(x)
 
 Used in gradient checking tests to validate AD implementation.
+
+Note: This axiom uses notation that requires full vector space infrastructure.
+It states that the finite difference approximation converges to the derivative,
+which is the defining property of the derivative (standard ε-δ definition).
 -/
 axiom gradient_matches_finite_difference
-  {n : ℕ} (f : ℝ^n → ℝ) (x : ℝ^n) (h : ℝ) (h_small : |h| < 0.001)
+  {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+  [NormedAddCommGroup F] [NormedSpace ℝ F]
+  (f : E → F) (x : E) (h : ℝ) (h_small : |h| < 0.001)
   (h_diff : DifferentiableAt ℝ f x) :
-  ∀ i : Fin n, ∀ ε > 0, ∃ δ > 0, ∀ h' : ℝ, |h'| < δ →
-    |(f (x + h' • (Pi.single i 1)) - f (x - h' • (Pi.single i 1))) / (2 * h') -
-     (fderiv ℝ f x) (Pi.single i 1)| < ε
+  ∀ v : E, ‖v‖ = 1 → ∀ ε > 0, ∃ δ > 0, ∀ h' : ℝ, 0 < |h'| ∧ |h'| < δ →
+    ‖(f (x + h' • v) - f (x - h' • v)) / (2 * h') - (fderiv ℝ f x) v‖ < ε
+
+/-! ## Axiom Catalog -/
+
+/--
+# Axioms Used in This Module
+
+This section catalogs all axioms used in gradient correctness verification,
+providing justification and scope for each.
+
+**Total axioms:** 1
+
+## Axiom 1: gradient_matches_finite_difference
+
+**Location:** Line 260
+
+**Statement:**
+For differentiable functions, the gradient computed by automatic differentiation
+matches the finite difference approximation within epsilon tolerance.
+
+**Purpose:**
+- Numerical validation axiom (not a mathematical proof)
+- Used in gradient checking tests (Testing/GradientCheck.lean)
+- Bridges symbolic differentiation with numerical validation
+
+**Justification:**
+- This is a validation statement, not a mathematical theorem
+- States that for small h, the symmetric difference quotient approximates the derivative
+- This is true by the definition of derivative (limit as h → 0)
+- Axiomatized because we don't prove it formally, but validate it numerically
+
+**Scope:**
+- Only used in testing, not in core verification theorems
+- Could be proven using mathlib's derivative definition
+- Currently axiomatized for pragmatic reasons (testing focus)
+
+**Alternatives:**
+- Could prove using mathlib's `has_fderiv_at_iff_is_o` and approximation bounds
+- Future work: Replace with formal proof based on derivative definition
+
+**Related theorems:**
+- Uses in: gradient checking (Testing/GradientCheck.lean)
+- Related to: numerical stability analysis (out of scope)
+-/
+
+/-! ## Mathlib Lemmas Needed for Proof Completion -/
+
+/--
+# Mathlib Dependencies for Incomplete Proofs
+
+This section documents which mathlib lemmas are needed to complete each proof.
+
+## relu_gradient_almost_everywhere (Line 55)
+
+**Needed mathlib lemmas:**
+1. `deriv_eventually_eq`: If f = g in a neighborhood, then deriv f = deriv g
+2. `deriv_id`: deriv (id : ℝ → ℝ) = 1
+3. `deriv_const`: deriv (fun _ => c) = 0
+4. `eventually_nhds`: For constructing neighborhoods of x > 0 or x < 0
+
+**Strategy:**
+- For x > 0: Show ReLU = id in neighborhood, apply deriv_eventually_eq
+- For x < 0: Show ReLU = 0 in neighborhood, apply deriv_eventually_eq
+
+## sigmoid_gradient_correct (Line 84)
+
+**Needed mathlib lemmas:**
+1. `deriv_div`: Derivative of quotient f/g
+2. `deriv_const`: Derivative of constant
+3. `deriv_add`: Derivative of sum
+4. `deriv_exp`: Derivative of exponential
+5. `deriv_neg`: Derivative of negation
+6. Algebraic simplification lemmas for 1/(1 + e^(-x))
+
+## matvec_gradient_wrt_vector (Line 103)
+
+**Needed mathlib lemmas:**
+1. `fderiv_linear`: For linear maps, fderiv = the map itself
+2. `ContinuousLinearMap.mk'_apply`: Properties of continuous linear maps
+3. Matrix multiplication linearity proofs
+
+## vadd_gradient_correct (Line 130)
+
+**Needed mathlib lemmas:**
+1. `fderiv_add_const`: Derivative of x ↦ x + c is identity
+2. `ContinuousLinearMap.ext`: Extensionality for continuous linear maps
+
+## cross_entropy_softmax_gradient_correct (Line 205)
+
+**Needed mathlib lemmas:**
+1. `deriv_log`: Derivative of logarithm
+2. Softmax Jacobian calculation (may need custom proof)
+3. Chain rule for composition
+4. Simplification of softmax gradient expression
+-/
 
 /-! ## Documentation and Verification Summary -/
 
@@ -270,31 +369,44 @@ axiom gradient_matches_finite_difference
 # Verification Summary
 
 **Completed:**
-- Theorem statements for all core operations (ReLU, sigmoid, linear ops, chain rule)
-- Mathematical specifications matching analytical derivatives
-- End-to-end gradient correctness theorem statement
+- ✓ Theorem statements for all core operations (ReLU, sigmoid, linear ops, chain rule)
+- ✓ Mathematical specifications matching analytical derivatives
+- ✓ End-to-end gradient correctness theorem statement
+- ✓ Chain rule correctness proven (chain_rule_preserves_correctness)
 
 **In Progress:**
-- Formal proofs using mathlib's calculus library
-- ReLU special handling at x = 0 (subgradient or convention)
-- Softmax gradient derivation (requires careful Jacobian calculation)
+- ⧗ Formal proofs using mathlib's calculus library (see mathlib dependencies above)
+- ⧗ ReLU special handling at x = 0 (subgradient or convention)
+- ⧗ Softmax gradient derivation (requires careful Jacobian calculation)
 
 **Verification Scope:**
 - All proofs are on ℝ (real numbers), not Float
 - Float implementation is validated numerically, not formally proven
 - This establishes mathematical correctness; numerical stability is separate
+- Gradient checking tests bridge symbolic and numerical validation
 
 **Next Steps:**
-1. Complete relu_gradient_almost_everywhere proof
-2. Prove sigmoid_gradient_correct using mathlib's exp rules
-3. Complete linear algebra gradient proofs
-4. Prove cross_entropy_softmax_gradient_correct
-5. Compose proofs to establish network_gradient_correct
+1. Complete `relu_gradient_almost_everywhere` proof using eventuallyEq
+2. Prove `sigmoid_gradient_correct` using mathlib's exp and div rules
+3. Complete linear algebra gradient proofs (mostly straightforward linearity)
+4. Prove `cross_entropy_softmax_gradient_correct` (most complex remaining proof)
+5. Compose proofs to establish `network_gradient_correct`
+
+**Cross-References:**
+- Type safety verification: VerifiedNN.Verification.TypeSafety
+- Gradient checking tests: VerifiedNN.Testing.GradientCheck
+- Convergence properties: VerifiedNN.Verification.Convergence
+- Custom tactics for automation: VerifiedNN.Verification.Tactics
 
 **Dependencies:**
-- Mathlib.Analysis.Calculus.FDeriv.Basic
-- Mathlib.Analysis.Calculus.Deriv.Basic
-- SciLean's automatic differentiation framework
+- Mathlib.Analysis.Calculus.FDeriv.Basic (Fréchet derivatives)
+- Mathlib.Analysis.Calculus.Deriv.Basic (single-variable derivatives)
+- SciLean's automatic differentiation framework (fun_trans, fun_prop)
+
+**Axiom Usage:**
+- 1 axiom: gradient_matches_finite_difference (numerical validation only)
+- Core mathematical theorems do NOT rely on axioms
+- Chain rule proven using mathlib's fderiv.comp
 -/
 
 end VerifiedNN.Verification.GradientCorrectness

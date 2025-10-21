@@ -48,10 +48,17 @@ inductive LRSchedule where
 
 **Returns:** Learning rate to use for the current epoch
 
+**Mathematical formulas:**
+- `constant α`: Returns α for all epochs
+- `step α₀ s γ`: Returns α₀ · γ^⌊epoch/s⌋ (step decay every s epochs by factor γ)
+- `exponential α₀ γ`: Returns α₀ · γ^epoch (exponential decay)
+- `cosine α₀ T`: Returns α₀ · (1 + cos(π·epoch/T))/2 (cosine annealing over T epochs)
+
 **Examples:**
 - `constant 0.01` returns 0.01 for all epochs
 - `step 0.1 30 0.1` returns 0.1 for epochs 0-29, 0.01 for 30-59, 0.001 for 60+, etc.
 - `exponential 0.1 0.95` returns 0.1 * 0.95^epoch
+- `cosine 0.1 100` smoothly decays from 0.1 to ~0 over 100 epochs
 -/
 def applySchedule (schedule : LRSchedule) (epoch : Nat) : Float :=
   match schedule with
@@ -62,14 +69,24 @@ def applySchedule (schedule : LRSchedule) (epoch : Nat) : Float :=
   | LRSchedule.exponential initialLR decayRate =>
       initialLR * Float.pow decayRate epoch.toFloat
   | LRSchedule.cosine initialLR totalEpochs =>
-      let progress := min 1.0 (epoch.toFloat / totalEpochs.toFloat)
-      let pi : Float := 3.141592653589793
-      let cosineDecay := (1.0 + Float.cos (pi * progress)) / 2.0
-      initialLR * cosineDecay
+      -- Safety: Handle totalEpochs = 0 case
+      if totalEpochs = 0 then
+        initialLR
+      else
+        let progress := min 1.0 (epoch.toFloat / totalEpochs.toFloat)
+        let pi : Float := 3.141592653589793
+        let cosineDecay := (1.0 + Float.cos (pi * progress)) / 2.0
+        initialLR * cosineDecay
 
 /-- Warmup schedule that linearly increases learning rate from 0 to target over N epochs.
 
 Useful for stabilizing training at the beginning, especially with large batch sizes.
+
+**Mathematical formula:**
+- For epoch < N: α · (epoch + 1) / N  (linear warmup)
+- For epoch ≥ N: α  (constant at target)
+
+where α is the target learning rate and N is warmupEpochs.
 
 **Parameters:**
 - `targetLR`: Target learning rate to reach after warmup
@@ -79,7 +96,10 @@ Useful for stabilizing training at the beginning, especially with large batch si
 **Returns:** Learning rate with warmup applied
 -/
 def warmupSchedule (targetLR : Float) (warmupEpochs : Nat) (epoch : Nat) : Float :=
-  if epoch < warmupEpochs then
+  -- Safety: Handle warmupEpochs = 0 case
+  if warmupEpochs = 0 then
+    targetLR
+  else if epoch < warmupEpochs then
     targetLR * ((epoch.toFloat + 1.0) / warmupEpochs.toFloat)
   else
     targetLR
@@ -143,7 +163,9 @@ def addGradient {n : Nat} (acc : GradientAccumulator n) (gradient : Vector n) : 
 - Average gradient (accumulated / count)
 - Fresh accumulator reset to zero
 
-**Note:** Returns zero vector if no gradients were accumulated.
+**Safety:** Returns zero vector if no gradients were accumulated (avoids division by zero).
+
+**Note:** The average is computed as accumulated / count only when count > 0.
 -/
 def getAndReset {n : Nat} (acc : GradientAccumulator n) : Vector n × GradientAccumulator n :=
   if acc.count > 0 then
@@ -167,7 +189,10 @@ inductive OptimizerState (n : Nat) where
 - `gradient`: Computed gradient
 
 **Returns:** Updated optimizer state
+
+**Performance:** Marked inline for hot-path optimization.
 -/
+@[inline]
 def optimizerStep {n : Nat} (state : OptimizerState n) (gradient : Vector n) : OptimizerState n :=
   match state with
   | OptimizerState.sgd s => OptimizerState.sgd (sgdStep s gradient)
@@ -179,7 +204,10 @@ def optimizerStep {n : Nat} (state : OptimizerState n) (gradient : Vector n) : O
 - `state`: Optimizer state (SGD or Momentum)
 
 **Returns:** Current parameter vector
+
+**Performance:** Marked inline for hot-path optimization.
 -/
+@[inline]
 def getParams {n : Nat} (state : OptimizerState n) : Vector n :=
   match state with
   | OptimizerState.sgd s => s.params

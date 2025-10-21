@@ -15,6 +15,51 @@ indicating success/failure and prints diagnostic information.
 
 **Verification Status:** These are computational tests, not formal proofs.
 They validate implementation behavior against expected properties.
+
+## Test Coverage Summary
+
+### Activation Functions (Core.Activation)
+- ✓ ReLU: non-negativity, correctness on positive/negative/zero
+- ✓ Sigmoid: range (0,1), midpoint at 0, monotonicity
+- ✓ Tanh: range (-1,1), odd function, zero at origin
+- ✓ Leaky ReLU: positive preservation, negative scaling
+- ✓ Derivatives: analytical formulas for relu', sigmoid', tanh'
+
+### Data Types (Core.DataTypes)
+- ✓ Approximate equality: float comparison with tolerance
+- ⚠ Vector operations: pending SciLean API clarification
+- ⚠ Matrix operations: pending SciLean API clarification
+
+### Linear Algebra (Core.LinearAlgebra)
+- ⚠ Matrix-vector multiplication: pending implementation (contains sorry)
+- ⚠ Vector operations: pending implementation
+
+### Test Infrastructure
+- ✓ assertTrue: boolean assertion helper
+- ✓ assertApproxEq: float comparison helper
+- ✓ assertVecApproxEq: vector comparison helper
+- ✓ Test runner with pass/fail summary
+
+## Current Status
+
+| Component | Tests | Status | Notes |
+|-----------|-------|--------|-------|
+| Activation Functions | 5 suites | ✓ Working | All scalar functions tested |
+| Activation Derivatives | 1 suite | ✓ Working | Analytical formulas verified |
+| Approximate Equality | 1 suite | ✓ Working | Tolerance-based comparison |
+| Vector Construction | 1 suite | ⚠ Pending | SciLean syntax clarification |
+| Matrix Construction | 1 suite | ⚠ Pending | SciLean syntax clarification |
+| Vector Operations | 1 suite | ⚠ Blocked | LinearAlgebra.lean has sorry |
+
+## Usage
+
+```bash
+# Build tests
+lake build VerifiedNN.Testing.UnitTests
+
+# Run tests (via RunTests.lean)
+lake env lean --run VerifiedNN/Testing/RunTests.lean
+```
 -/
 
 import VerifiedNN.Core.DataTypes
@@ -300,7 +345,7 @@ def runAllTests : IO Unit := do
     ("Approximate Equality", testApproxEquality)
   ]
 
-  for (name, test) in testSuites do
+  for (_, test) in testSuites do
     totalTests := totalTests + 1
     let passed ← test
     if passed then
