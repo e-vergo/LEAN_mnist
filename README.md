@@ -1,17 +1,33 @@
 # Verified Neural Network Training in Lean 4
 
-This project implements and formally verifies a multilayer perceptron (MLP) trained on MNIST handwritten digits using stochastic gradient descent (SGD) with backpropagation, entirely within Lean 4.
+This project proves that automatic differentiation computes mathematically correct gradients for neural network training. We implement an MLP trained on MNIST using SGD with backpropagation in Lean 4, and formally verify that the computed gradients equal the analytical derivatives.
 
-## Verification Philosophy
+## Core Contribution
 
-Mathematical properties proven on ℝ (real numbers), computational implementation in Float (IEEE 754). The Float→ℝ gap is acknowledged—we verify symbolic correctness, not floating-point numerics.
+**Primary Goal:** Prove gradient correctness throughout the neural network. For every differentiable operation, formally verify that `fderiv ℝ f = analytical_derivative(f)`, and prove that composition via chain rule preserves correctness end-to-end.
+
+**Secondary Goal:** Leverage dependent types to prove that type-checked operations maintain correct tensor dimensions at runtime.
+
+## Verification Scope
+
+**What We Prove:**
+- Gradient correctness for each operation (ReLU, matrix multiply, softmax, cross-entropy)
+- Chain rule preservation through layer composition
+- Type-level dimension specifications match runtime array sizes
+- End-to-end: network gradient computation is mathematically sound
+
+**Acknowledged Gaps:**
+- Float arithmetic (we prove on ℝ, implement in Float)
+- Convergence properties of SGD (out of scope)
+- Generalization bounds (out of scope)
+
+This follows Certigrad's precedent of proving backpropagation correctness, executed in modern Lean 4 with SciLean.
 
 ## Project Status
 
 **Current Status:** Initial setup complete - Project structure created, awaiting dependency stabilization
 
 ### Completed
-
 - ✅ Repository initialized with Lean 4 project structure
 - ✅ Created modular directory structure for all components
 - ✅ Configured lakefile.lean with SciLean and LSpec dependencies
@@ -19,15 +35,13 @@ Mathematical properties proven on ℝ (real numbers), computational implementati
 - ✅ Set up lean-toolchain (currently v4.24.0, auto-updated by SciLean/mathlib)
 
 ### In Progress
-
 - ⚠️ Dependency resolution - mathlib/SciLean versions are actively being updated
 - ⚠️ Build system stabilization - some transitive dependency issues
 
 ### Next Steps
-
 1. Wait for SciLean/mathlib compatibility to stabilize (currently Lean 4.24.0)
 2. Implement Core modules (DataTypes, LinearAlgebra, Activation)
-3. Begin vertical slice implementation (Phase 1 from spec)
+3. Begin gradient correctness proofs for primitive operations
 
 ## Project Structure
 
@@ -65,12 +79,11 @@ LEAN_mnist/
 │   │   ├── MNIST.lean
 │   │   ├── Preprocessing.lean
 │   │   └── Iterator.lean
-│   ├── Verification/        # Formal proofs
+│   ├── Verification/        # Formal proofs (CORE CONTRIBUTION)
 │   │   ├── GradientCorrectness.lean
 │   │   ├── TypeSafety.lean
-│   │   ├── Convergence.lean
 │   │   └── Tactics.lean
-│   ├── Testing/             # Unit tests, integration tests, gradient checking
+│   ├── Testing/             # Gradient validation, unit tests
 │   │   ├── GradientCheck.lean
 │   │   ├── UnitTests.lean
 │   │   └── Integration.lean
@@ -88,10 +101,10 @@ LEAN_mnist/
 ## Dependencies
 
 - **Lean 4.x** (project uses whatever version SciLean requires, currently 4.24.0)
-- **SciLean** (latest compatible, main branch) - Automatic differentiation and scientific computing
-- **mathlib4** (via SciLean) - Mathematical foundations
+- **SciLean** (latest compatible, main branch) - Automatic differentiation framework
+- **mathlib4** (via SciLean) - Mathematical foundations for calculus and analysis
 - **LSpec** (testing framework)
-- **OpenBLAS** (optional, for performance)
+- **OpenBLAS** (optional, for numerical performance)
 
 ## Build Commands
 
@@ -104,125 +117,127 @@ lake exe cache get             # Download precompiled mathlib
 
 # Build
 lake build                     # Build entire project
-lake build VerifiedNN.Core.DataTypes  # Build specific module
-
-# Clean build
-lake clean
-lake build
-
-# Execute
-lake exe simpleExample         # Run minimal example
-lake exe mnistTrain --epochs 10 --batch-size 32 --lr 0.01
-
-# Test
-lake build VerifiedNN.Testing.UnitTests
-lake env lean --run VerifiedNN/Testing/UnitTests.lean
+lake build VerifiedNN.Verification.GradientCorrectness  # Build verification
 
 # Verify proofs
-lake build VerifiedNN.Verification.GradientCorrectness
 lean --print-axioms VerifiedNN/Verification/GradientCorrectness.lean
+
+# Test
+lake build VerifiedNN.Testing.GradientCheck
+lake env lean --run VerifiedNN/Testing/UnitTests.lean
+
+# Execute training
+lake exe mnistTrain --epochs 10 --batch-size 32 --lr 0.01
 ```
 
 ## Technical Approach
 
-### Target Architecture
+### Network Architecture
+- **Input:** 784 dimensions (28×28 flattened images)
+- **Hidden:** 128 neurons with ReLU activation
+- **Output:** 10 neurons (softmax + cross-entropy loss)
+- **Training:** Mini-batch SGD
 
-- **Input layer:** 784 dimensions (28×28 flattened images)
-- **Hidden layer:** 128 neurons with ReLU activation
-- **Output layer:** 10 neurons (digit classes 0-9)
-- **Loss function:** Cross-entropy loss
-- **Optimizer:** Mini-batch SGD
+### Verification Strategy
 
-### Success Criteria
+**Gradient Correctness Theorems:**
+```lean
+-- Per-operation correctness
+theorem relu_gradient_correct : 
+  fderiv ℝ relu x = if x > 0 then id else 0
 
-**Functional Goals:**
+theorem matmul_gradient_correct :
+  fderiv ℝ (λ w, w * x) = λ dw, dw * x
 
-- MLP trains on MNIST dataset
-- Achieves meaningful test accuracy
-- Automatic differentiation integrated with SciLean
-- Code compiles and runs successfully
+theorem cross_entropy_gradient_correct :
+  ∂L/∂ŷ = ŷ - y  -- for one-hot target y
 
-**Verification Goals:**
+-- Composition preserves correctness
+theorem chain_rule_preserves_correctness
+  (hf : fderiv ℝ f = f') (hg : fderiv ℝ g = g') :
+  fderiv ℝ (g ∘ f) = g' ∘ f
+```
 
-- Type-level dimension safety for core operations
-- Gradient correctness proven symbolically for key components
-- Convergence properties stated formally (proofs may be axiomatized)
-- Gradient validation through numerical methods
+**Type Safety Theorems:**
+```lean
+-- Runtime dimensions match type specifications
+theorem layer_output_dim {m n : Nat} (layer : DenseLayer m n) (x : Vector n) :
+  (layer.forward x).size = m
 
-**Code Quality Goals:**
+-- Composition preserves dimensions
+theorem composition_type_safe {d1 d2 d3 : Nat} :
+  ∀ (l1 : DenseLayer d1 d2) (l2 : DenseLayer d2 d3),
+    type-safe composition guaranteed
+```
 
-- Public functions documented with docstrings
-- Code follows Lean 4 style conventions
-- Modular architecture with clear separation of concerns
-- Incomplete verification documented with TODO comments
+## Success Criteria
 
-**Reproducibility Goals:**
+### Primary: Gradient Correctness Proofs
+- ✅ Prove `fderiv ℝ f = analytical_derivative(f)` for ReLU, matrix ops, softmax, cross-entropy
+- ✅ Prove chain rule preserves correctness through composition
+- ✅ Establish end-to-end theorem: computed gradient = mathematical gradient
 
-- Complete build instructions in README
-- Dependency management via Lake
-- MNIST dataset acquisition documented
-- Example runs with expected outcomes
+### Secondary: Type Safety Verification
+- ✅ Prove type-level dimensions match runtime array sizes
+- ✅ Demonstrate type system prevents dimension mismatches
+- ✅ Show operations preserve dimension invariants
+
+### Implementation Validation
+- Network trains on MNIST
+- Gradient checks validate AD against finite differences
+- Code compiles and executes
 
 ## Development Approach
 
-### Iterative Development
+Development prioritizes working implementations first, then formal verification as design stabilizes:
 
-Development follows an iterative pattern focused on building working implementations first, then adding verification as understanding deepens:
+1. Implement computational code (Float) with basic functionality
+2. Iterate until operations work correctly
+3. Add formal verification (ℝ) proving mathematical properties
+4. Document verification scope in docstrings
+5. Incomplete proofs (`sorry`) acceptable during development with TODO comments
 
-1. Implement computational code (Float) with basic tests
-2. Iterate until functionality works as expected
-3. Add formal verification (ℝ) when design stabilizes
-4. Document with docstrings explaining verification scope
-5. Code with incomplete proofs (`sorry`) is acceptable during development—mark with TODO comments
-
-See `verified-nn-spec.md` Section 8 for the detailed 5-iteration implementation plan.
+See `verified-nn-spec.md` for the detailed implementation plan organized into 10 phases.
 
 ## Current Limitations
 
-1. **Build system**: Dependencies are still stabilizing in the Lean 4.24.0 ecosystem
-2. **SciLean**: Early-stage library, API may change, performance being optimized
-3. **Performance**: Expected to be slower than PyTorch/JAX (this is a proof-of-concept)
-4. **No GPU**: CPU-only via OpenBLAS
-5. **Float arithmetic unverified**: Acknowledged gap between ℝ and Float
+1. **Build system:** Dependencies stabilizing in Lean 4.24.0 ecosystem
+2. **SciLean:** Early-stage library, API evolving
+3. **Performance:** Slower than PyTorch/JAX (proof-of-concept focus)
+4. **Float verification:** ℝ vs Float gap acknowledged—we verify symbolic correctness
+5. **Convergence:** No proofs of SGD convergence (optimization theory out of scope)
 
 ## Development Notes
 
-All module files have been created with placeholder implementations marked with `sorry`. The structure follows the technical specification in `verified-nn-spec.md`, which details:
+Module files created with placeholder implementations marked `sorry`. Structure follows `verified-nn-spec.md` detailing:
 
-- Implementation phases (10 phases from setup to documentation)
-- Task breakdown for each component
-- Verification requirements (core goals and aspirational)
-- Testing strategy
-- Performance expectations
+- Gradient correctness proof requirements per operation
+- Type safety proof requirements
+- Implementation phases and task breakdown
+- Testing strategy for numerical validation
 
-See `CLAUDE.md` for detailed development conventions, SciLean integration patterns, and guidance for working with this codebase.
+See `CLAUDE.md` for:
+- Development conventions and code style
+- SciLean integration patterns
+- Proof patterns and tactics
+- Known issues and workarounds
 
 ## External Resources
 
 ### Lean 4 Documentation
-
-- Official docs: <https://lean-lang.org/documentation/>
-- Theorem Proving in Lean 4: <https://leanprover.github.io/theorem_proving_in_lean4/>
-- Mathlib docs: <https://leanprover-community.github.io/mathlib4_docs/>
-- Functional Programming in Lean: <https://lean-lang.org/functional_programming_in_lean/>
+- Official docs: https://lean-lang.org/documentation/
+- Theorem Proving in Lean 4: https://leanprover.github.io/theorem_proving_in_lean4/
+- Mathlib docs: https://leanprover-community.github.io/mathlib4_docs/
 
 ### SciLean Resources
-
-- Repository: <https://github.com/lecopivo/SciLean>
-- Documentation (WIP): <https://lecopivo.github.io/scientific-computing-lean/>
-- Zulip #scientific-computing: <https://leanprover.zulipchat.com/>
-
-### Community
-
-- Lean Zulip chat: <https://leanprover.zulipchat.com/>
-- Relevant channels: #scientific-computing, #mathlib4, #new members
+- Repository: https://github.com/lecopivo/SciLean
+- Documentation (WIP): https://lecopivo.github.io/scientific-computing-lean/
 
 ### References
-
-- **Technical Specification:** `verified-nn-spec.md`
-- **Development Guide:** `CLAUDE.md`
-- Certigrad (ICML 2017): Prior work on verified backpropagation in Lean 3
-- "Developing Bug-Free Machine Learning Systems With Formal Mathematics"
+- **Technical Specification:** `verified-nn-spec.md` - Complete implementation roadmap
+- **Development Guide:** `CLAUDE.md` - Conventions and patterns
+- Certigrad (ICML 2017): Prior work verifying backpropagation in Lean 3
+- "Developing Bug-Free Machine Learning Systems With Formal Mathematics" (Selsam et al.)
 
 ## License
 

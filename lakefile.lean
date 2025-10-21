@@ -15,11 +15,12 @@ package «verifiedNN» where
     "-Dpp.unicode.fun=true",
     "-DautoImplicit=false"
   ]
-  moreLeanArgs := #["-O3"]
+  -- Optimization flags commented out for Lean 4.23.0 compatibility
+  -- moreLeanArgs := #["-O3"]
   moreLeancArgs := #["-O3", "-march=native"]
 
 require scilean from git
-  "https://github.com/lecopivo/SciLean.git" @ "main"
+  "https://github.com/lecopivo/SciLean.git" @ "master"
 
 require LSpec from git
   "https://github.com/argumentcomputer/LSpec.git" @ "main"
