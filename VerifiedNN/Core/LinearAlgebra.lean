@@ -171,9 +171,7 @@ Mathematical Statement: x + y = y + x
 -/
 theorem vadd_comm {n : Nat} (x y : Vector n) : vadd x y = vadd y x := by
   unfold vadd
-  congr
   funext i
-  simp [SciLean.getElem_ofFn]
   ring
 
 /-- Vector addition is associative.

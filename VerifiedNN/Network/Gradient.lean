@@ -38,14 +38,6 @@ private theorem idx_toNat_lt {n : Nat} (i : Idx n) : i.1.toNat < n := by
   -- i.1 is the USize component, convert via the equivalence
   exact h
 
-/-- Technical lemma: For-loop range membership.
-
-    In a `for i in [0:n]` loop, we have `i < n` by construction.
-    This is axiomatized as it requires understanding Lean's ForIn typeclass for Std.Range.
-
-    TODO: Prove using Std.Range.mem and ForIn.toStream properties. -/
-private axiom range_mem_bound {n : Nat} (i : Nat) : i < n → i < n  -- Tautology, but helps omega in loop context
-
 /-- Total number of parameters in the network.
 
 Breakdown:
