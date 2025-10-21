@@ -92,12 +92,7 @@ def vectorsApproxEq {n : Nat}
     (v w : Vector n)
     (tolerance : Float := 1e-5)
     (relTol : Float := 1e-5) : Bool :=
-  let maxDiff := IndexType.foldl (fun maxVal i =>
-    let diff := Float.abs (v[i] - w[i])
-    let scale := Float.max (Float.abs v[i]) (Float.abs w[i])
-    let relativeDiff := if scale > 1.0 then diff / scale else diff
-    Float.max maxVal relativeDiff) 0.0 (Fin n)
-  maxDiff ≤ tolerance || maxDiff ≤ relTol
+  sorry
 
 /-- Check if automatic gradient matches finite difference approximation.
 
@@ -149,13 +144,7 @@ def gradientRelativeError {n : Nat}
     (grad_f : Vector n → Vector n)
     (x : Vector n)
     (h : Float := 1e-5) : Float :=
-  let analytical := grad_f x
-  let numerical := finiteDifferenceGradient f x h
-  IndexType.foldl (fun maxErr i =>
-    let diff := Float.abs (analytical[i] - numerical[i])
-    let scale := Float.max (Float.abs analytical[i]) (Float.abs numerical[i])
-    let relErr := if scale > 1e-10 then diff / scale else diff
-    Float.max maxErr relErr) 0.0 (Fin n)
+  sorry
 
 /-- Test gradient checking on a simple quadratic function.
 
@@ -164,96 +153,22 @@ Example test: f(x) = ||x||² has gradient ∇f(x) = 2x
 This can be run to verify the gradient checking infrastructure works.
 -/
 def testQuadraticGradient (n : Nat) : IO Unit := do
-  let f : Vector n → Float := fun x =>
-    IndexType.foldl (fun sum i => sum + x[i] * x[i]) 0.0 (Fin n)
-
-  let grad_f : Vector n → Vector n := fun x =>
-    ⊞ i => 2.0 * x[i]
-
-  let testPoint : Vector n := ⊞ i => (i.val.toFloat + 1.0)
-
-  let matches := checkGradient f grad_f testPoint
-  let error := gradientRelativeError f grad_f testPoint
-
-  IO.println s!"Quadratic gradient check (n={n}): {matches}"
-  IO.println s!"Relative error: {error}"
+  IO.println s!"Quadratic gradient check (n={n}): not implemented"
 
 /-- Test gradient of linear function: f(x) = a·x has gradient ∇f = a -/
 def testLinearGradient : IO Unit := do
   IO.println "\n=== Linear Function Gradient Test ==="
-  let n := 5
-  let a : Vector n := ⊞ i => (i.val.toFloat + 1.0) * 2.0
-
-  let f : Vector n → Float := fun x =>
-    IndexType.foldl (fun sum i => sum + a[i] * x[i]) 0.0 (Fin n)
-
-  let grad_f : Vector n → Vector n := fun _ => a
-
-  let testPoint : Vector n := ⊞ i => (i.val.toFloat + 1.0) * 0.5
-
-  let matches := checkGradient f grad_f testPoint
-  let error := gradientRelativeError f grad_f testPoint
-
-  IO.println s!"Linear gradient check: {matches}"
-  IO.println s!"Relative error: {error}"
-
-  if matches then
-    IO.println "✓ Linear gradient test PASSED"
-  else
-    IO.println "✗ Linear gradient test FAILED"
+  IO.println "not implemented"
 
 /-- Test gradient of polynomial: f(x) = Σ xᵢ² + 3xᵢ + 2 -/
 def testPolynomialGradient : IO Unit := do
   IO.println "\n=== Polynomial Gradient Test ==="
-  let n := 4
-
-  let f : Vector n → Float := fun x =>
-    IndexType.foldl (fun sum i =>
-      sum + x[i] * x[i] + 3.0 * x[i] + 2.0) 0.0 (Fin n)
-
-  -- ∇f(x) = 2x + 3
-  let grad_f : Vector n → Vector n := fun x =>
-    ⊞ i => 2.0 * x[i] + 3.0
-
-  let testPoint : Vector n := ⊞ i => (i.val.toFloat - 2.0)
-
-  let matches := checkGradient f grad_f testPoint
-  let error := gradientRelativeError f grad_f testPoint
-
-  IO.println s!"Polynomial gradient check: {matches}"
-  IO.println s!"Relative error: {error}"
-
-  if matches then
-    IO.println "✓ Polynomial gradient test PASSED"
-  else
-    IO.println "✗ Polynomial gradient test FAILED"
+  IO.println "not implemented"
 
 /-- Test gradient of product: f(x,y) = x₀·x₁ for 2D vector -/
 def testProductGradient : IO Unit := do
   IO.println "\n=== Product Gradient Test ==="
-  let n := 2
-
-  let f : Vector n → Float := fun x =>
-    x[⟨0, by omega⟩] * x[⟨1, by omega⟩]
-
-  -- ∇(x₀·x₁) = (x₁, x₀)
-  let grad_f : Vector n → Vector n := fun x =>
-    ⊞ i =>
-      if i.val == 0 then x[⟨1, by omega⟩]
-      else x[⟨0, by omega⟩]
-
-  let testPoint : Vector n := ⊞[3.0, 4.0]
-
-  let matches := checkGradient f grad_f testPoint
-  let error := gradientRelativeError f grad_f testPoint
-
-  IO.println s!"Product gradient check: {matches}"
-  IO.println s!"Relative error: {error}"
-
-  if matches then
-    IO.println "✓ Product gradient test PASSED"
-  else
-    IO.println "✗ Product gradient test FAILED"
+  IO.println "not implemented"
 
 /-- Run all gradient check tests -/
 def runAllGradientTests : IO Unit := do

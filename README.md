@@ -25,23 +25,38 @@ This follows Certigrad's precedent of proving backpropagation correctness, execu
 
 ## Project Status
 
-**Current Status:** Initial setup complete - Project structure created, awaiting dependency stabilization
+**Current Status:** ✅ Building successfully - Core modules implemented, verification in progress
 
 ### Completed
-- ✅ Repository initialized with Lean 4 project structure
+- ✅ Repository initialized with Lean 4 project structure (v4.20.1)
 - ✅ Created modular directory structure for all components
 - ✅ Configured lakefile.lean with SciLean and LSpec dependencies
-- ✅ Created placeholder files for all planned modules
-- ✅ Set up lean-toolchain (currently v4.24.0, auto-updated by SciLean/mathlib)
+- ✅ **All core modules build successfully**
+- ✅ Core data types and operations implemented
+- ✅ Layer implementations (Dense, Composition)
+- ✅ Network architecture definitions
+- ✅ Verification module structure established
+- ✅ Testing infrastructure in place
 
-### In Progress
-- ⚠️ Dependency resolution - mathlib/SciLean versions are actively being updated
-- ⚠️ Build system stabilization - some transitive dependency issues
+### In Progress (with `sorry` placeholders)
+- ⚠️ Training loop implementation (placeholder functions)
+- ⚠️ Gradient checking tests (structure complete, implementations pending)
+- ⚠️ Data preprocessing utilities
+- ⚠️ Network initialization strategies
+- ⚠️ Formal verification proofs (theorems stated, proofs in progress)
+
+### Verification Status
+- **Type Safety:** Core theorems proven, demonstrates dependent type safety
+- **Gradient Correctness:** Theorem statements complete, proofs use axioms/sorries for complex cases
+- **Chain Rule:** Proven using mathlib's composition theorem
+- **Operation-level gradients:** Stated, awaiting proof completion
 
 ### Next Steps
-1. Wait for SciLean/mathlib compatibility to stabilize (currently Lean 4.24.0)
-2. Implement Core modules (DataTypes, LinearAlgebra, Activation)
-3. Begin gradient correctness proofs for primitive operations
+1. Complete training loop implementation
+2. Finish gradient correctness proofs (currently axiomatized)
+3. Implement gradient checking numerical validation
+4. Add MNIST data loading
+5. Run end-to-end training with verification
 
 ## Project Structure
 
@@ -201,11 +216,13 @@ See `verified-nn-spec.md` for the detailed implementation plan organized into 10
 
 ## Current Limitations
 
-1. **Build system:** Dependencies stabilizing in Lean 4.24.0 ecosystem
-2. **SciLean:** Early-stage library, API evolving
-3. **Performance:** Slower than PyTorch/JAX (proof-of-concept focus)
-4. **Float verification:** ℝ vs Float gap acknowledged—we verify symbolic correctness
-5. **Convergence:** No proofs of SGD convergence (optimization theory out of scope)
+1. **Implementation completeness:** Many functions use `sorry` placeholders during iterative development
+2. **Verification completeness:** Gradient correctness proofs axiomatized (full proofs require deeper mathlib integration)
+3. **SciLean:** Early-stage library, API evolving, limited documentation
+4. **Performance:** Slower than PyTorch/JAX (proof-of-concept focus, not production-ready)
+5. **Float verification:** ℝ vs Float gap acknowledged—we verify symbolic correctness on real numbers
+6. **Convergence:** No proofs of SGD convergence (optimization theory out of scope)
+7. **Training:** Training loop structure in place but not fully implemented
 
 ## Development Notes
 

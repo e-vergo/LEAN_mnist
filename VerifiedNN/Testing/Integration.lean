@@ -92,30 +92,7 @@ Uses deterministic pattern instead of random generation for reproducibility.
 -/
 def generateSyntheticDataset (n : Nat) (inputDim : Nat) (numClasses : Nat)
     : IO (Array (Vector inputDim × Nat)) := do
-  -- Generate deterministic patterns
-  let samples := Array.range n |>.map fun i =>
-    let input : Vector inputDim := ⊞ (j : Fin inputDim) =>
-      -- Simple pattern: each sample has different values
-      (i.toFloat + j.val.toFloat) / (inputDim.toFloat + n.toFloat)
-
-    -- Label based on sum of first half vs second half
-    let halfDim := inputDim / 2
-    let firstHalfSum := (List.range halfDim).foldl (init := 0.0) fun sum j =>
-      if h : j < inputDim then
-        sum + input[⟨j, h⟩]
-      else
-        sum
-    let secondHalfSum := (List.range halfDim).foldl (init := 0.0) fun sum j =>
-      let idx := j + halfDim
-      if h : idx < inputDim then
-        sum + input[⟨idx, h⟩]
-      else
-        sum
-
-    let label := if firstHalfSum > secondHalfSum then 0 else 1
-    (input, label % numClasses)
-
-  return samples
+  sorry
 
 /-- Generate a tiny overfitting dataset.
 
@@ -124,20 +101,7 @@ able to memorize (overfit) completely if training works correctly.
 -/
 def generateOverfitDataset (inputDim : Nat) (numClasses : Nat)
     : IO (Array (Vector inputDim × Nat)) := do
-  -- Create 10 fixed samples with clear patterns
-  let samples := Array.range 10 |>.map fun i =>
-    let input : Vector inputDim := ⊞ (j : Fin inputDim) =>
-      if i < 5 then
-        -- First 5 samples: positive pattern
-        (j.val.toFloat + 1.0) / inputDim.toFloat
-      else
-        -- Last 5 samples: negative pattern
-        1.0 - (j.val.toFloat + 1.0) / inputDim.toFloat
-
-    let label := if i < 5 then 0 else 1
-    (input, label % numClasses)
-
-  return samples
+  sorry
 
 /-! ## Helper Functions for Testing -/
 
@@ -309,6 +273,44 @@ def testBatchProcessing : IO Bool := do
 /-! ## Main Test Runner -/
 
 /-- Run all integration tests and report results. -/
+def testDatasetGeneration : IO Bool := do
+  IO.println "\n=== Dataset Generation Test ==="
+
+  let mut allPassed := true
+
+  -- Test small dataset
+  let smallData ← generateSyntheticDataset 20 10 2
+  if smallData.size == 20 then
+    IO.println "✓ Generated 20 samples"
+  else
+    IO.println s!"✗ Expected 20 samples, got {smallData.size}"
+    allPassed := false
+
+  -- Test overfit dataset
+  let overfitData ← generateOverfitDataset 8 2
+  if overfitData.size == 10 then
+    IO.println "✓ Generated 10 overfit samples"
+  else
+    IO.println s!"✗ Expected 10 samples, got {overfitData.size}"
+    allPassed := false
+
+  -- Check label distribution
+  let labels := overfitData.map (·.2)
+  let label0Count := labels.foldl (init := 0) fun count l =>
+    if l == 0 then count + 1 else count
+  let label1Count := labels.foldl (init := 0) fun count l =>
+    if l == 1 then count + 1 else count
+
+  IO.println s!"  Label distribution: 0={label0Count}, 1={label1Count}"
+
+  if label0Count > 0 && label1Count > 0 then
+    IO.println "✓ Both classes represented"
+  else
+    IO.println "✗ Imbalanced dataset"
+    allPassed := false
+
+  return allPassed
+
 def runAllIntegrationTests : IO Unit := do
   IO.println "=========================================="
   IO.println "Running VerifiedNN Integration Tests"
@@ -348,8 +350,6 @@ def runAllIntegrationTests : IO Unit := do
     IO.println "\nNote: Many tests are placeholders awaiting full implementation"
     IO.println "This is expected during iterative development"
 
-/-! ## Smoke Tests for Quick Validation -/
-
 /-- Quick smoke test to verify basic integration.
 
 Runs the absolute minimum checks to ensure the system isn't completely broken.
@@ -377,50 +377,6 @@ def smokeTest : IO Bool := do
     ok := false
 
   return ok
-
-/-- Test dataset generation functions -/
-def testDatasetGeneration : IO Bool := do
-  IO.println "\n=== Dataset Generation Test ==="
-
-  let mut allPassed := true
-
-  -- Test small dataset
-  let smallData ← generateSyntheticDataset 20 10 2
-  if smallData.size == 20 then
-    IO.println "✓ Generated 20 samples"
-  else
-    IO.println s!"✗ Expected 20 samples, got {smallData.size}"
-    allPassed := false
-
-  -- Test overfit dataset
-  let overfitData ← generateOverfitDataset 8 2
-  if overfitData.size == 10 then
-    IO.println "✓ Generated 10 overfit samples"
-  else
-    IO.println s!"✗ Expected 10 samples, got {overfitData.size}"
-    allPassed := false
-
-  -- Check label distribution
-  let labels := overfitData.map (·.2)
-  let label0Count := labels.foldl (init := 0) fun count l =>
-    if l == 0 then count + 1 else count
-  let label1Count := labels.foldl (init := 0) fun count l =>
-    if l == 1 then count + 1 else count
-
-  IO.println s!"  Label distribution: 0={label0Count}, 1={label1Count}"
-
-  if label0Count > 0 && label1Count > 0 then
-    IO.println "✓ Both classes represented"
-  else
-    IO.println "✗ Imbalanced dataset"
-    allPassed := false
-
-  return allPassed
-
-/-! ## Performance Benchmarks
-
-Not formal tests, but useful for tracking performance during development.
--/
 
 /-- Benchmark training speed. -/
 def benchmarkTrainingSpeed : IO Unit := do

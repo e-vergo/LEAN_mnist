@@ -163,7 +163,15 @@ def reshapeToImage (vector : Vector 784) : Array (Array Float) := Id.run do
           -- This is a technical limitation of Lean's omega tactic
           -- The bound is mathematically trivial given hbound
           let idx : Idx 784 := ⟨linearIdx.toUSize, by
-            sorry  -- TODO: USize bound proof (technical detail)
+            -- Rewrite toUSize as ofNat, then apply toNat_ofNat_of_lt
+            rw [Nat.toUSize_eq]
+            rw [USize.toNat_ofNat_of_lt']
+            · exact hbound
+            · -- Show linearIdx < USize.size
+              -- Since linearIdx < 784, and 784 < 2^32 <= USize.size
+              calc linearIdx < 784 := hbound
+                _ < 4294967296 := by norm_num
+                _ ≤ USize.size := USize.le_size
           ⟩
           let val : Float := vector[idx]
           rowData := rowData.push val

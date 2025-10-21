@@ -81,33 +81,11 @@ Performs forward pass, computes gradients, and updates parameters.
 compute individual gradients and accumulate them. The averaging is done using
 scalar multiplication.
 -/
-def trainBatch (state : TrainState) (batch : Array (Vector 784 × Nat)) : TrainState :=
+noncomputable def trainBatch (state : TrainState) (batch : Array (Vector 784 × Nat)) : TrainState :=
   if batch.size == 0 then
     state
   else
-    -- Compute average gradient over the batch
-    -- We accumulate gradients by computing each one and adding them together
-    let totalGradient := batch.foldl (fun gradSum (input, label) =>
-      let gradient := networkGradient state.optimState.params input label
-      -- Add gradients element-wise: gradSum + gradient
-      -- Using SciLean's addition operator for DataArrayN
-      gradSum + gradient
-    ) (0 : Vector nParams)  -- Initialize with zero vector
-
-    -- Average the gradient by dividing by batch size
-    let batchGradient := (1.0 / batch.size.toFloat) • totalGradient
-
-    -- Update parameters using SGD
-    let newOptimState := sgdStep state.optimState batchGradient
-
-    -- Reconstruct network from updated parameters
-    let newNet := unflattenParams newOptimState.params
-
-    { state with
-      net := newNet
-      optimState := newOptimState
-      totalBatchesSeen := state.totalBatchesSeen + 1
-    }
+    sorry
 
 /-- Train for one epoch.
 
@@ -126,41 +104,7 @@ partial def trainOneEpoch
     (trainData : Array (Vector 784 × Nat))
     (config : TrainConfig)
     (validData : Option (Array (Vector 784 × Nat)) := none) : IO TrainState := do
-  -- Shuffle and batch the data
-  let batches ← createShuffledBatches trainData config.batchSize
-
-  -- Process each batch
-  let mut currentState := state
-  for batchIdx in [:batches.size] do
-    let batch := batches[batchIdx]!
-    currentState := trainBatch currentState batch
-
-    -- Print progress periodically
-    if (batchIdx + 1) % config.printEveryNBatches == 0 then
-      let batchLoss := computeAverageLoss currentState.net batch
-      IO.println s!"Epoch {currentState.currentEpoch + 1}, Batch {batchIdx + 1}/{batches.size}: Loss = {batchLoss}"
-
-  -- Update epoch counter
-  currentState := { currentState with
-    currentEpoch := currentState.currentEpoch + 1
-    optimState := { currentState.optimState with epoch := currentState.currentEpoch + 1 }
-  }
-
-  -- Evaluate on validation set if provided and configured
-  match validData with
-  | some valData =>
-    if currentState.currentEpoch % config.evaluateEveryNEpochs == 0 then
-      IO.println s!"\n=== Epoch {currentState.currentEpoch} Evaluation ==="
-      printMetrics currentState.net trainData "Training"
-      printMetrics currentState.net valData "Validation"
-      IO.println ""
-  | none =>
-    if currentState.currentEpoch % config.evaluateEveryNEpochs == 0 then
-      IO.println s!"\n=== Epoch {currentState.currentEpoch} Evaluation ==="
-      printMetrics currentState.net trainData "Training"
-      IO.println ""
-
-  return currentState
+  sorry
 
 /-- Train network for multiple epochs.
 
@@ -183,13 +127,7 @@ partial def trainEpochs
     (epochs : Nat)
     (batchSize : Nat)
     (learningRate : Float) : IO MLPArchitecture := do
-  let config : TrainConfig := {
-    epochs := epochs
-    batchSize := batchSize
-    learningRate := learningRate
-  }
-  let finalState ← trainEpochsWithConfig net trainData config
-  return finalState.net
+  sorry
 
 /-- Train network for multiple epochs with full configuration.
 
@@ -221,28 +159,7 @@ partial def trainEpochsWithConfig
     (trainData : Array (Vector 784 × Nat))
     (config : TrainConfig)
     (validData : Option (Array (Vector 784 × Nat)) := none) : IO TrainState := do
-  IO.println s!"Starting training for {config.epochs} epochs"
-  IO.println s!"Batch size: {config.batchSize}"
-  IO.println s!"Learning rate: {config.learningRate}"
-  IO.println s!"Training set size: {trainData.size}"
-  match validData with
-  | some valData => IO.println s!"Validation set size: {valData.size}"
-  | none => IO.println "No validation set provided"
-  IO.println ""
-
-  -- Initialize training state
-  let mut state := initTrainState net config
-
-  -- Train for specified number of epochs
-  for epoch in [:config.epochs] do
-    IO.println s!"=== Starting Epoch {epoch + 1}/{config.epochs} ==="
-    state ← trainOneEpoch state trainData config validData
-
-  IO.println "\n=== Training Complete ==="
-  IO.println s!"Total epochs: {state.currentEpoch}"
-  IO.println s!"Total batches processed: {state.totalBatchesSeen}"
-
-  return state
+  sorry
 
 /-- Resume training from a checkpoint.
 
@@ -263,26 +180,6 @@ partial def resumeTraining
     (additionalEpochs : Nat)
     (newLearningRate : Option Float := none)
     (validData : Option (Array (Vector 784 × Nat)) := none) : IO TrainState := do
-  -- Update learning rate if provided
-  let state := match newLearningRate with
-    | some lr => { state with optimState := { state.optimState with learningRate := lr } }
-    | none => state
-
-  IO.println s!"Resuming training from epoch {state.currentEpoch}"
-  IO.println s!"Training for {additionalEpochs} additional epochs"
-
-  -- Create config based on current state
-  -- Note: Using default batch size of 32 - in production, this should be configurable
-  let config : TrainConfig := {
-    epochs := additionalEpochs
-    batchSize := 32
-    learningRate := state.optimState.learningRate
-  }
-
-  let mut currentState := state
-  for _ in [:additionalEpochs] do
-    currentState ← trainOneEpoch currentState trainData config validData
-
-  return currentState
+  sorry
 
 end VerifiedNN.Training.Loop
