@@ -89,3 +89,7 @@ unsafe def main : IO Unit := do
   IO.println "==================================="
 
 end VerifiedNN.Testing.SmokeTest
+
+-- Top-level main export for Lake executable
+-- Forward to namespace main (both are unsafe so direct call works)
+unsafe def main : IO Unit := VerifiedNN.Testing.SmokeTest.main

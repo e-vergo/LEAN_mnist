@@ -144,12 +144,12 @@ def testDivisionByZeroHandling : IO Bool := do
 
   -- Zero vector norm
   let zeroVec : Vector 3 := ⊞[0.0, 0.0, 0.0]
-  let zeroNorm := norm zeroVec
+  let zeroNorm := LinearAlgebra.norm zeroVec
   allPassed := allPassed && (← assertApproxEq "Norm: zero vector → 0" zeroNorm 0.0)
 
   -- Very small vector norm (near underflow)
   let tinyVec : Vector 3 := ⊞[1e-30, 1e-30, 1e-30]
-  let tinyNorm := norm tinyVec
+  let tinyNorm := LinearAlgebra.norm tinyVec
   allPassed := allPassed && (← assertFinite "Norm: tiny vector is finite" tinyNorm)
   allPassed := allPassed && (← assertTrue "Norm: tiny vector > 0" (tinyNorm > 0.0))
 
@@ -170,7 +170,7 @@ def testNaNAndInfHandling : IO Bool := do
 
   -- Check that operations with reasonable inputs don't produce NaN/Inf
   let normalVec : Vector 3 := ⊞[1.0, 2.0, 3.0]
-  let normalNorm := norm normalVec
+  let normalNorm := LinearAlgebra.norm normalVec
   allPassed := allPassed && (← assertNotNaN "Norm: normal vector not NaN" normalNorm)
   allPassed := allPassed && (← assertNotInf "Norm: normal vector not Inf" normalNorm)
 
@@ -183,8 +183,9 @@ def testNaNAndInfHandling : IO Bool := do
   let probs := softmax logits
   for i in [:3] do
     if h : i < 3 then
-      allPassed := allPassed && (← assertNotNaN s!"Softmax: p[{i}] not NaN" probs[⟨i, h⟩])
-      allPassed := allPassed && (← assertNotInf s!"Softmax: p[{i}] not Inf" probs[⟨i, h⟩])
+      let pi := ∑ (idx : Idx 3), if idx.1.toNat == i then probs[idx] else 0.0
+      allPassed := allPassed && (← assertNotNaN s!"Softmax: p[{i}] not NaN" pi)
+      allPassed := allPassed && (← assertNotInf s!"Softmax: p[{i}] not Inf" pi)
 
   return allPassed
 
@@ -198,14 +199,14 @@ def testUnderflowAndOverflow : IO Bool := do
 
   -- Very large vector components
   let largeVec : Vector 2 := ⊞[1e30, 1e30]
-  let largeNorm := norm largeVec
+  let largeNorm := LinearAlgebra.norm largeVec
   -- Norm should be large but finite
   allPassed := allPassed && (← assertFinite "Norm: large vector is finite" largeNorm)
   allPassed := allPassed && (← assertTrue "Norm: large vector is large" (largeNorm > 1e30))
 
   -- Very small vector components (underflow region)
   let smallVec : Vector 2 := ⊞[1e-150, 1e-150]
-  let smallNorm := norm smallVec
+  let smallNorm := LinearAlgebra.norm smallVec
   allPassed := allPassed && (← assertFinite "Norm: tiny vector is finite" smallNorm)
   -- May underflow to zero, which is acceptable
   IO.println s!"  Norm of [1e-150, 1e-150]: {smallNorm}"
@@ -231,7 +232,7 @@ def testSoftmaxStability : IO Bool := do
   -- All probabilities should be finite and in (0, 1)
   for i in [:3] do
     if h : i < 3 then
-      let pi := hugeProbs[⟨i, h⟩]
+      let pi := ∑ (idx : Idx 3), if idx.1.toNat == i then hugeProbs[idx] else 0.0
       allPassed := allPassed && (← assertNotNaN s!"Softmax: huge logits p[{i}] not NaN" pi)
       allPassed := allPassed && (← assertNotInf s!"Softmax: huge logits p[{i}] not Inf" pi)
       allPassed := allPassed && (← assertTrue s!"Softmax: huge logits p[{i}] ∈ (0,1)" (pi > 0.0 && pi < 1.0))
@@ -246,7 +247,7 @@ def testSoftmaxStability : IO Bool := do
 
   for i in [:3] do
     if h : i < 3 then
-      let pi := negativeProbs[⟨i, h⟩]
+      let pi := ∑ (idx : Idx 3), if idx.1.toNat == i then negativeProbs[idx] else 0.0
       allPassed := allPassed && (← assertFinite s!"Softmax: negative logits p[{i}] finite" pi)
 
   let negativeSum := ∑ i, negativeProbs[i]
@@ -258,7 +259,8 @@ def testSoftmaxStability : IO Bool := do
 
   for i in [:3] do
     if h : i < 3 then
-      allPassed := allPassed && (← assertFinite s!"Softmax: mixed logits p[{i}] finite" mixedProbs[⟨i, h⟩])
+      let pi := ∑ (idx : Idx 3), if idx.1.toNat == i then mixedProbs[idx] else 0.0
+      allPassed := allPassed && (← assertFinite s!"Softmax: mixed logits p[{i}] finite" pi)
 
   let mixedSum := ∑ i, mixedProbs[i]
   allPassed := allPassed && (← assertApproxEq "Softmax: mixed logits sum = 1" mixedSum 1.0 1e-4)
@@ -275,19 +277,19 @@ def testNormalizationEdgeCases : IO Bool := do
 
   -- Vector with one very large component
   let skewedVec : Vector 3 := ⊞[1e20, 1.0, 1.0]
-  let skewedNorm := norm skewedVec
+  let skewedNorm := LinearAlgebra.norm skewedVec
   allPassed := allPassed && (← assertFinite "Norm: skewed vector is finite" skewedNorm)
   -- Should be approximately the large component
   allPassed := allPassed && (← assertTrue "Norm: dominated by large component" (skewedNorm > 0.99e20))
 
   -- All equal large values
   let equalLargeVec : Vector 3 := ⊞[1e10, 1e10, 1e10]
-  let equalLargeNorm := norm equalLargeVec
+  let equalLargeNorm := LinearAlgebra.norm equalLargeVec
   allPassed := allPassed && (← assertFinite "Norm: equal large values is finite" equalLargeNorm)
 
   -- Mix of positive and negative large values
   let mixedSignVec : Vector 3 := ⊞[1e10, -1e10, 1e10]
-  let mixedSignNorm := norm mixedSignVec
+  let mixedSignNorm := LinearAlgebra.norm mixedSignVec
   allPassed := allPassed && (← assertFinite "Norm: mixed signs is finite" mixedSignNorm)
 
   return allPassed
@@ -363,6 +365,3 @@ def runAllTests : IO Unit := do
     IO.println s!"✗ {totalTests - totalPassed} test suite(s) failed"
 
 end VerifiedNN.Testing.NumericalStabilityTests
-
-/-- Top-level main for execution -/
-def main : IO Unit := VerifiedNN.Testing.NumericalStabilityTests.runAllTests

@@ -16,6 +16,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Verification Philosophy:** Mathematical properties proven on ℝ (real numbers), computational implementation in Float (IEEE 754). The Float→ℝ gap is acknowledged—we verify symbolic correctness, not floating-point numerics.
 
+**New to this project?** See [START_HERE.md](START_HERE.md) for a quick 5-minute overview or [GETTING_STARTED.md](GETTING_STARTED.md) for comprehensive onboarding with installation instructions.
+
+**Finding documentation:** See [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) for a complete guide to all documentation organized by experience level and task.
+
 ## Current Implementation Status
 
 **Build Status:** ✅ **All 40 Lean files compile successfully with ZERO errors**
@@ -228,6 +232,8 @@ scripts/
 ├── download_mnist.sh  # MNIST dataset retrieval
 └── benchmark.sh       # Performance benchmarks
 ```
+
+**Detailed architecture documentation:** See [ARCHITECTURE.md](ARCHITECTURE.md) for module dependency graphs, call flow diagrams, and design decisions.
 
 ## Lean 4 Conventions
 
@@ -474,9 +480,11 @@ Before considering a module "complete":
 - [x] Code follows mathlib comment standards
 - [x] Cross-references to related modules documented
 
-See [CLEANUP_SUMMARY.md](CLEANUP_SUMMARY.md) for comprehensive cleanup report and metrics.
+See [DOCUMENTATION_ENHANCEMENT_REPORT.md](DOCUMENTATION_ENHANCEMENT_REPORT.md) for documentation quality improvements.
 
 ## Verification Workflow
+
+**Detailed proof development guide:** See [VERIFICATION_WORKFLOW.md](VERIFICATION_WORKFLOW.md) for step-by-step instructions on developing formal proofs in this codebase.
 
 ### Project Goals
 
@@ -650,17 +658,27 @@ These represent the ultimate standard for production-quality code. During develo
 
 ## External Resources
 
-### Essential Documentation
+### Internal Documentation (Start Here!)
+
+**Essential reading for this project:**
+- **[START_HERE.md](START_HERE.md)** - Quick 5-minute project overview
+- **[GETTING_STARTED.md](GETTING_STARTED.md)** - Comprehensive setup and onboarding
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System design and module dependencies
+- **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Complete testing handbook
+- **[COOKBOOK.md](COOKBOOK.md)** - Practical recipes and examples
+- **[VERIFICATION_WORKFLOW.md](VERIFICATION_WORKFLOW.md)** - Proof development guide
+- **[verified-nn-spec.md](verified-nn-spec.md)** - Complete technical specification
+
+### Essential External Documentation
 - Lean 4 Official: https://lean-lang.org/documentation/
 - Theorem Proving in Lean 4: https://leanprover.github.io/theorem_proving_in_lean4/
 - Mathlib4 docs: https://leanprover-community.github.io/mathlib4_docs/
 - SciLean Repository: https://github.com/lecopivo/SciLean
 - Lean Zulip chat: https://leanprover.zulipchat.com/ (channels: #scientific-computing, #mathlib4, #new members)
 
-### References
+### Academic References
 - Certigrad (ICML 2017): Prior work on verified backpropagation in Lean 3
 - "Developing Bug-Free Machine Learning Systems With Formal Mathematics" (Selsam et al.)
-- Full technical specification: [verified-nn-spec.md](verified-nn-spec.md)
 
 ## Critical Reminders for Claude Code
 
@@ -688,14 +706,23 @@ When working with Lean code in this project, **always leverage the MCP tools** a
 ### When in Doubt
 - **First:** Use `lean_leansearch` or `lean_loogle` to search for relevant theorems/definitions
 - **Second:** Use `lean_local_search` to find similar code in this codebase
-- **Third:** Check directory READMEs for module-specific documentation (all 10 directories have comprehensive READMEs)
+- **Third:** Check internal documentation guides:
+  - [COOKBOOK.md](COOKBOOK.md) - Practical recipes and examples
+  - [TESTING_GUIDE.md](TESTING_GUIDE.md) - Testing strategies and patterns
+  - [VERIFICATION_WORKFLOW.md](VERIFICATION_WORKFLOW.md) - Proof development steps
+  - [ARCHITECTURE.md](ARCHITECTURE.md) - Module structure and dependencies
+  - Directory READMEs - All 10 VerifiedNN/ subdirectories have comprehensive documentation
 - Consult SciLean examples and documentation
 - Check mathlib for existing analysis lemmas via `lean_hover_info` and `lean_declaration_file`
 - Reference [verified-nn-spec.md](verified-nn-spec.md) for detailed implementation guidance
-- Review [CLEANUP_SUMMARY.md](CLEANUP_SUMMARY.md) for codebase organization and standards
+- Review [ARCHITECTURE.md](ARCHITECTURE.md) for codebase organization and module structure
 - Ask on Lean Zulip #scientific-computing (Tomáš Skřivan, SciLean author, is responsive)
 
 ---
 
-**Last Updated:** 2025-10-21
+**Last Updated:** October 22, 2025
 **Maintained by:** Project contributors
+
+**Recent Updates:**
+- **2025-10-22:** Added references to new documentation guides (GETTING_STARTED, ARCHITECTURE, TESTING_GUIDE, COOKBOOK, VERIFICATION_WORKFLOW, DOCUMENTATION_INDEX)
+- **2025-10-21:** Repository cleanup to mathlib submission quality

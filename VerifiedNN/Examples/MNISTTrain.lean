@@ -282,8 +282,11 @@ Run `./scripts/download_mnist.sh` to download the dataset.
 - 20 epochs: ~5-10 minutes
 
 (Times vary based on CPU performance and batch size)
+
+**Unsafe:** Uses automatic differentiation which is technically noncomputable,
+but marked unsafe to enable interpreter mode execution.
 -/
-noncomputable def runTraining (config : TrainingConfig) : IO Unit := do
+unsafe def runTraining (config : TrainingConfig) : IO Unit := do
   IO.println "=========================================="
   IO.println "MNIST Neural Network Training"
   IO.println "Verified Neural Network in Lean 4"
@@ -403,7 +406,7 @@ validates configuration, and executes the training pipeline.
 
 **Parameters:**
 - `args`: List of command-line arguments (automatically provided by Lake's
-  executable infrastructure when invoked via `lake exe mnistTrain`)
+  executable infrastructure when invoked via `lake env lean --run`)
 
 **Behavior:**
 1. Parses arguments using `parseArgs` (may exit on invalid input or --help)
@@ -412,12 +415,11 @@ validates configuration, and executes the training pipeline.
 
 **Usage:**
 ```bash
-# Via Lake executable system (recommended)
-lake exe mnistTrain
-lake exe mnistTrain --epochs 15 --batch-size 64 --quiet
+# Via interpreter mode (required for noncomputable operations)
+lake env lean --run VerifiedNN/Examples/MNISTTrain.lean --epochs 10
 
 # See help
-lake exe mnistTrain --help
+lake env lean --run VerifiedNN/Examples/MNISTTrain.lean --help
 ```
 
 **Exit Codes:**
@@ -428,14 +430,21 @@ lake exe mnistTrain --help
 - MNIST dataset must be downloaded to `data/` directory
 - Run `./scripts/download_mnist.sh` if data files are missing
 
+**Unsafe:** Marked unsafe to enable interpreter mode execution of noncomputable
+automatic differentiation code.
+
 **See Also:**
 - Module docstring for detailed usage examples
 - `SimpleExample.lean` for simpler example on toy data
 - `parseArgs` for argument specification
 - `runTraining` for execution details
 -/
-noncomputable def main (args : List String) : IO Unit := do
+unsafe def main (args : List String) : IO Unit := do
   let config ← parseArgs args
   runTraining config
 
 end VerifiedNN.Examples.MNISTTrain
+
+-- Top-level main for Lake executable infrastructure
+-- Uses unsafe to enable interpreter mode execution
+unsafe def main (args : List String) : IO Unit := VerifiedNN.Examples.MNISTTrain.main args

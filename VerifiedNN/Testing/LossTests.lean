@@ -112,7 +112,7 @@ def testCrossEntropyBasic : IO Bool := do
   -- Expected: Small loss since class 0 has highest logit
   let logits1 : Vector 3 := ⊞[2.0, 1.0, 0.1]
   let target1 : Nat := 0
-  let loss1 := crossEntropy logits1 target1
+  let loss1 := crossEntropyLoss logits1 target1
 
   -- Loss should be positive and relatively small
   allPassed := allPassed && (← assertTrue "CE: loss ≥ 0 for correct prediction" (loss1 ≥ 0.0))
@@ -123,7 +123,7 @@ def testCrossEntropyBasic : IO Bool := do
   -- Logits: [2.0, 1.0, 0.1], target: class 2
   -- Expected: Large loss since class 2 has lowest logit
   let target2 : Nat := 2
-  let loss2 := crossEntropy logits1 target2
+  let loss2 := crossEntropyLoss logits1 target2
 
   allPassed := allPassed && (← assertTrue "CE: wrong prediction has higher loss" (loss2 > loss1))
   IO.println s!"  Loss for [2.0, 1.0, 0.1] with target 2: {loss2}"
@@ -146,7 +146,7 @@ def testCrossEntropyNonNegative : IO Bool := do
   ]
 
   for (logits, target) in testCases do
-    let loss := crossEntropy logits target
+    let loss := crossEntropyLoss logits target
     allPassed := allPassed && (← assertTrue s!"CE: loss ≥ 0 for target {target}" (loss ≥ 0.0))
 
   return allPassed
@@ -161,7 +161,7 @@ def testCrossEntropyPerfectPrediction : IO Bool := do
   -- Loss should be very close to 0
   let logits : Vector 3 := ⊞[100.0, 0.0, 0.0]
   let target : Nat := 0
-  let loss := crossEntropy logits target
+  let loss := crossEntropyLoss logits target
 
   allPassed := allPassed && (← assertApproxEq "CE: near-perfect prediction → loss ≈ 0" loss 0.0 0.01)
   IO.println s!"  Loss for near-perfect prediction: {loss}"
@@ -177,7 +177,7 @@ def testCrossEntropyWorstCase : IO Bool := do
   -- Target class has very low logit, other classes have high logits
   let logits : Vector 3 := ⊞[100.0, 99.0, -100.0]
   let target : Nat := 2  -- Class with lowest logit
-  let loss := crossEntropy logits target
+  let loss := crossEntropyLoss logits target
 
   -- Loss should be very large (close to the difference: 100 - (-100) = 200)
   allPassed := allPassed && (← assertTrue "CE: worst case has high loss" (loss > 100.0))
@@ -201,25 +201,29 @@ def testSoftmaxProperties : IO Bool := do
   let sum1 := ∑ i, probs1[i]
   allPassed := allPassed && (← assertApproxEq "Softmax: sum = 1" sum1 1.0 1e-5)
 
-  -- Check all values in (0, 1)
+  -- Check all values in (0, 1) using extracted values
   for i in [:4] do
     if h : i < 4 then
-      let pi := probs1[⟨i, h⟩]
+      let pi := ∑ (idx : Idx 4), if idx.1.toNat == i then probs1[idx] else 0.0
       allPassed := allPassed && (← assertTrue s!"Softmax: p[{i}] ∈ (0,1)" (pi > 0.0 && pi < 1.0))
 
-  -- Check monotonicity: larger logit → larger probability
+  -- Check monotonicity: larger logit → larger probability using indicator extraction
+  let p0 := ∑ i : Idx 4, if i.1.toNat == 0 then probs1[i] else 0.0
+  let p1 := ∑ i : Idx 4, if i.1.toNat == 1 then probs1[i] else 0.0
+  let p2 := ∑ i : Idx 4, if i.1.toNat == 2 then probs1[i] else 0.0
+  let p3 := ∑ i : Idx 4, if i.1.toNat == 3 then probs1[i] else 0.0
   allPassed := allPassed && (← assertTrue "Softmax: monotonic in logits"
-    (probs1[⟨0, by omega⟩] < probs1[⟨1, by omega⟩] &&
-     probs1[⟨1, by omega⟩] < probs1[⟨2, by omega⟩] &&
-     probs1[⟨2, by omega⟩] < probs1[⟨3, by omega⟩]))
+    (p0 < p1 && p1 < p2 && p2 < p3))
 
   -- Test case 2: Equal logits → equal probabilities
   let logits2 : Vector 3 := ⊞[5.0, 5.0, 5.0]
   let probs2 := softmax logits2
   let expectedProb := 1.0 / 3.0
 
-  allPassed := allPassed && (← assertApproxEq "Softmax: equal logits → p = 1/n" probs2[⟨0, by omega⟩] expectedProb 1e-5)
-  allPassed := allPassed && (← assertApproxEq "Softmax: equal logits → p = 1/n" probs2[⟨1, by omega⟩] expectedProb 1e-5)
+  let p2_0 := ∑ i : Idx 3, if i.1.toNat == 0 then probs2[i] else 0.0
+  let p2_1 := ∑ i : Idx 3, if i.1.toNat == 1 then probs2[i] else 0.0
+  allPassed := allPassed && (← assertApproxEq "Softmax: equal logits → p = 1/n" p2_0 expectedProb 1e-5)
+  allPassed := allPassed && (← assertApproxEq "Softmax: equal logits → p = 1/n" p2_1 expectedProb 1e-5)
 
   return allPassed
 
@@ -234,7 +238,7 @@ def testLogSumExpStability : IO Bool := do
   -- Test with very large logits (would overflow without max trick)
   let largeLogits : Vector 3 := ⊞[1000.0, 999.0, 998.0]
   let target : Nat := 0
-  let loss := crossEntropy largeLogits target
+  let loss := crossEntropyLoss largeLogits target
 
   -- Loss should be finite and reasonable (not NaN or Inf)
   allPassed := allPassed && (← assertTrue "LSE: large logits don't overflow" (!loss.isNaN && !loss.isInf))
@@ -243,14 +247,14 @@ def testLogSumExpStability : IO Bool := do
 
   -- Test with very negative logits
   let negativeLogits : Vector 3 := ⊞[-1000.0, -999.0, -998.0]
-  let loss2 := crossEntropy negativeLogits 0
+  let loss2 := crossEntropyLoss negativeLogits 0
 
   allPassed := allPassed && (← assertTrue "LSE: negative logits don't underflow" (!loss2.isNaN && !loss2.isInf))
   IO.println s!"  Loss with logits [-1000, -999, -998]: {loss2}"
 
   -- Test with mixed large positive and negative
   let mixedLogits : Vector 3 := ⊞[500.0, -500.0, 0.0]
-  let loss3 := crossEntropy mixedLogits 1
+  let loss3 := crossEntropyLoss mixedLogits 1
 
   allPassed := allPassed && (← assertTrue "LSE: mixed large values are stable" (!loss3.isNaN && !loss3.isInf))
   IO.println s!"  Loss with logits [500, -500, 0]: {loss3}"
@@ -272,18 +276,18 @@ def testBatchLoss : IO Bool := do
   let targets : Array Nat := #[0, 1, 2]
 
   -- Compute batch loss
-  let batchLossVal := batchLoss logitsBatch targets
+  let batchLossVal := batchCrossEntropyLoss logitsBatch targets
 
   -- Batch loss should be non-negative
   allPassed := allPassed && (← assertTrue "Batch loss: non-negative" (batchLossVal ≥ 0.0))
 
-  -- Compute individual losses and average
+  -- Compute individual losses and average using indicator sums
   let mut sumIndividual : Float := 0.0
   for b in [:3] do
     if hb : b < 3 then
-      let logits_b : Vector 4 := ⊞ (i : Idx 4) => logitsBatch[⟨b, hb⟩, i]
-      let target_b := targets[b]!
-      sumIndividual := sumIndividual + crossEntropy logits_b target_b
+      let logits_b : Vector 4 := ⊞ (i : Idx 4) => ∑ (bidx : Idx 3), if bidx.1.toNat == b then logitsBatch[bidx, i] else 0.0
+      let target_b := targets.get! b
+      sumIndividual := sumIndividual + crossEntropyLoss logits_b target_b
 
   let avgIndividual := sumIndividual / 3.0
 
@@ -333,6 +337,3 @@ def runAllTests : IO Unit := do
     IO.println s!"✗ {totalTests - totalPassed} test suite(s) failed"
 
 end VerifiedNN.Testing.LossTests
-
-/-- Top-level main for execution -/
-def main : IO Unit := VerifiedNN.Testing.LossTests.runAllTests

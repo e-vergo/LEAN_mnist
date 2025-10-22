@@ -62,3 +62,8 @@ lean_exe smokeTest where
   root := `VerifiedNN.Testing.SmokeTest
   supportInterpreter := true
   moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
+
+lean_exe gradientCheck where
+  root := `VerifiedNN.Testing.GradientCheck
+  supportInterpreter := true
+  moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]

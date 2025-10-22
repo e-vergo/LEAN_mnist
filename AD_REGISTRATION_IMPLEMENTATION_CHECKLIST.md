@@ -6,33 +6,34 @@ This checklist tracks the implementation of `@[fun_trans]` and `@[fun_prop]` att
 
 Operations are grouped by complexity and dependency order to enable incremental, testable progress.
 
+**Status Update (2025-10-22):** LinearAlgebra.lean **COMPLETE** - 15/18 operations registered successfully.
+
 ---
 
-## LinearAlgebra.lean - Operations to Register
+## LinearAlgebra.lean - Operations to Register [✅ COMPLETE]
 
-### Phase 1: Foundation (Linear Vector Operations)
+### Phase 1: Foundation (Linear Vector Operations) [✅ COMPLETE]
 
 These operations inherit differentiability from module structure. Minimal work required.
 
-- [ ] **vadd** - Vector addition
-  - [ ] Remove TODO comment about fun_prop registration
-  - [ ] Add `@[fun_prop] theorem vadd.Differentiable`
-  - [ ] Proof strategy: `unfold vadd; fun_prop`
+- [x] **vadd** - Vector addition
+  - [x] Remove TODO comment about fun_prop registration
+  - [x] Add `@[fun_prop] theorem vadd.arg_xy.Differentiable_rule`
+  - [x] Proof strategy: `unfold vadd; fun_prop` ✅ WORKED
 
-- [ ] **vsub** - Vector subtraction
-  - [ ] Remove TODO comment
-  - [ ] Add `@[fun_prop] theorem vsub.Differentiable`
-  - [ ] Proof strategy: `unfold vsub; fun_prop`
+- [x] **vsub** - Vector subtraction
+  - [x] Remove TODO comment
+  - [x] Add `@[fun_prop] theorem vsub.arg_xy.Differentiable_rule`
+  - [x] Proof strategy: `unfold vsub; fun_prop` ✅ WORKED
 
-- [ ] **smul** - Scalar-vector multiplication
-  - [ ] Remove TODO comment
-  - [ ] Add `@[fun_prop] theorem smul.Differentiable`
-  - [ ] Proof strategy: `unfold smul; fun_prop`
+- [x] **smul** - Scalar-vector multiplication
+  - [x] Remove TODO comment
+  - [x] Add `@[fun_prop] theorem smul.arg_cx.Differentiable_rule`
+  - [x] Proof strategy: `unfold smul; fun_prop` ✅ WORKED
 
 **Testing after Phase 1:**
 ```bash
-lake build VerifiedNN.Core.LinearAlgebra  # Should compile
-# Try: #check @vadd.Differentiable
+lake build VerifiedNN.Core.LinearAlgebra  # ✅ PASSED
 ```
 
 ---

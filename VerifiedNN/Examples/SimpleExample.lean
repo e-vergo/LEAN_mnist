@@ -198,15 +198,15 @@ Prints training progress including:
 - Sample predictions with confidence scores
 - Summary of improvements
 
-**Noncomputable:** Uses Float operations and SciLean's automatic differentiation,
-which cannot be evaluated in the Lean kernel.
+**Unsafe:** Uses automatic differentiation and noncomputable operations, but marked
+unsafe to enable interpreter mode execution for validation purposes.
 
-**Usage:** `lake exe simpleExample`
+**Usage:** `lake env lean --run VerifiedNN/Examples/SimpleExample.lean`
 
 **For Production Training:** See `MNISTTrain.lean` for full MNIST with data loading,
 CLI argument parsing, and train/test split.
 -/
-noncomputable def main : IO Unit := do
+unsafe def main : IO Unit := do
   IO.println "=========================================="
   IO.println "REAL Neural Network Training Example"
   IO.println "=========================================="
@@ -296,3 +296,7 @@ noncomputable def main : IO Unit := do
   IO.println "  ✓ Real loss computation and metrics"
 
 end VerifiedNN.Examples.SimpleExample
+
+-- Top-level main for Lake executable infrastructure
+-- Uses unsafe to enable interpreter mode execution
+unsafe def main : IO Unit := VerifiedNN.Examples.SimpleExample.main

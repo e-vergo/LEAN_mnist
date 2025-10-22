@@ -237,11 +237,17 @@ def testMatrixTranspose : IO Bool := do
   let A : Matrix 2 3 := ⊞ (i : Idx 2) (j : Idx 3) => (i.1.toNat * 3 + j.1.toNat + 1).toFloat
   let AT := transpose A
 
-  -- Check specific elements
-  allPassed := allPassed && (← assertApproxEq "transpose: AT[0,0] = A[0,0]" AT[⟨0, by decide⟩, ⟨0, by decide⟩] 1.0)
-  allPassed := allPassed && (← assertApproxEq "transpose: AT[0,1] = A[1,0]" AT[⟨0, by decide⟩, ⟨1, by decide⟩] 4.0)
-  allPassed := allPassed && (← assertApproxEq "transpose: AT[1,0] = A[0,1]" AT[⟨1, by decide⟩, ⟨0, by decide⟩] 2.0)
-  allPassed := allPassed && (← assertApproxEq "transpose: AT[2,1] = A[1,2]" AT[⟨2, by decide⟩, ⟨1, by decide⟩] 6.0)
+  -- Check specific elements by sum (avoids explicit indexing issues)
+  -- AT is 3×2, A is 2×3
+  -- Verify AT[0,0] = 1.0 by extracting it with indicator function
+  let at00 := ∑ (i : Idx 3) (j : Idx 2), if i.1.toNat == 0 && j.1.toNat == 0 then AT[i, j] else 0.0
+  let at01 := ∑ (i : Idx 3) (j : Idx 2), if i.1.toNat == 0 && j.1.toNat == 1 then AT[i, j] else 0.0
+  let at10 := ∑ (i : Idx 3) (j : Idx 2), if i.1.toNat == 1 && j.1.toNat == 0 then AT[i, j] else 0.0
+  let at21 := ∑ (i : Idx 3) (j : Idx 2), if i.1.toNat == 2 && j.1.toNat == 1 then AT[i, j] else 0.0
+  allPassed := allPassed && (← assertApproxEq "transpose: AT[0,0] = A[0,0]" at00 1.0)
+  allPassed := allPassed && (← assertApproxEq "transpose: AT[0,1] = A[1,0]" at01 4.0)
+  allPassed := allPassed && (← assertApproxEq "transpose: AT[1,0] = A[0,1]" at10 2.0)
+  allPassed := allPassed && (← assertApproxEq "transpose: AT[2,1] = A[1,2]" at21 6.0)
 
   -- Double transpose should return original
   let ATT := transpose AT
@@ -291,10 +297,15 @@ def testOuterProduct : IO Bool := do
   let w : Vector 3 := ⊞[3.0, 4.0, 5.0]
   let outerProd := outer v w
 
-  allPassed := allPassed && (← assertApproxEq "outer: [1,2] ⊗ [3,4,5] element [0,0]" outerProd[⟨0, by decide⟩, ⟨0, by decide⟩] 3.0)
-  allPassed := allPassed && (← assertApproxEq "outer: [1,2] ⊗ [3,4,5] element [0,2]" outerProd[⟨0, by decide⟩, ⟨2, by decide⟩] 5.0)
-  allPassed := allPassed && (← assertApproxEq "outer: [1,2] ⊗ [3,4,5] element [1,0]" outerProd[⟨1, by decide⟩, ⟨0, by decide⟩] 6.0)
-  allPassed := allPassed && (← assertApproxEq "outer: [1,2] ⊗ [3,4,5] element [1,2]" outerProd[⟨1, by decide⟩, ⟨2, by decide⟩] 10.0)
+  -- Check specific elements using indicator sums
+  let op00 := ∑ (i : Idx 2) (j : Idx 3), if i.1.toNat == 0 && j.1.toNat == 0 then outerProd[i, j] else 0.0
+  let op02 := ∑ (i : Idx 2) (j : Idx 3), if i.1.toNat == 0 && j.1.toNat == 2 then outerProd[i, j] else 0.0
+  let op10 := ∑ (i : Idx 2) (j : Idx 3), if i.1.toNat == 1 && j.1.toNat == 0 then outerProd[i, j] else 0.0
+  let op12 := ∑ (i : Idx 2) (j : Idx 3), if i.1.toNat == 1 && j.1.toNat == 2 then outerProd[i, j] else 0.0
+  allPassed := allPassed && (← assertApproxEq "outer: [1,2] ⊗ [3,4,5] element [0,0]" op00 3.0)
+  allPassed := allPassed && (← assertApproxEq "outer: [1,2] ⊗ [3,4,5] element [0,2]" op02 5.0)
+  allPassed := allPassed && (← assertApproxEq "outer: [1,2] ⊗ [3,4,5] element [1,0]" op10 6.0)
+  allPassed := allPassed && (← assertApproxEq "outer: [1,2] ⊗ [3,4,5] element [1,2]" op12 10.0)
 
   return allPassed
 
@@ -316,10 +327,10 @@ def testBatchMatvec : IO Bool := do
   -- Verify batch size preserved (type-checked at compile time)
   -- Verify output dimension correct (type-checked at compile time)
 
-  -- Check first output vector manually
-  let x0 : Vector 2 := ⊞ (i : Idx 2) => X[⟨0, by decide⟩, i]
+  -- Check first output vector manually using indicator extraction
+  let x0 : Vector 2 := ⊞ (i : Idx 2) => ∑ (b : Idx 3), if b.1.toNat == 0 then X[b, i] else 0.0
   let expected0 := matvec A x0
-  let result0 : Vector 2 := ⊞ (i : Idx 2) => result[⟨0, by decide⟩, i]
+  let result0 : Vector 2 := ⊞ (i : Idx 2) => ∑ (b : Idx 3), if b.1.toNat == 0 then result[b, i] else 0.0
   allPassed := allPassed && (← assertVecApproxEq "batchMatvec: first batch element" result0 expected0)
 
   return allPassed
@@ -337,18 +348,18 @@ def testBatchAddVec : IO Bool := do
   -- Add bias to each row
   let result := batchAddVec X bias
 
-  -- Check first row: [1,2,3] + [10,20,30] = [11,22,33]
-  let r00 := result[⟨0, Nat.zero_lt_succ 1⟩, ⟨0, Nat.zero_lt_succ 2⟩]
+  -- Check first row: [1,2,3] + [10,20,30] = [11,22,33] using indicator sums
+  let r00 := ∑ (b : Idx 2) (i : Idx 3), if b.1.toNat == 0 && i.1.toNat == 0 then result[b, i] else 0.0
   allPassed := allPassed && (← assertApproxEq "batchAddVec: first row, first element" r00 11.0)
-  let r01 := result[⟨0, Nat.zero_lt_succ 1⟩, ⟨1, Nat.succ_lt_succ (Nat.zero_lt_succ 1)⟩]
+  let r01 := ∑ (b : Idx 2) (i : Idx 3), if b.1.toNat == 0 && i.1.toNat == 1 then result[b, i] else 0.0
   allPassed := allPassed && (← assertApproxEq "batchAddVec: first row, second element" r01 22.0)
-  let r02 := result[⟨0, Nat.zero_lt_succ 1⟩, ⟨2, Nat.succ_lt_succ (Nat.succ_lt_succ (Nat.zero_lt_succ 0))⟩]
+  let r02 := ∑ (b : Idx 2) (i : Idx 3), if b.1.toNat == 0 && i.1.toNat == 2 then result[b, i] else 0.0
   allPassed := allPassed && (← assertApproxEq "batchAddVec: first row, third element" r02 33.0)
 
   -- Check second row: [4,5,6] + [10,20,30] = [14,25,36]
-  let r10 := result[⟨1, Nat.succ_lt_succ (Nat.zero_lt_succ 0)⟩, ⟨0, Nat.zero_lt_succ 2⟩]
+  let r10 := ∑ (b : Idx 2) (i : Idx 3), if b.1.toNat == 1 && i.1.toNat == 0 then result[b, i] else 0.0
   allPassed := allPassed && (← assertApproxEq "batchAddVec: second row, first element" r10 14.0)
-  let r12 := result[⟨1, Nat.succ_lt_succ (Nat.zero_lt_succ 0)⟩, ⟨2, Nat.succ_lt_succ (Nat.succ_lt_succ (Nat.zero_lt_succ 0))⟩]
+  let r12 := ∑ (b : Idx 2) (i : Idx 3), if b.1.toNat == 1 && i.1.toNat == 2 then result[b, i] else 0.0
   allPassed := allPassed && (← assertApproxEq "batchAddVec: second row, third element" r12 36.0)
 
   return allPassed
@@ -392,6 +403,3 @@ def runAllTests : IO Unit := do
     IO.println s!"✗ {totalTests - totalPassed} test suite(s) failed"
 
 end VerifiedNN.Testing.LinearAlgebraTests
-
-/-- Top-level main for execution -/
-def main : IO Unit := VerifiedNN.Testing.LinearAlgebraTests.runAllTests

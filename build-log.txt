@@ -1,0 +1,417 @@
+ℹ [2505/2968] Replayed SciLean.FFI.ByteArray:dynlib
+info: stderr:
+ld64.lld: warning: directory not found for option -L/usr/local/opt/openblas/lib
+ℹ [2506/2968] Replayed SciLean.FFI.FloatArray:dynlib
+info: stderr:
+ld64.lld: warning: directory not found for option -L/usr/local/opt/openblas/lib
+ℹ [2507/2968] Replayed SciLean.FFI.Float:dynlib
+info: stderr:
+ld64.lld: warning: directory not found for option -L/usr/local/opt/openblas/lib
+ℹ [2511/2968] Replayed SciLean.FFI:shared
+info: stderr:
+ld64.lld: warning: directory not found for option -L/usr/local/opt/openblas/lib
+ℹ [2555/2968] Replayed LeanBLAS.FFI.FloatArray:dynlib
+info: stderr:
+ld64.lld: warning: directory not found for option -L/usr/local/opt/openblas/lib
+ℹ [2563/2968] Replayed LeanBLAS.FFI.CBLASLevelOneFloat64:dynlib
+info: stderr:
+ld64.lld: warning: directory not found for option -L/usr/local/opt/openblas/lib
+ℹ [2564/2968] Replayed LeanBLAS.FFI.CBLASLevelTwoFloat64:dynlib
+info: stderr:
+ld64.lld: warning: directory not found for option -L/usr/local/opt/openblas/lib
+ℹ [2568/2968] Replayed LeanBLAS.FFI:shared
+info: stderr:
+ld64.lld: warning: directory not found for option -L/usr/local/opt/openblas/lib
+⚠ [2922/2968] Replayed VerifiedNN.Util.ImageRenderer
+warning: /Users/eric/LEAN_mnist/VerifiedNN/Util/ImageRenderer.lean:604:47: unused variable `palette`
+note: this linter can be disabled with `set_option linter.unusedVariables false`
+⚠ [2936/2968] Replayed VerifiedNN.Verification.TypeSafety
+warning: /Users/eric/LEAN_mnist/VerifiedNN/Verification/TypeSafety.lean:339:8: declaration uses 'sorry'
+✖ [2963/2968] Building VerifiedNN.Testing.DataPipelineTests
+trace: .> LEAN_PATH=/Users/eric/LEAN_mnist/.lake/packages/Cli/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/batteries/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/Qq/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/aesop/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/proofwidgets/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/importGraph/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/plausible/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/mathlib/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/leanblas/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/scilean/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/build/lib/lean /Users/eric/.elan/toolchains/leanprover--lean4---v4.20.1/bin/lean -Dpp.unicode.fun=true -Dpp.proofs.withType=false -DautoImplicit=false -DrelaxedAutoImplicit=false /Users/eric/LEAN_mnist/VerifiedNN/Testing/DataPipelineTests.lean -R /Users/eric/LEAN_mnist -o /Users/eric/LEAN_mnist/.lake/build/lib/lean/VerifiedNN/Testing/DataPipelineTests.olean -i /Users/eric/LEAN_mnist/.lake/build/lib/lean/VerifiedNN/Testing/DataPipelineTests.ilean -c /Users/eric/LEAN_mnist/.lake/build/ir/VerifiedNN/Testing/DataPipelineTests.c --plugin /Users/eric/LEAN_mnist/.lake/packages/scilean/.lake/build/lib/libSciLean_FFI.dylib --plugin /Users/eric/LEAN_mnist/.lake/packages/leanblas/.lake/build/lib/libLeanBLAS_FFI.dylib --plugin /Users/eric/.elan/toolchains/leanprover--lean4---v4.20.1/lib/lean/libLake_shared.dylib --json
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/DataPipelineTests.lean:118:32: application type mismatch
+  { val := ↑i, isLt := h }
+argument
+  h
+has type
+  i < 784 : Prop
+but is expected to have type
+  (↑i).toNat < 784 : Prop
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/DataPipelineTests.lean:114:38: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  a ≥ 784
+where
+ a := ↑(USize.toNat 0)
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/DataPipelineTests.lean:115:38: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  a ≥ 784
+where
+ a := ↑(USize.toNat 0)
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/DataPipelineTests.lean:129:89: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  a ≥ 784
+where
+ a := ↑(USize.toNat 0)
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/DataPipelineTests.lean:134:90: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  a ≥ 784
+where
+ a := ↑(USize.toNat 0)
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/DataPipelineTests.lean:139:92: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  a ≥ 784
+where
+ a := ↑(USize.toNat 0)
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/DataPipelineTests.lean:209:29: application type mismatch
+  { val := ↑i, isLt := h }
+argument
+  h
+has type
+  i < 784 : Prop
+but is expected to have type
+  (↑i).toNat < 784 : Prop
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/DataPipelineTests.lean:217:82: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  a ≥ 784
+where
+ a := ↑(USize.toNat 0)
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/DataPipelineTests.lean:218:77: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  a ≥ 784
+where
+ a := ↑(USize.toNat 1)
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/DataPipelineTests.lean:219:88: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  a ≥ 784
+where
+ a := ↑(USize.toNat 2)
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/DataPipelineTests.lean:259:38: expected ';' or line break
+warning: /Users/eric/LEAN_mnist/VerifiedNN/Testing/DataPipelineTests.lean:309:20: unused variable `iter3`
+note: this linter can be disabled with `set_option linter.unusedVariables false`
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/DataPipelineTests.lean:373:76: invalid field 'position', the environment does not contain 'VerifiedNN.Data.Iterator.DataIterator.position'
+  iterReset
+has type
+  DataIterator
+warning: /Users/eric/LEAN_mnist/VerifiedNN/Testing/DataPipelineTests.lean:412:7: unused variable `name`
+note: this linter can be disabled with `set_option linter.unusedVariables false`
+error: Lean exited with code 1
+✖ [2964/2968] Building VerifiedNN.Testing.NumericalStabilityTests
+trace: .> LEAN_PATH=/Users/eric/LEAN_mnist/.lake/packages/Cli/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/batteries/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/Qq/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/aesop/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/proofwidgets/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/importGraph/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/plausible/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/mathlib/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/leanblas/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/scilean/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/build/lib/lean /Users/eric/.elan/toolchains/leanprover--lean4---v4.20.1/bin/lean -Dpp.unicode.fun=true -Dpp.proofs.withType=false -DautoImplicit=false -DrelaxedAutoImplicit=false /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean -R /Users/eric/LEAN_mnist -o /Users/eric/LEAN_mnist/.lake/build/lib/lean/VerifiedNN/Testing/NumericalStabilityTests.olean -i /Users/eric/LEAN_mnist/.lake/build/lib/lean/VerifiedNN/Testing/NumericalStabilityTests.ilean -c /Users/eric/LEAN_mnist/.lake/build/ir/VerifiedNN/Testing/NumericalStabilityTests.c --plugin /Users/eric/LEAN_mnist/.lake/packages/scilean/.lake/build/lib/libSciLean_FFI.dylib --plugin /Users/eric/LEAN_mnist/.lake/packages/leanblas/.lake/build/lib/libLeanBLAS_FFI.dylib --plugin /Users/eric/.elan/toolchains/leanprover--lean4---v4.20.1/lib/lean/libLake_shared.dylib --json
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:147:18: ambiguous, possible interpretations 
+  LinearAlgebra.norm zeroVec : Float
+  
+  ‖zeroVec‖ : ℝ
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:152:18: ambiguous, possible interpretations 
+  LinearAlgebra.norm tinyVec : Float
+  
+  ‖tinyVec‖ : ℝ
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:140:4: failed to compile definition, consider marking it as 'noncomputable' because it depends on 'Real.decidableLT', which is 'noncomputable'
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:173:20: ambiguous, possible interpretations 
+  LinearAlgebra.norm normalVec : Float
+  
+  ‖normalVec‖ : ℝ
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:186:86: application type mismatch
+  { val := ↑i, isLt := h }
+argument
+  h
+has type
+  i < 3 : Prop
+but is expected to have type
+  (↑i).toNat < 3 : Prop
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:187:86: application type mismatch
+  { val := ↑i, isLt := h }
+argument
+  h
+has type
+  i < 3 : Prop
+but is expected to have type
+  (↑i).toNat < 3 : Prop
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:201:19: ambiguous, possible interpretations 
+  LinearAlgebra.norm largeVec : Float
+  
+  ‖largeVec‖ : ℝ
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:208:19: ambiguous, possible interpretations 
+  LinearAlgebra.norm smallVec : Float
+  
+  ‖smallVec‖ : ℝ
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:211:13: failed to synthesize
+  ToString ℝ
+
+Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:194:4: failed to compile definition, consider marking it as 'noncomputable' because it depends on 'Real.decidableLT', which is 'noncomputable'
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:234:30: application type mismatch
+  { val := ↑i, isLt := h }
+argument
+  h
+has type
+  i < 3 : Prop
+but is expected to have type
+  (↑i).toNat < 3 : Prop
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:249:34: application type mismatch
+  { val := ↑i, isLt := h }
+argument
+  h
+has type
+  i < 3 : Prop
+but is expected to have type
+  (↑i).toNat < 3 : Prop
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:261:103: application type mismatch
+  { val := ↑i, isLt := h }
+argument
+  h
+has type
+  i < 3 : Prop
+but is expected to have type
+  (↑i).toNat < 3 : Prop
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:278:20: ambiguous, possible interpretations 
+  LinearAlgebra.norm skewedVec : Float
+  
+  ‖skewedVec‖ : ℝ
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:285:24: ambiguous, possible interpretations 
+  LinearAlgebra.norm equalLargeVec : Float
+  
+  ‖equalLargeVec‖ : ℝ
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:290:23: ambiguous, possible interpretations 
+  LinearAlgebra.norm mixedSignVec : Float
+  
+  ‖mixedSignVec‖ : ℝ
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:271:4: failed to compile definition, consider marking it as 'noncomputable' because it depends on 'Real.decidableLT', which is 'noncomputable'
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:332:4: failed to compile definition, consider marking it as 'noncomputable' because it depends on 'VerifiedNN.Testing.NumericalStabilityTests.testDivisionByZeroHandling', and it does not have executable code
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/NumericalStabilityTests.lean:368:4: failed to compile definition, consider marking it as 'noncomputable' because it depends on 'VerifiedNN.Testing.NumericalStabilityTests.runAllTests', and it does not have executable code
+error: Lean exited with code 1
+✖ [2965/2968] Building VerifiedNN.Testing.LossTests
+trace: .> LEAN_PATH=/Users/eric/LEAN_mnist/.lake/packages/Cli/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/batteries/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/Qq/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/aesop/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/proofwidgets/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/importGraph/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/plausible/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/mathlib/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/leanblas/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/scilean/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/build/lib/lean /Users/eric/.elan/toolchains/leanprover--lean4---v4.20.1/bin/lean -Dpp.unicode.fun=true -Dpp.proofs.withType=false -DautoImplicit=false -DrelaxedAutoImplicit=false /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean -R /Users/eric/LEAN_mnist -o /Users/eric/LEAN_mnist/.lake/build/lib/lean/VerifiedNN/Testing/LossTests.olean -i /Users/eric/LEAN_mnist/.lake/build/lib/lean/VerifiedNN/Testing/LossTests.ilean -c /Users/eric/LEAN_mnist/.lake/build/ir/VerifiedNN/Testing/LossTests.c --plugin /Users/eric/LEAN_mnist/.lake/packages/scilean/.lake/build/lib/libSciLean_FFI.dylib --plugin /Users/eric/LEAN_mnist/.lake/packages/leanblas/.lake/build/lib/libLeanBLAS_FFI.dylib --plugin /Users/eric/.elan/toolchains/leanprover--lean4---v4.20.1/lib/lean/libLake_shared.dylib --json
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:115:15: unknown identifier 'crossEntropy'
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:126:15: unknown identifier 'crossEntropy'
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:149:16: unknown identifier 'crossEntropy'
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:164:14: unknown identifier 'crossEntropy'
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:180:14: unknown identifier 'crossEntropy'
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:207:27: application type mismatch
+  { val := ↑i, isLt := h }
+argument
+  h
+has type
+  i < 4 : Prop
+but is expected to have type
+  (↑i).toNat < 4 : Prop
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:212:19: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  a ≥ 4
+where
+ a := ↑(USize.toNat 0)
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:212:43: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  a ≥ 4
+where
+ a := ↑(USize.toNat 1)
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:213:19: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  a ≥ 4
+where
+ a := ↑(USize.toNat 1)
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:213:43: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  a ≥ 4
+where
+ a := ↑(USize.toNat 2)
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:214:19: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  a ≥ 4
+where
+ a := ↑(USize.toNat 2)
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:214:43: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  a ≥ 4
+where
+ a := ↑(USize.toNat 3)
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:221:94: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  a ≥ 3
+where
+ a := ↑(USize.toNat 0)
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:222:94: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  a ≥ 3
+where
+ a := ↑(USize.toNat 1)
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:237:14: unknown identifier 'crossEntropy'
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:246:15: unknown identifier 'crossEntropy'
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:253:15: unknown identifier 'crossEntropy'
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:248:83: invalid field notation, type is not of the form (C ...) where C is a constant
+  loss2
+has type
+  ?m.40102 x✝¹ __do_lift✝¹ __do_lift✝ x✝
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:248:99: invalid field notation, type is not of the form (C ...) where C is a constant
+  loss2
+has type
+  ?m.40102 x✝¹ __do_lift✝¹ __do_lift✝ x✝
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:255:81: invalid field notation, type is not of the form (C ...) where C is a constant
+  loss3
+has type
+  ?m.40106 x✝² __do_lift✝² __do_lift✝¹ x✝¹ __do_lift✝ x✝
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:255:97: invalid field notation, type is not of the form (C ...) where C is a constant
+  loss3
+has type
+  ?m.40106 x✝² __do_lift✝² __do_lift✝¹ x✝¹ __do_lift✝ x✝
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:275:22: unknown identifier 'batchLoss'
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:284:66: application type mismatch
+  { val := ↑b, isLt := hb }
+argument
+  hb
+has type
+  b < 3 : Prop
+but is expected to have type
+  (↑b).toNat < 3 : Prop
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:285:22: failed to synthesize
+  GetElem? (Array ℕ) (Idx 3) ?m.43039 ?m.43040
+
+Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:286:39: unknown identifier 'crossEntropy'
+warning: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LossTests.lean:320:7: unused variable `name`
+note: this linter can be disabled with `set_option linter.unusedVariables false`
+error: Lean exited with code 1
+✖ [2966/2968] Building VerifiedNN.Testing.LinearAlgebraTests
+trace: .> LEAN_PATH=/Users/eric/LEAN_mnist/.lake/packages/Cli/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/batteries/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/Qq/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/aesop/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/proofwidgets/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/importGraph/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/plausible/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/mathlib/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/leanblas/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/packages/scilean/.lake/build/lib/lean:/Users/eric/LEAN_mnist/.lake/build/lib/lean /Users/eric/.elan/toolchains/leanprover--lean4---v4.20.1/bin/lean -Dpp.unicode.fun=true -Dpp.proofs.withType=false -DautoImplicit=false -DrelaxedAutoImplicit=false /Users/eric/LEAN_mnist/VerifiedNN/Testing/LinearAlgebraTests.lean -R /Users/eric/LEAN_mnist -o /Users/eric/LEAN_mnist/.lake/build/lib/lean/VerifiedNN/Testing/LinearAlgebraTests.olean -i /Users/eric/LEAN_mnist/.lake/build/lib/lean/VerifiedNN/Testing/LinearAlgebraTests.ilean -c /Users/eric/LEAN_mnist/.lake/build/ir/VerifiedNN/Testing/LinearAlgebraTests.c --plugin /Users/eric/LEAN_mnist/.lake/packages/scilean/.lake/build/lib/libSciLean_FFI.dylib --plugin /Users/eric/LEAN_mnist/.lake/packages/leanblas/.lake/build/lib/libLeanBLAS_FFI.dylib --plugin /Users/eric/.elan/toolchains/leanprover--lean4---v4.20.1/lib/lean/libLake_shared.dylib --json
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LinearAlgebraTests.lean:242:102: tactic 'decide' failed for proposition
+  USize.toNat 1 < 2
+since its 'Decidable' instance
+  (USize.toNat 1).decLt 2
+did not reduce to 'isTrue' or 'isFalse'.
+
+After unfolding the instances 'instDecidableEqBool', 'Bool.decEq', 'Nat.decLe' and 'Nat.decLt', reduction got stuck at the 'Decidable' instance
+  match (USize.toNat 1).succ.ble 2, true with
+  | false, false => isTrue ⋯
+  | false, true => isFalse ⋯
+  | true, false => isFalse ⋯
+  | true, true => isTrue ⋯
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LinearAlgebraTests.lean:243:86: tactic 'decide' failed for proposition
+  USize.toNat 1 < 3
+since its 'Decidable' instance
+  (USize.toNat 1).decLt 3
+did not reduce to 'isTrue' or 'isFalse'.
+
+After unfolding the instances 'instDecidableEqBool', 'Bool.decEq', 'Nat.decLe' and 'Nat.decLt', reduction got stuck at the 'Decidable' instance
+  match (USize.toNat 1).succ.ble 3, true with
+  | false, false => isTrue ⋯
+  | false, true => isFalse ⋯
+  | true, false => isFalse ⋯
+  | true, true => isTrue ⋯
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LinearAlgebraTests.lean:244:86: tactic 'decide' failed for proposition
+  USize.toNat 2 < 3
+since its 'Decidable' instance
+  (USize.toNat 2).decLt 3
+did not reduce to 'isTrue' or 'isFalse'.
+
+After unfolding the instances 'instDecidableEqBool', 'Bool.decEq', 'Nat.decLe' and 'Nat.decLt', reduction got stuck at the 'Decidable' instance
+  match (USize.toNat 2).succ.ble 3, true with
+  | false, false => isTrue ⋯
+  | false, true => isFalse ⋯
+  | true, false => isFalse ⋯
+  | true, true => isTrue ⋯
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LinearAlgebraTests.lean:244:102: tactic 'decide' failed for proposition
+  USize.toNat 1 < 2
+since its 'Decidable' instance
+  (USize.toNat 1).decLt 2
+did not reduce to 'isTrue' or 'isFalse'.
+
+After unfolding the instances 'instDecidableEqBool', 'Bool.decEq', 'Nat.decLe' and 'Nat.decLt', reduction got stuck at the 'Decidable' instance
+  match (USize.toNat 1).succ.ble 2, true with
+  | false, false => isTrue ⋯
+  | false, true => isFalse ⋯
+  | true, false => isFalse ⋯
+  | true, true => isTrue ⋯
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LinearAlgebraTests.lean:295:118: tactic 'decide' failed for proposition
+  USize.toNat 2 < 3
+since its 'Decidable' instance
+  (USize.toNat 2).decLt 3
+did not reduce to 'isTrue' or 'isFalse'.
+
+After unfolding the instances 'instDecidableEqBool', 'Bool.decEq', 'Nat.decLe' and 'Nat.decLt', reduction got stuck at the 'Decidable' instance
+  match (USize.toNat 2).succ.ble 3, true with
+  | false, false => isTrue ⋯
+  | false, true => isFalse ⋯
+  | true, false => isFalse ⋯
+  | true, true => isTrue ⋯
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LinearAlgebraTests.lean:296:102: tactic 'decide' failed for proposition
+  USize.toNat 1 < 2
+since its 'Decidable' instance
+  (USize.toNat 1).decLt 2
+did not reduce to 'isTrue' or 'isFalse'.
+
+After unfolding the instances 'instDecidableEqBool', 'Bool.decEq', 'Nat.decLe' and 'Nat.decLt', reduction got stuck at the 'Decidable' instance
+  match (USize.toNat 1).succ.ble 2, true with
+  | false, false => isTrue ⋯
+  | false, true => isFalse ⋯
+  | true, false => isFalse ⋯
+  | true, true => isTrue ⋯
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LinearAlgebraTests.lean:297:102: tactic 'decide' failed for proposition
+  USize.toNat 1 < 2
+since its 'Decidable' instance
+  (USize.toNat 1).decLt 2
+did not reduce to 'isTrue' or 'isFalse'.
+
+After unfolding the instances 'instDecidableEqBool', 'Bool.decEq', 'Nat.decLe' and 'Nat.decLt', reduction got stuck at the 'Decidable' instance
+  match (USize.toNat 1).succ.ble 2, true with
+  | false, false => isTrue ⋯
+  | false, true => isFalse ⋯
+  | true, false => isFalse ⋯
+  | true, true => isTrue ⋯
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LinearAlgebraTests.lean:297:118: tactic 'decide' failed for proposition
+  USize.toNat 2 < 3
+since its 'Decidable' instance
+  (USize.toNat 2).decLt 3
+did not reduce to 'isTrue' or 'isFalse'.
+
+After unfolding the instances 'instDecidableEqBool', 'Bool.decEq', 'Nat.decLe' and 'Nat.decLt', reduction got stuck at the 'Decidable' instance
+  match (USize.toNat 2).succ.ble 3, true with
+  | false, false => isTrue ⋯
+  | false, true => isFalse ⋯
+  | true, false => isFalse ⋯
+  | true, true => isTrue ⋯
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LinearAlgebraTests.lean:343:49: application type mismatch
+  { val := 1, isLt := ⋯ }
+argument
+  Nat.succ_lt_succ (Nat.zero_lt_succ 1)
+has type
+  Nat.succ 0 < (Nat.succ 1).succ : Prop
+but is expected to have type
+  USize.toNat 1 < 3 : Prop
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LinearAlgebraTests.lean:345:49: application type mismatch
+  { val := 2, isLt := ⋯ }
+argument
+  Nat.succ_lt_succ (Nat.succ_lt_succ (Nat.zero_lt_succ 0))
+has type
+  (Nat.succ 0).succ < (Nat.succ 0).succ.succ : Prop
+but is expected to have type
+  USize.toNat 2 < 3 : Prop
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LinearAlgebraTests.lean:349:24: application type mismatch
+  { val := 1, isLt := ⋯ }
+argument
+  Nat.succ_lt_succ (Nat.zero_lt_succ 0)
+has type
+  Nat.succ 0 < (Nat.succ 0).succ : Prop
+but is expected to have type
+  USize.toNat 1 < 2 : Prop
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LinearAlgebraTests.lean:351:24: application type mismatch
+  { val := 1, isLt := ⋯ }
+argument
+  Nat.succ_lt_succ (Nat.zero_lt_succ 0)
+has type
+  Nat.succ 0 < (Nat.succ 0).succ : Prop
+but is expected to have type
+  USize.toNat 1 < 2 : Prop
+error: /Users/eric/LEAN_mnist/VerifiedNN/Testing/LinearAlgebraTests.lean:351:68: application type mismatch
+  { val := 2, isLt := ⋯ }
+argument
+  Nat.succ_lt_succ (Nat.succ_lt_succ (Nat.zero_lt_succ 0))
+has type
+  (Nat.succ 0).succ < (Nat.succ 0).succ.succ : Prop
+but is expected to have type
+  USize.toNat 2 < 3 : Prop
+error: Lean exited with code 1
+Some required builds logged failures:
+- VerifiedNN.Testing.DataPipelineTests
+- VerifiedNN.Testing.NumericalStabilityTests
+- VerifiedNN.Testing.LossTests
+- VerifiedNN.Testing.LinearAlgebraTests
+error: build failed
