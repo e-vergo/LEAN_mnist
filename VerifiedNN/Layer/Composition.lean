@@ -1,7 +1,7 @@
-import VerifiedNN.Layer.Dense
-import VerifiedNN.Core.Activation
-import SciLean
 import Mathlib.Analysis.Calculus.FDeriv.Basic
+import SciLean
+import VerifiedNN.Core.Activation
+import VerifiedNN.Layer.Dense
 
 /-!
 # Layer Composition
@@ -36,10 +36,12 @@ The intermediate dimension parameter (e.g., `d2` in `DenseLayer d1 d2` → `Dens
 must match exactly for the code to type-check.
 
 Batched operations (`stackBatch`, `stackBatchReLU`) process multiple samples simultaneously
-for better throughput during training. These are essential for efficient mini-batch gradient descent.
+for better throughput during training. These are essential for efficient mini-batch gradient
+descent.
 
-The `stackLinear` variant composes layers without activation functions, creating a pure affine
-transformation. This is useful for analyzing mathematical properties and proving composition theorems.
+The `stackLinear` variant composes layers without activation functions, creating a pure
+affine transformation. This is useful for analyzing mathematical properties and proving
+composition theorems.
 
 ## Verification Status
 
@@ -48,7 +50,8 @@ transformation. This is useful for analyzing mathematical properties and proving
 - **Axioms:** 0
 - **Type safety:** ✅ Dimension compatibility enforced by type system (compile-time checking)
 - **Composition correctness:** ✅ Proven by construction (definitions are correct by design)
-- **Affine preservation:** ✅ Proven in VerifiedNN.Layer.Properties.stackLinear_preserves_affine_combination
+- **Affine preservation:** ✅ Proven in
+  VerifiedNN.Layer.Properties.stackLinear_preserves_affine_combination
 - **Differentiability:** Planned (chain rule for composition of differentiable functions)
 - **Gradient correctness:** Planned (see VerifiedNN/Verification/GradientCorrectness.lean)
 
@@ -85,7 +88,8 @@ where `layer1 = (W₁, b₁)`, `layer2 = (W₂, b₂)`, and `σ₁, σ₂` are a
 
 **Returns:** `Vector d3`: Output of two-layer composition
 
-**Type safety:** If this function type-checks, dimension compatibility is guaranteed at compile time.
+**Type safety:** If this function type-checks, dimension compatibility is guaranteed at
+compile time.
 
 **Verified properties:**
 - Output dimension equals `d3` (type-level guarantee)

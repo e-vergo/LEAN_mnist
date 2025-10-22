@@ -1,5 +1,5 @@
-import VerifiedNN.Core.DataTypes
 import SciLean
+import VerifiedNN.Core.DataTypes
 
 /-!
 # ASCII Image Renderer
@@ -98,7 +98,8 @@ when rendered in typical monospace fonts, creating a natural brightness ramp.
 
 **Alternative palettes:**
 - Simple: " .:-=+@" (8 levels)
-- Detailed: " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$" (70 levels)
+- Detailed: " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
+  (70 levels - full ASCII gradient for maximum detail)
 
 The current 16-char palette balances detail with readability.
 -/
@@ -191,6 +192,17 @@ def brightnessToChar (value : Float) (isRaw255 : Bool) (inverted : Bool) : Char 
 This uses compile-time known indices which SciLean's DataArrayN supports.
 While verbose, this avoids the computed Nat → Idx conversion problem.
 
+**Design Rationale:**
+SciLean's `DataArrayN` requires `Idx n` type for indexing, not `Nat`. This prevents
+computed indexing like `img[row * 28 + col]`. To maintain computability while
+accessing all 784 pixels, we manually unroll all indices as literal values.
+
+**Line Length Exception:**
+Lines 206-288 intentionally exceed 100 characters (up to ~500 chars) due to
+match expressions containing 28 literal index cases per row. This is the minimal
+computable implementation given SciLean's type constraints. See README.md for
+full technical justification.
+
 **Parameters:**
 - `img`: 784-dimensional vector
 - `rowIdx`: Which row (0-27)
@@ -198,8 +210,11 @@ While verbose, this avoids the computed Nat → Idx conversion problem.
 - `inverted`: Brightness inversion flag
 
 **Returns:** String of 28 characters representing one row
+
+**Complexity:** O(28) per row, O(784) total for full image
 -/
-private def renderRowLiteral (img : Vector 784) (rowIdx : Nat) (isRaw255 : Bool) (inverted : Bool) : String :=
+private def renderRowLiteral (img : Vector 784) (rowIdx : Nat)
+    (isRaw255 : Bool) (inverted : Bool) : String :=
   let offset := rowIdx * 28
   match offset with
   | 0 => String.mk (List.range 28 |>.map fun i =>
@@ -474,7 +489,8 @@ Original              Predicted
 ..........................    ..........................
 ```
 -/
-def renderImageComparison (img1 img2 : Vector 784) (label1 label2 : String) (inverted : Bool) : String :=
+def renderImageComparison (img1 img2 : Vector 784)
+    (label1 label2 : String) (inverted : Bool) : String :=
   let ascii1 := renderImage img1 inverted
   let ascii2 := renderImage img2 inverted
 
@@ -519,7 +535,8 @@ Label 0          Label 1          Label 2
 ..........       ..........       ..........
 ```
 -/
-def renderImageGrid (images : List (Vector 784)) (labels : List String) (cols : Nat) (inverted : Bool) : String :=
+def renderImageGrid (images : List (Vector 784)) (labels : List String)
+    (cols : Nat) (inverted : Bool) : String :=
   if images.isEmpty || cols == 0 then
     "(empty grid)"
   else
@@ -578,7 +595,8 @@ Provides multiple palette options for different preferences and terminal themes:
 def availablePalettes : List PaletteConfig := [
   { chars := " .:-=+*#%@", name := "default" },
   { chars := " .:-=+@", name := "simple" },
-  { chars := " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$", name := "detailed" },
+  { chars := " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$",
+    name := "detailed" },
   { chars := " ░▒▓█", name := "blocks" }
 ]
 
@@ -601,9 +619,10 @@ Like `renderImage` but allows specifying a custom character palette.
 
 **Returns:** Multi-line string containing 28 rows of 28 characters each
 -/
-def renderImageWithPalette (img : Vector 784) (palette : String) (inverted : Bool) : String :=
+def renderImageWithPalette (img : Vector 784) (_palette : String) (inverted : Bool) : String :=
   -- For now, just use the default renderer
   -- TODO: Implement custom palette support with proper SciLean indexing
+  -- The palette parameter is prefixed with _ to indicate it's intentionally unused
   renderImage img inverted
 
 /-- Render image with border frame.
@@ -617,7 +636,8 @@ Adds a decorative border around the ASCII art image.
 
 **Returns:** Multi-line string with bordered image
 -/
-def renderImageWithBorder (img : Vector 784) (inverted : Bool) (borderStyle : String := "single") : String :=
+def renderImageWithBorder (img : Vector 784) (inverted : Bool)
+    (borderStyle : String := "single") : String :=
   let ascii := renderImage img inverted
   let lines := ascii.splitOn "\n"
 

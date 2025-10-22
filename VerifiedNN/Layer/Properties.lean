@@ -1,8 +1,8 @@
+import Mathlib.Analysis.Calculus.FDeriv.Basic
+import SciLean
+import VerifiedNN.Core.LinearAlgebra
 import VerifiedNN.Layer.Dense
 import VerifiedNN.Layer.Composition
-import VerifiedNN.Core.LinearAlgebra
-import SciLean
-import Mathlib.Analysis.Calculus.FDeriv.Basic
 
 /-!
 # Layer Properties
@@ -141,7 +141,9 @@ theorem forwardLinear_is_affine {m n : Nat}
     (x y : Vector n)
     (α β : Float) :
   layer.forwardLinear (vadd (smul α x) (smul β y)) =
-    vadd (vadd (smul α (matvec layer.weights x)) (smul β (matvec layer.weights y))) layer.bias := by
+    vadd (vadd (smul α (matvec layer.weights x))
+              (smul β (matvec layer.weights y)))
+         layer.bias := by
   unfold DenseLayer.forwardLinear
   rw [matvec_linear]
 
@@ -186,14 +188,21 @@ theorem layer_preserves_affine_combination {m n : Nat}
   unfold vadd smul
   simp [SciLean.getElem_ofFn]
   -- Direct calc proof
-  calc (⊞ i => α * (matvec layer.weights x)[i] + β * (matvec layer.weights y)[i] + layer.bias[i])[i]
-    _ = α * (matvec layer.weights x)[i] + β * (matvec layer.weights y)[i] + layer.bias[i] := by
+  calc (⊞ i => α * (matvec layer.weights x)[i] + β * (matvec layer.weights y)[i]
+                   + layer.bias[i])[i]
+    _ = α * (matvec layer.weights x)[i] + β * (matvec layer.weights y)[i]
+          + layer.bias[i] := by
         rw [SciLean.getElem_ofFn]
-    _ = α * (matvec layer.weights x)[i] + β * (matvec layer.weights y)[i] + (1 * layer.bias[i]) := by ring
-    _ = α * (matvec layer.weights x)[i] + β * (matvec layer.weights y)[i] + ((α + β) * layer.bias[i]) := by rw [←h]
-    _ = α * (matvec layer.weights x)[i] + β * (matvec layer.weights y)[i] + (α * layer.bias[i] + β * layer.bias[i]) := by ring
-    _ = α * ((matvec layer.weights x)[i] + layer.bias[i]) + β * ((matvec layer.weights y)[i] + layer.bias[i]) := by ring
-    _ = (⊞ i => α * ((matvec layer.weights x)[i] + layer.bias[i]) + β * ((matvec layer.weights y)[i] + layer.bias[i]))[i] := by
+    _ = α * (matvec layer.weights x)[i] + β * (matvec layer.weights y)[i]
+          + (1 * layer.bias[i]) := by ring
+    _ = α * (matvec layer.weights x)[i] + β * (matvec layer.weights y)[i]
+          + ((α + β) * layer.bias[i]) := by rw [←h]
+    _ = α * (matvec layer.weights x)[i] + β * (matvec layer.weights y)[i]
+          + (α * layer.bias[i] + β * layer.bias[i]) := by ring
+    _ = α * ((matvec layer.weights x)[i] + layer.bias[i])
+          + β * ((matvec layer.weights y)[i] + layer.bias[i]) := by ring
+    _ = (⊞ i => α * ((matvec layer.weights x)[i] + layer.bias[i])
+                  + β * ((matvec layer.weights y)[i] + layer.bias[i]))[i] := by
         rw [SciLean.getElem_ofFn]
 
 /-- Composition of affine maps preserves affine combinations.
@@ -216,7 +225,8 @@ theorem stackLinear_preserves_affine_combination {d1 d2 d3 : Nat}
   -- Apply layer1's affine combination preservation
   rw [layer_preserves_affine_combination layer1 x y α β h]
   -- Apply layer2's affine combination preservation to the result
-  rw [layer_preserves_affine_combination layer2 (layer1.forwardLinear x) (layer1.forwardLinear y) α β h]
+  rw [layer_preserves_affine_combination layer2 (layer1.forwardLinear x)
+                                          (layer1.forwardLinear y) α β h]
 
 /-! ## Differentiability Properties (Planned)
 

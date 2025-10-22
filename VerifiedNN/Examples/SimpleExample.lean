@@ -206,7 +206,7 @@ unsafe to enable interpreter mode execution for validation purposes.
 **For Production Training:** See `MNISTTrain.lean` for full MNIST with data loading,
 CLI argument parsing, and train/test split.
 -/
-unsafe def main : IO Unit := do
+noncomputable unsafe def main : IO Unit := do
   IO.println "=========================================="
   IO.println "REAL Neural Network Training Example"
   IO.println "=========================================="
@@ -299,4 +299,4 @@ end VerifiedNN.Examples.SimpleExample
 
 -- Top-level main for Lake executable infrastructure
 -- Uses unsafe to enable interpreter mode execution
-unsafe def main : IO Unit := VerifiedNN.Examples.SimpleExample.main
+noncomputable unsafe def main : IO Unit := VerifiedNN.Examples.SimpleExample.main

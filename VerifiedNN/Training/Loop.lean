@@ -266,7 +266,8 @@ This is proven in standard calculus (linearity of differentiation).
 
 **Noncomputable:** Uses automatic differentiation which involves symbolic computation.
 -/
-noncomputable def trainBatch (state : TrainState) (batch : Array (Vector 784 × Nat)) : TrainState :=
+noncomputable def trainBatch
+    (state : TrainState) (batch : Array (Vector 784 × Nat)) : TrainState :=
   if batch.size == 0 then
     state
   else
@@ -344,7 +345,8 @@ noncomputable def trainOneEpoch
     | some vData =>
       let valAcc := computeAccuracy currentState.net vData
       let valLoss := computeAverageLoss currentState.net vData
-      TrainingLog.logEpochEnd (state.currentEpoch + 1) trainAcc trainLoss (some valAcc) (some valLoss)
+      TrainingLog.logEpochEnd
+        (state.currentEpoch + 1) trainAcc trainLoss (some valAcc) (some valLoss)
     | none =>
       TrainingLog.logEpochEnd (state.currentEpoch + 1) trainAcc trainLoss
 

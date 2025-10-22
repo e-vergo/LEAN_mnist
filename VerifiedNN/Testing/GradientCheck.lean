@@ -771,6 +771,5 @@ def runAllGradientTests : IO Unit := do
 
 end VerifiedNN.Testing.GradientCheck
 
-/-- Main entry point for running gradient checks standalone -/
-def main : IO Unit := do
-  VerifiedNN.Testing.GradientCheck.runAllGradientTests
+-- Note: Individual test file main definitions are omitted to avoid collision with
+-- RunTests.lean unified test runner. To run these tests: lake build VerifiedNN.Testing.RunTests

@@ -203,7 +203,7 @@ def testSoftmaxProperties : IO Bool := do
 
   -- Check all values in (0, 1) using extracted values
   for i in [:4] do
-    if h : i < 4 then
+    if i < 4 then
       let pi := ∑ (idx : Idx 4), if idx.1.toNat == i then probs1[idx] else 0.0
       allPassed := allPassed && (← assertTrue s!"Softmax: p[{i}] ∈ (0,1)" (pi > 0.0 && pi < 1.0))
 
@@ -284,9 +284,9 @@ def testBatchLoss : IO Bool := do
   -- Compute individual losses and average using indicator sums
   let mut sumIndividual : Float := 0.0
   for b in [:3] do
-    if hb : b < 3 then
+    if b < 3 then
       let logits_b : Vector 4 := ⊞ (i : Idx 4) => ∑ (bidx : Idx 3), if bidx.1.toNat == b then logitsBatch[bidx, i] else 0.0
-      let target_b := targets.get! b
+      let target_b := targets.get! b  -- Note: targets[b]! doesn't work (b is Idx 3, not Nat)
       sumIndividual := sumIndividual + crossEntropyLoss logits_b target_b
 
   let avgIndividual := sumIndividual / 3.0
@@ -321,7 +321,7 @@ def runAllTests : IO Unit := do
     ("Batch Loss", testBatchLoss)
   ]
 
-  for (name, test) in testSuites do
+  for (_, test) in testSuites do
     totalTests := totalTests + 1
     let passed ← test
     if passed then

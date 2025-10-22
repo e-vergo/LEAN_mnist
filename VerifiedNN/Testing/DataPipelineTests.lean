@@ -115,7 +115,7 @@ def testNormalizePixels : IO Bool := do
   let mut minVal := val0
   let mut maxVal := val0
   for i in [:784] do
-    if h : i < 784 then
+    if i < 784 then
       let val := ∑ (idx : Idx 784), if idx.1.toNat == i then normalized[idx] else 0.0
       if val < minVal then minVal := val
       if val > maxVal then maxVal := val
@@ -125,19 +125,19 @@ def testNormalizePixels : IO Bool := do
 
   -- Check specific values
   -- Pixel value 0 → 0.0
-  let zeroPixel : Vector 784 := ⊞ (i : Idx 784) => 0.0
+  let zeroPixel : Vector 784 := ⊞ (_ : Idx 784) => 0.0
   let normalizedZero := normalizePixels zeroPixel
   let nz0 := ∑ (i : Idx 784), if i.1.toNat == 0 then normalizedZero[i] else 0.0
   allPassed := allPassed && (← assertApproxEq "Normalize: 0 → 0.0" nz0 0.0)
 
   -- Pixel value 255 → 1.0
-  let maxPixel : Vector 784 := ⊞ (i : Idx 784) => 255.0
+  let maxPixel : Vector 784 := ⊞ (_ : Idx 784) => 255.0
   let normalizedMax := normalizePixels maxPixel
   let nm0 := ∑ (i : Idx 784), if i.1.toNat == 0 then normalizedMax[i] else 0.0
   allPassed := allPassed && (← assertApproxEq "Normalize: 255 → 1.0" nm0 1.0 1e-5)
 
   -- Pixel value 127.5 → 0.5
-  let midPixel : Vector 784 := ⊞ (i : Idx 784) => 127.5
+  let midPixel : Vector 784 := ⊞ (_ : Idx 784) => 127.5
   let normalizedMid := normalizePixels midPixel
   let mid0 := ∑ (i : Idx 784), if i.1.toNat == 0 then normalizedMid[i] else 0.0
   allPassed := allPassed && (← assertApproxEq "Normalize: 127.5 → 0.5" mid0 0.5 1e-5)
@@ -209,7 +209,7 @@ def testClipPixels : IO Bool := do
   -- Check all values in [0, 1]
   let mut allInRange := true
   for i in [:784] do
-    if h : i < 784 then
+    if i < 784 then
       let val := ∑ (idx : Idx 784), if idx.1.toNat == i then clipped[idx] else 0.0
       if val < 0.0 || val > 1.0 then
         allInRange := false
@@ -307,7 +307,7 @@ def testIteratorBasics : IO Bool := do
     | none =>
       IO.println "✗ Iterator: failed to get second batch"
       return false
-    | some (batch2, iter3) =>
+    | some (batch2, _) =>
       allPassed := allPassed && (← assertTrue "Iterator: second batch size = 3" (batch2.size == 3))
 
       -- Check batches don't overlap (simple check: first elements differ)
@@ -410,7 +410,7 @@ def runAllTests : IO Unit := do
     ("Iterator Reset", testIteratorReset)
   ]
 
-  for (name, test) in testSuites do
+  for (_, test) in testSuites do
     totalTests := totalTests + 1
     let passed ← test
     if passed then

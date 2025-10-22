@@ -230,5 +230,5 @@ def runTests : IO Unit := do
 
 end VerifiedNN.Testing.OptimizerTests
 
-/-- Top-level main for execution -/
-def main : IO Unit := VerifiedNN.Testing.OptimizerTests.runTests
+-- Note: Individual test file main definitions are omitted to avoid collision with
+-- RunTests.lean unified test runner. To run these tests: lake build VerifiedNN.Testing.RunTests

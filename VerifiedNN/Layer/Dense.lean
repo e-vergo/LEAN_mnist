@@ -1,9 +1,9 @@
+import Mathlib.Analysis.Calculus.FDeriv.Basic
+import Mathlib.Analysis.Calculus.Deriv.Basic
+import SciLean
 import VerifiedNN.Core.DataTypes
 import VerifiedNN.Core.LinearAlgebra
 import VerifiedNN.Core.Activation
-import SciLean
-import Mathlib.Analysis.Calculus.FDeriv.Basic
-import Mathlib.Analysis.Calculus.Deriv.Basic
 
 /-!
 # Dense Layer
@@ -12,7 +12,8 @@ Dense (fully-connected) layer implementation with compile-time dimension safety.
 
 ## Main Definitions
 
-* `DenseLayer inDim outDim`: Dense layer structure transforming `inDim`-dimensional inputs to `outDim`-dimensional outputs
+* `DenseLayer inDim outDim`: Dense layer structure transforming `inDim`-dimensional inputs
+  to `outDim`-dimensional outputs
 * `DenseLayer.forwardLinear`: Linear transformation `Wx + b` without activation
 * `DenseLayer.forward`: Forward pass `activation(Wx + b)` with optional activation function
 * `DenseLayer.forwardReLU`: Forward pass with ReLU activation

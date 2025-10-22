@@ -182,7 +182,7 @@ def testNaNAndInfHandling : IO Bool := do
   let logits : Vector 3 := ⊞[1.0, 2.0, 3.0]
   let probs := softmax logits
   for i in [:3] do
-    if h : i < 3 then
+    if i < 3 then
       let pi := ∑ (idx : Idx 3), if idx.1.toNat == i then probs[idx] else 0.0
       allPassed := allPassed && (← assertNotNaN s!"Softmax: p[{i}] not NaN" pi)
       allPassed := allPassed && (← assertNotInf s!"Softmax: p[{i}] not Inf" pi)
@@ -231,7 +231,7 @@ def testSoftmaxStability : IO Bool := do
 
   -- All probabilities should be finite and in (0, 1)
   for i in [:3] do
-    if h : i < 3 then
+    if i < 3 then
       let pi := ∑ (idx : Idx 3), if idx.1.toNat == i then hugeProbs[idx] else 0.0
       allPassed := allPassed && (← assertNotNaN s!"Softmax: huge logits p[{i}] not NaN" pi)
       allPassed := allPassed && (← assertNotInf s!"Softmax: huge logits p[{i}] not Inf" pi)
@@ -246,7 +246,7 @@ def testSoftmaxStability : IO Bool := do
   let negativeProbs := softmax negativeLogits
 
   for i in [:3] do
-    if h : i < 3 then
+    if i < 3 then
       let pi := ∑ (idx : Idx 3), if idx.1.toNat == i then negativeProbs[idx] else 0.0
       allPassed := allPassed && (← assertFinite s!"Softmax: negative logits p[{i}] finite" pi)
 
@@ -258,7 +258,7 @@ def testSoftmaxStability : IO Bool := do
   let mixedProbs := softmax mixedLogits
 
   for i in [:3] do
-    if h : i < 3 then
+    if i < 3 then
       let pi := ∑ (idx : Idx 3), if idx.1.toNat == i then mixedProbs[idx] else 0.0
       allPassed := allPassed && (← assertFinite s!"Softmax: mixed logits p[{i}] finite" pi)
 
@@ -349,7 +349,7 @@ def runAllTests : IO Unit := do
     ("Gradient Extremes", testGradientExtremes)
   ]
 
-  for (name, test) in testSuites do
+  for (_, test) in testSuites do
     totalTests := totalTests + 1
     let passed ← test
     if passed then

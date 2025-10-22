@@ -243,6 +243,6 @@ See `verified-nn-spec.md` Section 5.1 for detailed verification roadmap.
 
 ---
 
-**Last Updated**: 2025-10-21 (Added Layer.lean re-export module, verified mathlib standards)
+**Last Updated**: 2025-10-22 (Imports reorganized, line lengths fixed to ≤100 chars)
 **Maintainers**: Project contributors
 **Build Status**: ✅ All 4 files compile with zero errors and warnings

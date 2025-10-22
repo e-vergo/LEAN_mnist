@@ -8,7 +8,7 @@ This directory contains the complete training infrastructure for neural network 
 
 ## Module Structure
 
-### Loop.lean (615 lines)
+### Loop.lean (617 lines)
 **Main training loop orchestration**
 
 Implements the core training loop that ties together all training components:
@@ -373,11 +373,11 @@ lake exe mnistTrain --epochs 2 --batch-size 32 --lr 0.01
 
 **Line counts (after cleanup):**
 - Batch.lean: 206 lines (comprehensive docstrings)
-- Loop.lean: 615 lines (comprehensive docstrings and structured logging)
+- Loop.lean: 617 lines (comprehensive docstrings and structured logging)
 - Metrics.lean: 327 lines (enhanced docstrings with mathematical notation)
-- **Total: 1,148 lines**
+- **Total: 1,150 lines**
 
-**Last verified:** 2025-10-21 (comprehensive cleanup completed)
+**Last verified:** 2025-10-22 (line length fixes applied)
 
 **Known dependencies:**
 - Network/Gradient.lean uses `sorry` for some gradient correctness proofs (7 sorries, all documented)
@@ -446,4 +446,4 @@ lake exe mnistTrain --epochs 2 --batch-size 32 --lr 0.01
 ---
 
 **Maintained by:** VerifiedNN contributors
-**Last updated:** 2025-10-21
+**Last updated:** 2025-10-22
