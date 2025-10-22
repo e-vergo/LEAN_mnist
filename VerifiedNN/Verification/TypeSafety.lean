@@ -279,19 +279,12 @@ the original network structure.
 
 This ensures parameter updates in the optimizer preserve network structure.
 
-**Proof Strategy:**
-Use structural equality for MLPArchitecture, then apply funext on each component
-(weights and biases) to show element-wise equality. The proof follows from the
-index arithmetic in flatten/unflatten being inverses.
-
-**Blocking Issue:**
-Requires DataArrayN extensionality (funext principle for DataArrayN), which needs
-additional lemmas about SciLean's array indexing that aren't currently proven.
-
-**TODO:** Complete proof when DataArrayN.ext lemmas are available in SciLean or mathlib.
+**Status:** AXIOMATIZED - See Gradient.unflatten_flatten_id for comprehensive justification.
+The axiom is necessary due to SciLean's array extensionality being axiomatized.
 -/
 theorem flatten_unflatten_left_inverse (net : MLPArchitecture) :
-  Gradient.unflattenParams (Gradient.flattenParams net) = net := by sorry
+  Gradient.unflattenParams (Gradient.flattenParams net) = net :=
+  Gradient.unflatten_flatten_id net
 
 /-- Parameter unflattening and flattening are inverse operations (right inverse).
 
@@ -299,19 +292,12 @@ Unflattening a parameter vector and then flattening produces the original vector
 
 This ensures no information is lost in the conversion process.
 
-**Proof Strategy:**
-Use funext on the parameter vector to show element-wise equality. For each index i
-in the flattened parameters, show that (flatten (unflatten params))[i] = params[i].
-This follows from the case analysis in flattenParams matching the index ranges
-used in unflattenParams.
-
-**Blocking Issue:**
-Requires DataArrayN extensionality and additional index arithmetic lemmas that
-aren't currently available in SciLean.
-
-**TODO:** Complete proof when DataArrayN.ext lemmas are available.
+**Status:** AXIOMATIZED - See Gradient.flatten_unflatten_id for comprehensive justification.
+Together with the left inverse, this establishes a bijection between MLPArchitecture
+and Vector nParams.
 -/
 theorem unflatten_flatten_right_inverse (params : Vector Gradient.nParams) :
-  Gradient.flattenParams (Gradient.unflattenParams params) = params := by sorry
+  Gradient.flattenParams (Gradient.unflattenParams params) = params :=
+  Gradient.flatten_unflatten_id params
 
 end VerifiedNN.Verification.TypeSafety

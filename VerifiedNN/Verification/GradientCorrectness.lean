@@ -22,6 +22,7 @@ import VerifiedNN.Loss.Gradient
 import SciLean
 import Mathlib.Analysis.Calculus.FDeriv.Basic
 import Mathlib.Analysis.Calculus.Deriv.Basic
+import Mathlib.Analysis.Calculus.Deriv.Slope
 import Mathlib.Analysis.SpecialFunctions.Exp
 import Mathlib.LinearAlgebra.Matrix.ToLin
 import Mathlib.Analysis.InnerProductSpace.PiL2
@@ -229,16 +230,14 @@ theorem smul_gradient_correct
   ∀ x : Fin n → ℝ,
     fderiv ℝ (fun v : Fin n → ℝ => c • v) x = c • ContinuousLinearMap.id ℝ (Fin n → ℝ) := by
   intro x
-  -- Scalar multiplication is a continuous linear map
-  -- For a continuous linear map L, fderiv ℝ L = L
-  -- Key insight: (c • ·) = c • id (as a continuous linear map)
-  -- So fderiv ℝ (c • ·) = c • id (by ContinuousLinearMap.fderiv)
-
-  have h_eq : (fun v : Fin n → ℝ => c • v) = (c • ContinuousLinearMap.id ℝ (Fin n → ℝ) : Fin n → ℝ → Fin n → ℝ) := by
-    ext v
-    simp [ContinuousLinearMap.smul_apply]
-  rw [h_eq]
-  exact ContinuousLinearMap.fderiv _ _
+  -- The function v ↦ c • v is c times the identity function
+  -- Use: fderiv (fun v => c • f v) = c • fderiv f (for any differentiable f)
+  -- Here f = id, so fderiv id = ContinuousLinearMap.id, giving us c • id
+  have h_smul : fderiv ℝ (fun v : Fin n → ℝ => c • v) x =
+                c • fderiv ℝ (fun v : Fin n → ℝ => v) x := by
+    apply fderiv_const_smul
+    exact differentiable_id.differentiableAt
+  rw [h_smul, fderiv_id']
 
 /-! ## Composition and Chain Rule -/
 
@@ -325,48 +324,16 @@ theorem cross_entropy_softmax_gradient_correct
     -- The loss is differentiable when softmax(z)_y > 0 (which holds when exp is positive)
     softmax_denom > 0 → Real.exp (z y) > 0 → DifferentiableAt ℝ ce_loss z := by
   intro z
-  intro h_denom h_exp
+  simp only
+  intro h_denom_pos h_exp_pos
   -- Loss is composition of: z ↦ softmax(z)_y ↦ -log(·)
-
-  -- Step 1: softmax is differentiable (ratio of differentiable functions)
-  have h_softmax : DifferentiableAt ℝ (fun logits => (fun (i : Fin n) => Real.exp (logits i) / (∑ j : Fin n, Real.exp (logits j))) y) z := by
-    -- softmax_y(z) = exp(z_y) / Σ_j exp(z_j)
-    -- Both numerator and denominator are differentiable
-    simp only
-    -- SORRY 4/6: Softmax differentiability
-    -- Mathematical statement: softmax_y(z) = exp(z_y) / (∑_j exp(z_j)) is differentiable
-    -- Blocked by: Need to combine differentiability of exp, sum, and division
-    -- Proof strategy:
-    --   1. Numerator: exp(z_y) is differentiable (Real.differentiable_exp)
-    --   2. Denominator: ∑_j exp(z_j) is differentiable (finite sum of differentiable functions)
-    --   3. Division: Apply DifferentiableAt.div, need h_denom > 0 (we have this assumption)
-    --   4. Chain with projection: z ↦ z_y is differentiable (differentiable_apply)
-    -- Reference: mathlib's Real.differentiable_exp, DifferentiableAt.div, Finset.differentiable_sum
-    -- Status: Should be provable by combining existing mathlib lemmas, needs careful composition
-    sorry
-
-  -- Step 2: negative log is differentiable when argument > 0
-  have h_log : DifferentiableAt ℝ (fun x => -Real.log x) ((fun (i : Fin n) => Real.exp (z i) / (∑ j : Fin n, Real.exp (z j))) y) := by
-    have : (fun (i : Fin n) => Real.exp (z i) / (∑ j : Fin n, Real.exp (z j))) y > 0 := by
-      simp only
-      -- Show exp(z_y) / (∑_j exp(z_j)) > 0
-      -- Numerator: exp(z_y) > 0 (we have h_exp assumption)
-      -- Denominator: ∑_j exp(z_j) > 0 (we have h_denom assumption)
-      -- Division of positives is positive
-      sorry
-    -- SORRY 5/6: Differentiability of negative log
-    -- Mathematical statement: x ↦ -log(x) is differentiable for x > 0
-    -- Blocked by: Need mathlib's Real.differentiableAt_log for positive reals
-    -- Proof strategy:
-    --   1. Show log is differentiable at positive points: Real.differentiableAt_log_of_pos
-    --   2. Apply HasDerivAt.neg or DifferentiableAt.neg to get -log
-    -- Reference: mathlib's Mathlib.Analysis.SpecialFunctions.Log.Deriv
-    -- Status: Should be direct application of mathlib lemmas (Real.differentiableAt_log)
-    sorry
-
-  -- Step 3: Compose using chain rule
-  -- Apply DifferentiableAt.comp: (neg ∘ log) ∘ softmax_y
-  sorry
+  -- Use fun_prop with discharge tactic to handle all positivity/nonzero conditions
+  fun_prop (disch :=
+    first
+    | assumption
+    | exact ne_of_gt h_denom_pos
+    | exact ne_of_gt h_exp_pos
+    | exact ne_of_gt (div_pos h_exp_pos h_denom_pos))
 
 /-! ## End-to-End Gradient Correctness -/
 
@@ -401,43 +368,39 @@ theorem network_gradient_correct
   -- The entire network is a composition of differentiable functions
   -- loss = -log ∘ softmax_y ∘ layer2 ∘ layer1
 
-  -- Step 1: layer1 is differentiable (proven by layer_composition_gradient_correct)
+  -- Step 1: layer1 is differentiable
   have h_layer1 : DifferentiableAt ℝ (fun v => (fun i => σ₁ ((W₁.mulVec v + b₁) i))) x := by
-    -- This would follow from layer_composition_gradient_correct
-    -- but that theorem needs Matrix.mulVec differentiability
-    -- SORRY 6/6: End-to-end network differentiability
-    -- Mathematical statement: Full network is differentiable (composition of differentiable functions)
-    -- Blocked by: All previous sorries (especially Matrix.mulVec, softmax, and log)
-    -- Proof strategy:
-    --   1. Prove layer1 differentiable using layer_composition_gradient_correct (line 257)
-    --   2. Prove layer2 differentiable similarly
-    --   3. Prove softmax differentiable (SORRY 4)
-    --   4. Prove -log differentiable (SORRY 5)
-    --   5. Compose all using chain rule (proven at line 242)
-    -- Status: Depends on completing SORRY 3, 4, 5 above. Once those are done, this follows
-    --         by sequential application of DifferentiableAt.comp
-    -- Note: This is the MAIN THEOREM - proves end-to-end gradient correctness for full network
-    sorry
+    exact layer_composition_gradient_correct W₁ b₁ σ₁ hσ₁ x
 
   -- Step 2: layer2 is differentiable
   have h_layer2 : DifferentiableAt ℝ (fun v => (fun i => σ₂ ((W₂.mulVec v + b₂) i))) ((fun v => (fun i => σ₁ ((W₁.mulVec v + b₁) i))) x) := by
-    -- Similar to layer1, applies σ₂ componentwise to affine transformation
-    sorry
+    exact layer_composition_gradient_correct W₂ b₂ σ₂ hσ₂ _
 
-  -- Step 3: softmax_y is differentiable
-  have h_softmax : DifferentiableAt ℝ (fun logits => (fun (i : Fin n₂) => Real.exp (logits i) / (∑ j : Fin n₂, Real.exp (logits j))) y)
-    ((fun v => (fun i => σ₂ ((W₂.mulVec v + b₂) i))) ((fun v => (fun i => σ₁ ((W₁.mulVec v + b₁) i))) x)) := by
-    -- Requires showing exp and division are differentiable
-    sorry
+  -- Compose layers: layer2 ∘ layer1
+  have h_layers : DifferentiableAt ℝ (fun v => ((fun v => (fun i => σ₂ ((W₂.mulVec v + b₂) i))) ((fun v => (fun i => σ₁ ((W₁.mulVec v + b₁) i))) v))) x := by
+    -- The goal is to show: v ↦ layer2(layer1(v)) is differentiable at x
+    -- h_layer1: layer1 is differentiable at x
+    -- h_layer2: layer2 is differentiable at layer1(x)
+    -- Apply the chain rule
+    show DifferentiableAt ℝ ((fun w => (fun i => σ₂ ((W₂.mulVec w + b₂) i))) ∘ (fun v => (fun i => σ₁ ((W₁.mulVec v + b₁) i)))) x
+    exact DifferentiableAt.comp (x := x) h_layer2 h_layer1
 
-  -- Step 4: negative log is differentiable when argument > 0
-  have h_log : DifferentiableAt ℝ (fun t => -Real.log t)
-    ((fun (i : Fin n₂) => Real.exp (((fun v => (fun i => σ₂ ((W₂.mulVec v + b₂) i))) ((fun v => (fun i => σ₁ ((W₁.mulVec v + b₁) i))) x)) i) / (∑ j : Fin n₂, Real.exp (((fun v => (fun i => σ₂ ((W₂.mulVec v + b₂) i))) ((fun v => (fun i => σ₁ ((W₁.mulVec v + b₁) i))) x)) j))) y) := by
-    -- Requires: network x > 0 (softmax outputs are positive)
-    sorry
+  -- Step 3: Use cross_entropy theorem for the rest
+  let layer2_output := ((fun v => (fun i => σ₂ ((W₂.mulVec v + b₂) i))) ((fun v => (fun i => σ₁ ((W₁.mulVec v + b₁) i))) x))
 
-  -- Step 5: Compose all using chain rule
-  sorry  -- Requires proper sequential composition of all differentiable functions
+  have h_ce : DifferentiableAt ℝ (fun logits => -Real.log ((fun (i : Fin n₂) => Real.exp (logits i) / (∑ j : Fin n₂, Real.exp (logits j))) y)) layer2_output := by
+    have h_denom : (∑ j : Fin n₂, Real.exp (layer2_output j)) > 0 := by
+      apply Finset.sum_pos
+      · intro j _
+        exact Real.exp_pos _
+      · exact ⟨y, Finset.mem_univ y⟩
+    have h_exp : Real.exp (layer2_output y) > 0 := Real.exp_pos _
+    exact cross_entropy_softmax_gradient_correct y layer2_output h_denom h_exp
+
+  -- Step 4: Compose ce_loss ∘ (layer2 ∘ layer1)
+  -- The final composition h_ce.comp h_layers proves differentiability
+  -- of the entire network end-to-end
+  apply DifferentiableAt.comp (x := x) h_ce h_layers
 
 /-! ## Practical Gradient Checking Theorems -/
 
@@ -467,10 +430,16 @@ theorem gradient_matches_finite_difference
   -- Both quotients → f'(x), so their average → f'(x)
 
   have h1 : Filter.Tendsto (fun h => (f (x + h) - f x) / h) (nhdsWithin 0 {0}ᶜ) (nhds (deriv f x)) := by
-    -- This is the definition of deriv
-    -- Convert DifferentiableAt to HasDerivAt, then extract tendsto property
-    -- Note: This is essentially the definition of derivative, should be in mathlib
-    sorry
+    -- Convert DifferentiableAt to HasDerivAt
+    have h_deriv : HasDerivAt f (deriv f x) x := DifferentiableAt.hasDerivAt hf
+    -- Use HasDerivAt.tendsto_slope_zero: t⁻¹ • (f (x + t) - f x) → deriv f x
+    have h_slope := h_deriv.tendsto_slope_zero
+    -- In ℝ, h⁻¹ • y = h⁻¹ * y = y / h
+    have h_eq : ∀ h : ℝ, h⁻¹ • (f (x + h) - f x) = (f (x + h) - f x) / h := by
+      intro h
+      rw [smul_eq_mul, mul_comm, div_eq_mul_inv]
+    simp only [h_eq] at h_slope
+    exact h_slope
 
   -- Show that the symmetric quotient is the average of forward and backward quotients
   have h_eq : ∀ h : ℝ, h ≠ 0 →
@@ -482,17 +451,68 @@ theorem gradient_matches_finite_difference
 
   -- The backward quotient (f(x-h) - f(x))/(-h) also converges to f'(x)
   have h2 : Filter.Tendsto (fun h => (f (x - h) - f x) / (-h)) (nhdsWithin 0 {0}ᶜ) (nhds (deriv f x)) := by
-    -- Change of variables: let h' = -h
-    have : (fun h => (f (x - h) - f x) / (-h)) = (fun h => (f (x + (-h)) - f x) / (-h)) := by
-      ext h; rfl
-    rw [this]
-    -- Now this is the same form as h1, just with -h
-    -- Need to show limit is preserved under negation
-    sorry
+    -- Simplify: (f(x - h) - f(x)) / (-h) = (f(x + (-h)) - f(x)) / (-h)
+    have h_eq : ∀ h, (f (x - h) - f x) / (-h) = (f (x + (-h)) - f x) / (-h) := by
+      intro h
+      simp only [sub_eq_add_neg]
+    simp only [h_eq]
+    -- Now this is h1 composed with negation: (fun t => (f (x + t) - f x) / t) ∘ (fun h => -h)
+    -- Use the fact that negation preserves nhdsWithin 0 {0}ᶜ
+    have key : (fun h => (f (x + (-h)) - f x) / (-h)) =
+               (fun t => (f (x + t) - f x) / t) ∘ (fun h => -h) := by rfl
+    rw [key]
+    -- Apply Filter.Tendsto.comp with negation being continuous
+    apply Filter.Tendsto.comp h1
+    -- Show: (fun h => -h) : ℝ → ℝ tends from nhdsWithin 0 {0}ᶜ to nhdsWithin 0 {0}ᶜ
+    -- Negation is continuous and maps 0 to 0 and {0}ᶜ to {0}ᶜ
+    -- Use that negation is a homeomorphism
+    have neg_at_zero : Filter.Tendsto (Neg.neg : ℝ → ℝ) (nhds 0) (nhds (-(0:ℝ))) :=
+      Continuous.tendsto continuous_neg 0
+    have : (-(0:ℝ)) = 0 := by norm_num
+    rw [this] at neg_at_zero
+    have neg_preserves : ∀ h ∈ ({0}ᶜ : Set ℝ), (-h : ℝ) ∈ ({0}ᶜ : Set ℝ) := by
+      intro h hh
+      simp only [Set.mem_compl_iff, Set.mem_singleton_iff, neg_eq_zero] at hh ⊢
+      exact hh
+    exact neg_at_zero.inf (Filter.tendsto_principal.mpr neg_preserves)
 
   -- The average of two sequences converging to L converges to L
   -- Apply Filter.Tendsto.add and Filter.Tendsto.const_mul to combine h1 and h2
-  sorry
+  -- Goal: show (f(x+h) - f(x-h))/(2h) → deriv f x
+  -- We have h_eq showing this equals (1/2) * (forward quotient + backward quotient)
+  -- And we have h1, h2 showing both quotients → deriv f x
+
+  -- First, show the sum of the two quotients → 2 * deriv f x
+  have h_sum : Filter.Tendsto
+    (fun h => (f (x + h) - f x) / h + (f (x - h) - f x) / (-h))
+    (nhdsWithin 0 {0}ᶜ)
+    (nhds (deriv f x + deriv f x)) := by
+    exact Filter.Tendsto.add h1 h2
+
+  -- Simplify: deriv f x + deriv f x = 2 * deriv f x
+  have : deriv f x + deriv f x = 2 * deriv f x := by ring
+  rw [this] at h_sum
+
+  -- Now multiply by 1/2
+  have h_half : Filter.Tendsto
+    (fun h => (1/2) * ((f (x + h) - f x) / h + (f (x - h) - f x) / (-h)))
+    (nhdsWithin 0 {0}ᶜ)
+    (nhds ((1/2) * (2 * deriv f x))) := by
+    exact Filter.Tendsto.const_mul (1/2) h_sum
+
+  -- Simplify: (1/2) * (2 * deriv f x) = deriv f x
+  have : (1/2) * (2 * deriv f x) = deriv f x := by ring
+  rw [this] at h_half
+
+  -- Use h_eq to relate this to the symmetric quotient
+  -- Show that h_half implies our goal using functional extensionality on the filter
+  convert h_half using 1
+  funext h
+  by_cases hne : h = 0
+  · -- When h = 0, both sides involve division by zero, so they're equal by definition
+    simp [hne]
+  · -- When h ≠ 0, use h_eq
+    exact h_eq h hne
 
 -- End of module
 
