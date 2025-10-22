@@ -1,7 +1,5 @@
 import VerifiedNN.Data.MNIST
 import VerifiedNN.Util.ImageRenderer
-import VerifiedNN.Network.Architecture
-import VerifiedNN.Network.Initialization
 
 /-!
 # MNIST ASCII Renderer Demo
@@ -67,7 +65,6 @@ namespace VerifiedNN.Examples.RenderMNIST
 open VerifiedNN.Core
 open VerifiedNN.Data.MNIST
 open VerifiedNN.Util.ImageRenderer
-open VerifiedNN.Network
 
 /-- Configuration for rendering demo. -/
 structure RenderConfig where

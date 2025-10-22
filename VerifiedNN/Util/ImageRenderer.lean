@@ -184,39 +184,50 @@ def brightnessToChar (value : Float) (isRaw255 : Bool) (inverted : Bool) : Char 
   let finalIndex := if inverted then (paletteSize - 1 - index) else index
 
   -- Safely get character from palette (should never fail due to clamping)
-  brightnessChars.toList.get! finalIndex
+  brightnessChars.toList[finalIndex]!
 
-/-- Render a single row (28 pixels) of the image as an ASCII string.
+/-- Unsafely cast Vector to Array for indexing purposes.
 
-Extracts pixels from indices [rowIndex*28 .. rowIndex*28+27] and converts each
-to an ASCII character.
+This is a utility function for visualization only - no verification needed.
+Uses unsafe coercion to bypass SciLean's Idx type requirements.
 
 **Parameters:**
-- `img`: Full 784-dimensional image vector (flattened row-major 28×28)
-- `rowIndex`: Which row to render (0-27 inclusive)
-- `isRaw255`: Whether pixel values are in 0-255 range (vs 0-1 normalized)
-- `inverted`: Whether to use inverted brightness mapping
+- `vec`: 784-dimensional SciLean vector
 
-**Returns:** String of exactly 28 characters representing one row
-
-**Complexity:** O(28) - constant time per row
-
-**Row-major layout:** MNIST images are stored in row-major order:
-- Row 0: pixels [0..27]
-- Row 1: pixels [28..55]
-- ...
-- Row 27: pixels [756..783]
+**Returns:** Array of 784 floats
 -/
-private def renderRowFromVec (img : Vector 784) (rowIndex : Nat) (isRaw255 : Bool) (inverted : Bool) : String :=
-  -- Build string using ⊞ to extract each pixel by its absolute index
+private unsafe def vectorToArrayUnsafe (vec : Vector 784) : Array Float :=
+  -- Unsafe cast: treat DataArrayN internals as Array
+  unsafeCast vec
+
+/-- Safe wrapper using @[implemented_by] pattern.
+
+**Parameters:**
+- `vec`: 784-dimensional SciLean vector
+
+**Returns:** Array of 784 floats
+-/
+@[implemented_by vectorToArrayUnsafe]
+private def vectorToArray (vec : Vector 784) : Array Float :=
+  -- Default implementation (never executed due to implemented_by)
+  Array.replicate 784 0.0
+
+/-- Render a single row from an Array.
+
+**Parameters:**
+- `imgArray`: 784-element array
+- `rowIndex`: Row to render (0-27)
+- `isRaw255`: Whether values are 0-255 range
+- `inverted`: Invert brightness
+
+**Returns:** String of 28 characters
+-/
+private def renderRowFromArray (imgArray : Array Float) (rowIndex : Nat) (isRaw255 : Bool) (inverted : Bool) : String :=
   let startIdx := rowIndex * 28
   let chars := List.range 28 |>.map fun colIdx =>
     let absIdx := startIdx + colIdx
-    -- Create a single-element vector extracting just this pixel using runtime check
-    let pixelVec : Float^[1] := ⊞ (_ : Idx 1) => img[absIdx]!
-    let pixelValue := pixelVec[0]
-    brightnessToChar pixelValue isRaw255 inverted
-
+    let pixel := imgArray[absIdx]!
+    brightnessToChar pixel isRaw255 inverted
   String.mk chars
 
 /-- Render full 28×28 MNIST image as ASCII art.
@@ -232,9 +243,10 @@ or normalized 0-1 values.
 **Returns:** Multi-line string containing 28 rows of 28 characters each
 
 **Algorithm:**
-1. Auto-detect value range (0-255 vs 0-1)
-2. Render each of 28 rows using `renderRow`
-3. Join rows with newline characters
+1. Convert Vector to Array for Nat indexing
+2. Auto-detect value range (0-255 vs 0-1)
+3. Render each of 28 rows
+4. Join rows with newline characters
 
 **Complexity:** O(784) - processes each pixel exactly once
 
@@ -278,11 +290,13 @@ IO.println (renderImage image false)
 ```
 -/
 def renderImage (img : Vector 784) (inverted : Bool) : String :=
+  -- Convert to Array first for easier Nat indexing
+  let imgArray := vectorToArray img
   let isRaw255 := autoDetectRange img
 
-  -- Render each row directly from the vector
+  -- Render each row using Array indexing
   let rows := List.range 28 |>.map fun rowIdx =>
-    renderRowFromVec img rowIdx isRaw255 inverted
+    renderRowFromArray imgArray rowIdx isRaw255 inverted
   String.intercalate "\n" rows
 
 /-- Render MNIST image with a text label above it.
