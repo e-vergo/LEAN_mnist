@@ -14,6 +14,13 @@ not optimization theory. These axioms reference standard optimization literature
 **Mathematical Context:** Theorems are stated on ℝ (real numbers), not Float.
 
 **Total Axioms:** 8
+
+**⭐ MNIST MLP Applicability:** Axiom 7 (sgd_finds_stationary_point_nonconvex) is the
+PRIMARY theoretical justification for neural network training. MLP loss is non-convex,
+so strongly convex (Axiom 5) and convex (Axiom 6) convergence results do not apply.
+
+**Validation Status:** All axioms validated against literature (2025-10-21).
+See AXIOM_VALIDATION_REPORT.md for detailed cross-references.
 -/
 
 import SciLean
@@ -41,6 +48,9 @@ doesn't change too rapidly, allowing gradient descent to make reliable progress.
 **Mathematical Definition:** f is L-smooth if for all x, y:
   ‖∇f(x) - ∇f(y)‖ ≤ L‖x - y‖
 
+Equivalently (Nesterov Theorem 2.1.5):
+  f(y) ≤ f(x) + ⟨∇f(x), y-x⟩ + (L/2)‖y-x‖²
+
 **Usage:** Required for all convergence theorems (convex and non-convex cases)
 
 **Formalization Status:** Currently axiomatized because proper gradient operator and
@@ -49,7 +59,10 @@ typeclass instances beyond project scope.
 
 **Future Work:** Define using mathlib's LipschitzWith predicate on gradient operator.
 
-**Reference:** Nesterov (2018), "Lectures on Convex Optimization", Definition 2.1.1
+**Reference:**
+- Nesterov, Y. (2018). "Lectures on Convex Optimization" (2nd ed.), Springer.
+  Definition 2.1.1 and Theorem 2.1.5 (equivalence conditions), Chapter 2, pp. 59-137.
+- ISBN: 978-3-319-91578-4
 -/
 axiom IsSmooth {n : ℕ} (f : (Fin n → ℝ) → ℝ) (L : ℝ) : Prop
 
@@ -61,6 +74,11 @@ A loss function is μ-strongly convex if for all x, y:
 Strong convexity ensures unique global minimum and guarantees fast convergence.
 It's a stronger condition than ordinary convexity (μ = 0).
 
+**Key Properties:**
+- Implies strict convexity
+- Guarantees unique global minimum
+- Enables linear convergence rates for gradient descent
+
 **Usage:** Required for linear convergence rate (sgd_converges_strongly_convex)
 
 **Formalization Status:** Axiomatized because proper inner product and gradient notation
@@ -69,7 +87,10 @@ on function spaces without typeclass instances.
 
 **Future Work:** Define using mathlib's ConvexOn and add strong convexity inequality.
 
-**Reference:** Nesterov (2018), "Lectures on Convex Optimization", Definition 2.1.3
+**Reference:**
+- Nesterov, Y. (2018). "Lectures on Convex Optimization" (2nd ed.), Springer.
+  Definition 2.1.3, Section 2.1.
+- ISBN: 978-3-319-91578-4
 -/
 axiom IsStronglyConvex {n : ℕ} (f : (Fin n → ℝ) → ℝ) (μ : ℝ) : Prop
 
@@ -84,6 +105,8 @@ stochastic gradient estimator is bounded by σ².
 where g(x; ξ) is the stochastic gradient (computed on random mini-batch ξ) and
 ∇f(x) is the true gradient (expected value over all data).
 
+**Assumes:** Unbiased gradient estimator: 𝔼[g(x; ξ)] = ∇f(x)
+
 **Usage:** Required for all convergence theorems to bound noise in gradient estimates
 
 **Formalization Status:** Axiomatized because it requires probability theory (expectation,
@@ -91,8 +114,13 @@ random variables) and norm notation for gradient space, beyond current project s
 
 **Future Work:** Define using mathlib's probability theory (MeasureTheory.ExpectedValue).
 
-**Reference:** Bottou et al. (2018), "Optimization methods for large-scale machine learning",
-Assumption 3.2
+**Reference:**
+- Bottou, L., Curtis, F. E., & Nocedal, J. (2018).
+  "Optimization methods for large-scale machine learning."
+  SIAM Review, 60(2), 223-311.
+  Assumption 3.2 (page ~235).
+- DOI: 10.1137/16M1080173
+- arXiv: https://arxiv.org/abs/1606.04838
 -/
 axiom HasBoundedVariance {n : ℕ} (loss : (Fin n → ℝ) → ℝ) (stochasticGrad : (Fin n → ℝ) → (Fin n → ℝ)) (σ_sq : ℝ) : Prop
 
@@ -106,6 +134,14 @@ Gradient is bounded by a constant G for all parameters.
 This assumption ensures parameter updates don't diverge and is commonly satisfied
 in practice with gradient clipping or bounded activation functions.
 
+**Practical Enforcement:** In neural network training, this can be enforced via:
+- Gradient clipping (clip gradients to max norm G)
+- Weight decay / L2 regularization (keeps weights bounded)
+- Bounded activation functions (e.g., tanh, sigmoid)
+
+**Note:** May not hold globally for unbounded neural networks, but reasonable for
+bounded parameter regions or with gradient clipping.
+
 **Usage:** Required for non-convex convergence (sgd_finds_stationary_point_nonconvex)
 
 **Formalization Status:** Axiomatized because it requires norm notation for gradient
@@ -113,8 +149,11 @@ space (Fin n → ℝ).
 
 **Future Work:** Define using mathlib's norm on function spaces.
 
-**Reference:** Allen-Zhu et al. (2018), "A convergence theory for deep learning via
-over-parameterization", Assumption 2
+**Reference:**
+- Allen-Zhu, Z., Li, Y., & Song, Z. (2018).
+  "A convergence theory for deep learning via over-parameterization."
+  arXiv:1811.03962, Assumption 2.
+- Link: https://arxiv.org/abs/1811.03962
 -/
 axiom HasBoundedGradient {n : ℕ} (f : (Fin n → ℝ) → ℝ) (G : ℝ) : Prop
 
@@ -142,8 +181,17 @@ The expected squared distance to optimum θ* decreases exponentially:
 - Larger learning rate → faster initial convergence but worse final accuracy
 - Smaller variance (larger batches) → better final accuracy
 
-**Reference:** Bottou, Curtis, & Nocedal (2018), "Optimization methods for large-scale
-machine learning", SIAM Review 60(2), Theorem 4.7
+**Reference:**
+- Bottou, L., Curtis, F. E., & Nocedal, J. (2018).
+  "Optimization methods for large-scale machine learning."
+  SIAM Review, 60(2), 223-311.
+  **Theorem 4.7** (page ~250-260).
+- DOI: 10.1137/16M1080173
+- arXiv: https://arxiv.org/abs/1606.04838
+
+**See also:**
+- Robbins, H., & Monro, S. (1951). "A stochastic approximation method." Ann. Math. Stat.
+- Polyak, B. T., & Juditsky, A. B. (1992). "Acceleration of stochastic approximation by averaging."
 
 **Note:** MLP loss is NOT strongly convex (it's non-convex), so this doesn't apply
 directly to neural network training. Included for theoretical completeness.
@@ -188,7 +236,18 @@ where θ_avg_t = (1/t)∑_{s=1}^t θ_s is the average of all iterates.
 **Practical Note:** Averaging iterates (Polyak-Ruppert averaging) often improves
 final accuracy for convex problems, though less common in neural network training.
 
-**Reference:** Bottou et al. (2018), SIAM Review 60(2), Theorem 4.8
+**Reference:**
+- Bottou, L., Curtis, F. E., & Nocedal, J. (2018).
+  "Optimization methods for large-scale machine learning."
+  SIAM Review, 60(2), 223-311.
+  **Theorem 4.8** (page ~260-270).
+- DOI: 10.1137/16M1080173
+- arXiv: https://arxiv.org/abs/1606.04838
+
+**See also:**
+- Nesterov, Y. (2009). "Primal-dual subgradient methods for convex problems."
+- Shamir, O., & Zhang, T. (2013). "Stochastic gradient descent for non-smooth objectives."
+- Rakhlin, A., Shamir, O., & Sridharan, K. (2012). "Making gradient descent optimal for strongly convex stochastic optimization."
 
 **Note:** MLP loss is NOT convex, so this doesn't apply directly to neural networks.
 Included for theoretical understanding of convex optimization baselines.
@@ -208,8 +267,10 @@ axiom sgd_converges_convex
 
 /-- **Axiom 7: SGD finds stationary points in non-convex optimization**
 
+⭐ **PRIMARY THEOREM FOR MNIST MLP TRAINING** ⭐
+
 For non-convex functions (neural network loss landscapes), SGD does not guarantee
-convergence to global optima. However, it finds stationary points (where ∇f = 0)
+convergence to global optima. However, it finds stationary points (where ∇f ≈ 0)
 with high probability.
 
 **Conditions:**
@@ -222,19 +283,36 @@ with high probability.
 After T iterations, the minimum gradient norm encountered satisfies:
   min_{t=1..T} ‖∇f(θ_t)‖² ≤ 2(f(θ₀) - f_min)/(α·T) + 2α·L·σ²
 
-As T → ∞, the right side approaches 2α·L·σ², so gradient norm approaches 0.
+As T → ∞, the right side approaches 2α·L·σ² (constant noise floor).
+
+**Convergence Rate:** O(1/T) for gradient norm (sublinear)
+
+**Interpretation:**
+- **Optimization term:** 2(f(θ₀) - f_min)/(α·T) → 0 as T → ∞ (progress)
+- **Noise term:** 2α·L·σ² (constant floor from stochastic gradients)
+- Smaller learning rate or smaller variance → smaller final gradient norm
 
 **Practical Implications for MNIST MLP:**
-- This is the PRIMARY theoretical justification for neural network training
+- ⭐ This is the PRIMARY theoretical justification for neural network training
 - Stationary points may be local minima, saddle points, or global minima
 - SGD often escapes saddle points due to noise in stochastic gradients
 - For MNIST, most local minima have good accuracy (loss landscape is favorable)
 - No guarantee of global optimum, but empirically works well
+- Over-parameterized networks have benign loss landscapes (many good local minima)
 
-**Reference:** Allen-Zhu, Li, & Song (2018), "A convergence theory for deep learning
-via over-parameterization", arXiv:1811.03962
+**Reference:**
+- Allen-Zhu, Z., Li, Y., & Song, Z. (2018).
+  "A convergence theory for deep learning via over-parameterization."
+  arXiv:1811.03962 (ICML 2019).
+- Link: https://arxiv.org/abs/1811.03962
+
+**See also:**
+- Ghadimi, S., & Lan, G. (2013). "Stochastic first- and zeroth-order methods for nonconvex stochastic programming." SIAM J. Optim.
+- Ge, R., Huang, F., Jin, C., & Yuan, Y. (2015). "Escaping from saddle points—online stochastic gradient for tensor decomposition." COLT.
+- Allen-Zhu, Z., & Hazan, E. (2016). "Variance reduction for faster non-convex optimization." ICML.
 
 **Note:** This is the most relevant theorem for our MLP training on MNIST.
+Unlike Axioms 5-6 (strongly convex / convex), this applies to neural networks!
 -/
 axiom sgd_finds_stationary_point_nonconvex
   {n : ℕ}
@@ -264,6 +342,11 @@ compared to single-sample gradients (assuming independent samples).
 **Mathematical Formula:**
   Var[∇_batch f] = Var[∇_single f] / b
 
+**Derivation:** For i.i.d. random variables X₁, ..., Xₙ with Var[Xᵢ] = σ²:
+  Var[(X₁ + ... + Xₙ)/n] = (1/n²)·Var[X₁ + ... + Xₙ] = (1/n²)·n·σ² = σ²/n
+
+**Assumes:** Independent samples within batch (reasonable for random mini-batching)
+
 **Practical Trade-offs:**
 - Larger batches: Lower variance → more stable gradients → better final accuracy
 - Larger batches: Higher computational cost per iteration
@@ -279,9 +362,15 @@ compared to single-sample gradients (assuming independent samples).
 (variance, expectation, independence) is beyond project scope.
 
 **Future Work:** Prove using basic probability theory (law of large numbers, variance
-of sample mean).
+of sample mean). Could be formalized using mathlib's MeasureTheory.
 
-**Reference:** Standard result in statistics. See Bottou et al. (2018), Section 4.2
+**Reference:**
+- Standard result in probability theory (variance of sample mean).
+- Bottou, L., Curtis, F. E., & Nocedal, J. (2018).
+  "Optimization methods for large-scale machine learning."
+  SIAM Review, 60(2), 223-311.
+  Section 4.2 (Mini-batching and variance reduction), page ~240-245.
+- DOI: 10.1137/16M1080173
 -/
 axiom batch_size_reduces_variance
   {n : ℕ}

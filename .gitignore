@@ -30,8 +30,9 @@ venv/
 env/
 *.egg-info/
 
-# Data files
-/data/
+# Data files (exclude binary data but keep directory structure)
+/data/*
+!/data/.gitkeep
 *.idx-ubyte
 *.idx3-ubyte
 *.idx1-ubyte

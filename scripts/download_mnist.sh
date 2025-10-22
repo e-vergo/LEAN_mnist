@@ -9,8 +9,8 @@ cd data
 
 echo "Downloading MNIST dataset..."
 
-# MNIST URLs
-BASE_URL="http://yann.lecun.com/exdb/mnist"
+# MNIST URLs (using mirror since original is no longer available)
+BASE_URL="https://ossci-datasets.s3.amazonaws.com/mnist"
 
 FILES=(
   "train-images-idx3-ubyte.gz"

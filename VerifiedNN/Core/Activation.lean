@@ -10,19 +10,20 @@ Activation functions with automatic differentiation support.
 ## Implementation
 
 All activation functions are implemented to work with SciLean's AD system.
-ReLU uses `if` which may have limitations for AD at the discontinuity (x = 0).
-Softmax currently lacks numerical stability (log-sum-exp trick).
+- ReLU uses `if` which may have limitations for AD at the discontinuity (x = 0)
+- Softmax uses SciLean's numerically stable implementation with log-sum-exp trick
+- Sigmoid and tanh use Float.exp for exponential computation
 
 ## Verification Status
 
 - **Differentiation properties:** TODO - Register with @[fun_trans] and @[fun_prop]
 - **Analytical derivatives:** Provided separately for gradient checking
 - **Numerical correctness:** Validated via gradient checking tests
+- **Numerical stability:** Softmax implements max subtraction to prevent overflow
 
 ## Known Limitations
 
 - ReLU gradient undefined at x=0 (convention: use 0 as subgradient)
-- Softmax may overflow for large inputs without numerical stability fix
 - Tanh/sigmoid use Float.exp which may not be differentiable in SciLean yet
 -/
 
@@ -60,22 +61,24 @@ Applies ReLU to each element: `y[k,i] = max(0, x[k,i])`.
 def reluBatch {b n : Nat} (x : Batch b n) : Batch b n :=
   ⊞ (k, i) => relu x[k,i]
 
-/-- Softmax activation function: `exp(x[i]) / Σⱼ exp(x[j])`.
+/-- Numerically stable softmax activation: `exp(x[i] - max(x)) / Σⱼ exp(x[j] - max(x))`.
 
-**CRITICAL:** Currently lacks numerical stability (log-sum-exp trick).
-May overflow for large inputs. For production use, should implement:
-```
-  x_stable = x - max(x)
-  softmax(x) = exp(x_stable) / Σ exp(x_stable)
-```
+Implements the log-sum-exp trick to prevent overflow:
+1. Compute max value: `m = max(x)`
+2. Shift inputs: `x_stable = x - m`
+3. Compute: `softmax(x) = exp(x_stable) / Σ exp(x_stable)`
 
-**TODO:** Implement numerical stability via max subtraction.
-**TODO:** Add differentiation properties. -/
+This is mathematically equivalent to the naive implementation but numerically stable.
+
+**Verification Status:**
+- **Numerical stability:** Implemented via max subtraction
+- **Differentiation properties:** TODO - Register with @[fun_trans] and @[fun_prop]
+-/
 @[inline]
 def softmax {n : Nat} (x : Vector n) : Vector n :=
-  let expVals := ⊞ i => Float.exp x[i]
-  let sumExp := ∑ i, expVals[i]
-  ⊞ i => expVals[i] / sumExp
+  -- Use SciLean's built-in numerically stable softmax
+  -- which implements the log-sum-exp trick with max subtraction
+  DataArrayN.softmax x
 
 /-- Sigmoid activation function: `1 / (1 + exp(-x))`.
 

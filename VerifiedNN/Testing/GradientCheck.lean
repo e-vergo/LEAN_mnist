@@ -180,17 +180,106 @@ def testQuadraticGradient (n : Nat) : IO Unit := do
 /-- Test gradient of linear function: f(x) = a·x has gradient ∇f = a -/
 def testLinearGradient : IO Unit := do
   IO.println "\n=== Linear Function Gradient Test ==="
-  IO.println "not implemented"
+
+  -- Define f(x) = 2x₀ + 3x₁ + 5x₂
+  let f : Vector 3 → Float := fun x =>
+    2.0 * x[⟨⟨0, by sorry⟩, by sorry⟩] +
+    3.0 * x[⟨⟨1, by sorry⟩, by sorry⟩] +
+    5.0 * x[⟨⟨2, by sorry⟩, by sorry⟩]
+
+  -- Analytical gradient: ∇f = [2, 3, 5]
+  let grad_f : Vector 3 → Vector 3 := fun _ =>
+    ⊞ (i : Idx 3) =>
+      if i.1.val == 0 then 2.0
+      else if i.1.val == 1 then 3.0
+      else 5.0
+
+  -- Test point
+  let x : Vector 3 := ⊞ (i : Idx 3) =>
+    if i.1.val == 0 then 1.0
+    else if i.1.val == 1 then 2.0
+    else 3.0
+
+  -- Check gradient using existing framework
+  let result := checkGradient f grad_f x 1e-5 1e-5
+
+  if result then
+    IO.println "✓ Linear gradient test PASSED"
+    let error := gradientRelativeError f grad_f x 1e-5
+    IO.println s!"  Relative error: {error}"
+  else
+    IO.println "✗ Linear gradient test FAILED"
+    let error := gradientRelativeError f grad_f x 1e-5
+    IO.println s!"  Relative error: {error}"
+    -- Print analytical and numerical for debugging
+    let analytical := grad_f x
+    let numerical := finiteDifferenceGradient f x 1e-5
+    IO.println s!"  Analytical: [{analytical[⟨⟨0, by sorry⟩, by sorry⟩]}, {analytical[⟨⟨1, by sorry⟩, by sorry⟩]}, {analytical[⟨⟨2, by sorry⟩, by sorry⟩]}]"
+    IO.println s!"  Numerical:  [{numerical[⟨⟨0, by sorry⟩, by sorry⟩]}, {numerical[⟨⟨1, by sorry⟩, by sorry⟩]}, {numerical[⟨⟨2, by sorry⟩, by sorry⟩]}]"
 
 /-- Test gradient of polynomial: f(x) = Σ xᵢ² + 3xᵢ + 2 -/
 def testPolynomialGradient : IO Unit := do
   IO.println "\n=== Polynomial Gradient Test ==="
-  IO.println "not implemented"
+
+  let n := 5
+
+  -- Define f(x) = Σᵢ (xᵢ² + 3xᵢ + 2)
+  let f : Vector n → Float := fun x =>
+    ∑ i, (x[i] * x[i] + 3.0 * x[i] + 2.0)
+
+  -- Test point: x[i] = i (as float)
+  let x : Vector n := ⊞ (i : Idx n) => i.1.toNat.toFloat
+
+  -- Analytical gradient: ∇fᵢ = 2xᵢ + 3
+  let grad_f : Vector n → Vector n := fun x =>
+    ⊞ (i : Idx n) => 2.0 * x[i] + 3.0
+
+  let result := checkGradient f grad_f x 1e-4 1e-5
+
+  if result then
+    IO.println "✓ Polynomial gradient test PASSED"
+    let error := gradientRelativeError f grad_f x 1e-5
+    IO.println s!"  Relative error: {error}"
+  else
+    IO.println "✗ Polynomial gradient test FAILED"
+    let error := gradientRelativeError f grad_f x 1e-5
+    IO.println s!"  Relative error: {error}"
 
 /-- Test gradient of product: f(x,y) = x₀·x₁ for 2D vector -/
 def testProductGradient : IO Unit := do
   IO.println "\n=== Product Gradient Test ==="
-  IO.println "not implemented"
+
+  -- Define f(x) = x₀ · x₁
+  let f : Vector 2 → Float := fun x =>
+    x[⟨⟨0, by sorry⟩, by sorry⟩] * x[⟨⟨1, by sorry⟩, by sorry⟩]
+
+  -- Test point: [3.0, 4.0]
+  let x : Vector 2 := ⊞ (i : Idx 2) =>
+    if i.1.val == 0 then 3.0 else 4.0
+
+  -- Analytical gradient: ∇f = [x₁, x₀] = [4, 3]
+  let grad_f : Vector 2 → Vector 2 := fun x =>
+    ⊞ (i : Idx 2) =>
+      if i.1.val == 0 then
+        x[⟨⟨1, by sorry⟩, by sorry⟩]  -- ∂f/∂x₀ = x₁
+      else
+        x[⟨⟨0, by sorry⟩, by sorry⟩]  -- ∂f/∂x₁ = x₀
+
+  let result := checkGradient f grad_f x 1e-5 1e-5
+
+  if result then
+    IO.println "✓ Product gradient test PASSED"
+    let error := gradientRelativeError f grad_f x 1e-5
+    IO.println s!"  Relative error: {error}"
+  else
+    IO.println "✗ Product gradient test FAILED"
+    let error := gradientRelativeError f grad_f x 1e-5
+    IO.println s!"  Relative error: {error}"
+    -- Print for debugging
+    let analytical := grad_f x
+    let numerical := finiteDifferenceGradient f x 1e-5
+    IO.println s!"  Analytical: [{analytical[⟨⟨0, by sorry⟩, by sorry⟩]}, {analytical[⟨⟨1, by sorry⟩, by sorry⟩]}]"
+    IO.println s!"  Numerical:  [{numerical[⟨⟨0, by sorry⟩, by sorry⟩]}, {numerical[⟨⟨1, by sorry⟩, by sorry⟩]}]"
 
 /-- Run all gradient check tests -/
 def runAllGradientTests : IO Unit := do

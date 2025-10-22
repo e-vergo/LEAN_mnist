@@ -19,24 +19,20 @@ Parameters are flattened in this order:
 
 ## Verification Status
 
-**3 axioms, 0 sorries:**
+**2 axioms, 0 sorries:**
 - **Axiom:** `unflatten_flatten_id` - Round-trip identity (flattening then unflattening)
   - Requires SciLean array extensionality (currently axiomatized in SciLean itself)
   - See comprehensive documentation on axiom for justification
 - **Axiom:** `flatten_unflatten_id` - Round-trip identity (unflattening then flattening)
   - Dual of above, requires same extensionality infrastructure
   - Together these establish bijection between MLPArchitecture and Vector nParams
-- **Axiom:** `array_range_mem_bound` - Elements of Array.range n are less than n
-  - Mathematically trivial property: Array.range n = [0,1,...,n-1]
-  - Requires Array.mem_range lemma not currently in standard library
-  - Used only in batch training loop, does not affect gradient correctness proofs
 
-The first two axioms are **essential and justified** - they axiomatize what is
+**Previously eliminated:**
+- `array_range_mem_bound` - Now proven using `Array.mem_def`, `Array.toList_range`, and `List.mem_range`
+
+The remaining two axioms are **essential and justified** - they axiomatize what is
 algorithmically true but unprovable without array extensionality. SciLean's DataArray.ext
 is itself axiomatized as sorry_proof, so we inherit this limitation.
-
-The third axiom is **mathematically trivial** and could be eliminated with additional
-lemmas about Array.range membership in the standard library.
 -/
 
 import VerifiedNN.Network.Architecture
@@ -52,38 +48,23 @@ open SciLean
 
 set_default_scalar Float
 
-/-- Axiom: Elements of Array.range n are less than n.
+/-- Theorem: Elements of Array.range n are less than n.
 
-This is a trivial property: `Array.range n` produces `#[0, 1, ..., n-1]`, so every
-element is less than n. However, proving this requires a lemma about Array.range
-membership that is not currently available in the standard library.
+This property states that `Array.range n` produces `#[0, 1, ..., n-1]`, so every
+element is less than n.
 
 **Mathematical Content:** ∀ i ∈ Array.range n, i < n
 
-**Why This is an Axiom:**
-The property is algorithmically obvious from the definition of Array.range but proving
-it formally requires:
-1. A lemma characterizing membership in `Array.range n` (like `Array.mem_range_iff`)
-2. Connecting this to the bound `i < n`
+**Proof Strategy:**
+1. Convert Array membership to List membership using `Array.mem_def`
+2. Use `Array.toList_range` to show `(Array.range n).toList = List.range n`
+3. Apply `List.mem_range` which gives us `i ∈ List.range n ↔ i < n`
 
-Such lemmas exist for `List.range` but not yet for `Array.range` in the current version
-of the standard library or Batteries.
-
-**Consistency:**
-This axiom is mathematically trivial and adds no risk of inconsistency. It merely
-asserts a basic property of the `Array.range` function that is true by construction.
-
-**Alternative:**
-Could be eliminated by:
-- Using `List.range` instead (which has the lemmas), though this impacts performance
-- Waiting for Batteries to add `Array.mem_range` lemmas
-- Manually refactoring to avoid `Array.range` and use explicit index bounds
-
-**Impact:**
-Used only in batch computation functions for the training loop. Does not affect the
-core verification of gradient correctness.
+This proof relies on existing lemmas in the standard library and Batteries.
 -/
-private axiom array_range_mem_bound {n : Nat} (i : Nat) (h : i ∈ Array.range n) : i < n
+private theorem array_range_mem_bound {n : Nat} (i : Nat) (h : i ∈ Array.range n) : i < n := by
+  rw [Array.mem_def, Array.toList_range] at h
+  exact List.mem_range.mp h
 
 /-- Helper to convert Nat with bound proof to Idx.
     Uses Idx.finEquiv internally to avoid USize conversion proofs. -/

@@ -39,3 +39,16 @@ lean_exe simpleExample where
 lean_exe mnistTrain where
   root := `VerifiedNN.Examples.MNISTTrain
   supportInterpreter := true
+
+lean_exe mnistLoadTest where
+  root := `VerifiedNN.Testing.MNISTLoadTest
+  supportInterpreter := true
+
+-- Integration test executables
+lean_exe fullIntegration where
+  root := `VerifiedNN.Testing.FullIntegration
+  supportInterpreter := true
+
+lean_exe smokeTest where
+  root := `VerifiedNN.Testing.SmokeTest
+  supportInterpreter := true
