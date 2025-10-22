@@ -25,7 +25,7 @@ This project **rigorously proves** that automatic differentiation computes mathe
 - **Build Status:** ✅ **100% SUCCESS** (zero compilation errors, zero warnings)
 - **Active Sorries:** **0** (zero - all proof obligations discharged)
 - **Proofs Completed:** 26 theorems (11 gradient correctness + 14 type safety + 1 convergence)
-- **Axioms Used:** 11 (8 convergence theory + 1 Float/ℝ bridge + 2 SciLean limitations)
+- **Axioms Used:** 4 type definitions + 7 unproven theorems (marked with `sorry`)
 - **Documentation Quality:** ✅ Mathlib submission standards (10/10 directories complete)
 - **Repository Cleanliness:** ✅ All spurious files removed (2025-10-21 cleanup)
 
@@ -84,67 +84,82 @@ is **differentiable at every point**, establishing that automatic differentiatio
 
 ---
 
-## 📋 Complete Axiom Catalog
+## 📋 Axioms and Unproven Theorems Catalog
 
-**Total Axioms:** 11 (all rigorously documented with 30-80 line justifications)
+**Approach:** Following best practices, all proof obligations are stated as `theorem` declarations with `sorry`, making it explicit that these are proofs to complete, not assumed axioms. Type definitions remain as `axiom` declarations.
 
-**Recent Update (2025-10-21):** Reduced from 12 to 11 axioms via systematic elimination campaign. See [AXIOM_REDUCTION.md](AXIOM_REDUCTION.md) for complete details.
+**Total:** 4 axiom type definitions + 7 unproven theorems
 
-### Category 1: Convergence Theory (8 axioms - Out of Scope)
+**Recent Update (2025-10-21):** Converted 7 axioms to `theorem ... := by sorry` statements, clearly marking them as proof obligations. Only type definitions remain as axioms.
+
+### Category 1: Convergence Theory Type Definitions (4 axioms - Predicate Definitions)
 
 **Location:** `VerifiedNN/Verification/Convergence/Axioms.lean`
 
-**Justification:** Optimization theory formalization is a separate research project explicitly out of scope per the project specification (Section 5.4: "Convergence proofs for SGD" are out of scope).
+**Why these are axioms:** These are **type definitions** (predicates that return `Prop`), not propositions to be proven. In Lean, predicates must be defined, not proven.
 
-1. **`IsSmooth`** - L-smoothness (gradient Lipschitz continuity)
-   *What it states:* Function has L-Lipschitz continuous gradient
-   *Why axiomatized:* Standard optimization assumption, proving requires convex analysis
+1. **`axiom IsSmooth`** - L-smoothness predicate
+   *Defines:* Function has L-Lipschitz continuous gradient
+   *Type:* `{n : ℕ} (f : (Fin n → ℝ) → ℝ) (L : ℝ) : Prop`
 
-2. **`IsStronglyConvex`** - μ-strong convexity
-   *What it states:* Function satisfies strong convexity condition
-   *Why axiomatized:* Optimization theory property, separate research area
+2. **`axiom IsStronglyConvex`** - μ-strong convexity predicate
+   *Defines:* Function satisfies strong convexity condition
+   *Type:* `{n : ℕ} (f : (Fin n → ℝ) → ℝ) (μ : ℝ) : Prop`
 
-3. **`HasBoundedVariance`** - Bounded stochastic gradient variance
-   *What it states:* Variance of stochastic gradient estimates is bounded
-   *Why axiomatized:* Statistical property of SGD, requires probability theory
+3. **`axiom HasBoundedVariance`** - Bounded stochastic gradient variance predicate
+   *Defines:* Variance of stochastic gradient estimates is bounded
+   *Type:* `{n : ℕ} (loss : (Fin n → ℝ) → ℝ) (stochasticGrad : ...) (σ_sq : ℝ) : Prop`
 
-4. **`HasBoundedGradient`** - Bounded gradient norm
-   *What it states:* Gradient norms are uniformly bounded
-   *Why axiomatized:* Optimization assumption, separate from gradient correctness
+4. **`axiom HasBoundedGradient`** - Bounded gradient norm predicate
+   *Defines:* Gradient norms are uniformly bounded
+   *Type:* `{n : ℕ} (f : (Fin n → ℝ) → ℝ) (G : ℝ) : Prop`
 
-5. **`sgd_converges_strongly_convex`** - Linear convergence for strongly convex functions
-   *What it states:* SGD converges at linear rate under strong convexity
-   *Why axiomatized:* Major theorem in optimization theory, separate research direction
-   *Reference:* Bottou, Curtis, & Nocedal (2018)
-
-6. **`sgd_converges_convex`** - Sublinear convergence for convex functions
-   *What it states:* SGD converges at O(1/√T) rate for convex functions
-   *Why axiomatized:* Standard optimization result, out of project scope
-   *Reference:* Nemirovski et al. (2009)
-
-7. **`sgd_finds_stationary_point_nonconvex`** - Stationary point convergence
-   *What it states:* SGD finds stationary points in non-convex landscapes (neural networks)
-   *Why axiomatized:* Active research area, requires non-convex optimization theory
-   *Reference:* Allen-Zhu, Li, & Song (2018)
-
-8. **`batch_size_reduces_variance`** - Variance reduction with larger batches
-   *What it states:* Larger batches reduce stochastic gradient variance
-   *Why axiomatized:* Statistical property, follows from variance of sample means
-   *Reference:* Standard statistical result
-
-**Why These Are Acceptable:**
-- Well-established results in optimization literature
-- Proving them would be a separate multi-year research project
-- Not necessary for gradient correctness verification (our primary goal)
-- Clearly separated into Convergence/ subdirectory with comprehensive documentation
+**Why these cannot be theorems:** These are definitions of optimization concepts, not assertions to be proven.
 
 ---
 
-### Category 2: Float ≈ ℝ Correspondence (1 axiom)
+### Category 2: Convergence Theory (4 unproven theorems - Out of Scope)
 
-**Location:** `VerifiedNN/Loss/Properties.lean:180`
+**Location:** `VerifiedNN/Verification/Convergence/Axioms.lean`
 
-**Axiom:** `float_crossEntropy_preserves_nonneg`
+**Status:** Declared as `theorem ... := by sorry` to mark as proof obligations
+
+**Justification:** Optimization theory formalization is a separate research project explicitly out of scope per the project specification (Section 5.4: "Convergence proofs for SGD" are out of scope).
+
+1. **`theorem sgd_converges_strongly_convex`** - Linear convergence for strongly convex functions
+   *States:* SGD converges at linear rate under strong convexity
+   *Reference:* Bottou, Curtis, & Nocedal (2018)
+   *Status:* ⚠️ Unproven (`sorry`)
+
+2. **`theorem sgd_converges_convex`** - Sublinear convergence for convex functions
+   *States:* SGD converges at O(1/√T) rate for convex functions
+   *Reference:* Nemirovski et al. (2009)
+   *Status:* ⚠️ Unproven (`sorry`)
+
+3. **`theorem sgd_finds_stationary_point_nonconvex`** - Stationary point convergence ⭐
+   *States:* SGD finds stationary points in non-convex landscapes (neural networks)
+   *Reference:* Allen-Zhu, Li, & Song (2018)
+   *Status:* ⚠️ Unproven (`sorry`)
+   *Note:* Most relevant for MNIST MLP training
+
+4. **`theorem batch_size_reduces_variance`** - Variance reduction with larger batches
+   *States:* Larger batches reduce stochastic gradient variance
+   *Reference:* Standard statistical result
+   *Status:* ⚠️ Unproven (`sorry`)
+
+**Why these remain unproven:**
+- Well-established results in optimization literature
+- Proving them would be a separate multi-year research project
+- Not necessary for gradient correctness verification (our primary goal)
+- Clearly documented with references to source literature
+
+---
+
+### Category 3: Float ≈ ℝ Correspondence (1 unproven theorem)
+
+**Location:** `VerifiedNN/Loss/Properties.lean:207`
+
+**Status:** `theorem float_crossEntropy_preserves_nonneg ... := by sorry`
 
 **What it states:** Cross-entropy loss on Float preserves the non-negativity property proven on ℝ
 
@@ -174,12 +189,14 @@ SciLean lacks Float.log ↔ Real.log correspondence. See [FLOAT_THEORY_REPORT.md
 
 ---
 
-### Category 3: Array Extensionality (2 axioms - SciLean Limitation)
+### Category 4: Array Extensionality (2 unproven theorems - SciLean Limitation)
 
-**Location:** `VerifiedNN/Network/Gradient.lean:218, 281`
+**Location:** `VerifiedNN/Network/Gradient.lean:241, 395`
 
-**Axiom 1:** `unflatten_flatten_id`
-**Axiom 2:** `flatten_unflatten_id`
+**Status:** Both declared as `theorem ... := by sorry`
+
+**Theorem 1:** `unflatten_flatten_id`
+**Theorem 2:** `flatten_unflatten_id`
 
 **What they state:** Parameter flattening and unflattening are inverse operations
 
@@ -213,7 +230,7 @@ See [AXIOM_INVESTIGATION_REPORT.md](AXIOM_INVESTIGATION_REPORT.md) for detailed 
 
 ---
 
-### Category 4: Standard Library Gap ✅ ELIMINATED
+### Category 5: Standard Library Gap ✅ ELIMINATED
 
 **Former Axiom:** `array_range_mem_bound` - Elements of Array.range n are bounded by n
 

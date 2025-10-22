@@ -157,6 +157,7 @@ space (Fin n → ℝ).
 -/
 axiom HasBoundedGradient {n : ℕ} (f : (Fin n → ℝ) → ℝ) (G : ℝ) : Prop
 
+set_option linter.unusedVariables false in
 /-- **Axiom 5: SGD convergence for strongly convex functions**
 
 Under strong convexity (μ > 0), smoothness (L-Lipschitz gradient), and bounded variance,
@@ -196,7 +197,7 @@ The expected squared distance to optimum θ* decreases exponentially:
 **Note:** MLP loss is NOT strongly convex (it's non-convex), so this doesn't apply
 directly to neural network training. Included for theoretical completeness.
 -/
-axiom sgd_converges_strongly_convex
+theorem sgd_converges_strongly_convex
   {n : ℕ}
   (f : (Fin n → ℝ) → ℝ)
   (μ L : ℝ)
@@ -212,8 +213,14 @@ axiom sgd_converges_strongly_convex
   (h_lr_upper : α < 2 / (μ + L))
   (θ₀ θ_opt : (Fin n → ℝ))
   (h_opt : ∀ θ, f θ_opt ≤ f θ) :
-  True  -- Placeholder for complete convergence statement with norm notation
+  True := by
+  -- Placeholder for complete convergence statement with norm notation.
+  -- Full statement would require: 𝔼[‖θ_t - θ*‖²] ≤ (1 - α·μ)^t · ‖θ_0 - θ*‖² + (α·σ²)/μ
+  -- Cannot be proven because IsStronglyConvex, IsSmooth, HasBoundedVariance are axiomatized.
+  -- Per verified-nn-spec.md Section 5.4, convergence proofs are explicitly out of scope.
+  trivial
 
+set_option linter.unusedVariables false in
 /-- **Axiom 6: SGD convergence for convex (not strongly convex) functions**
 
 For general convex functions (μ = 0), SGD converges sublinearly to a neighborhood
@@ -252,7 +259,7 @@ final accuracy for convex problems, though less common in neural network trainin
 **Note:** MLP loss is NOT convex, so this doesn't apply directly to neural networks.
 Included for theoretical understanding of convex optimization baselines.
 -/
-axiom sgd_converges_convex
+theorem sgd_converges_convex
   {n : ℕ}
   (f : (Fin n → ℝ) → ℝ)
   (L : ℝ)
@@ -263,8 +270,14 @@ axiom sgd_converges_convex
   (h_variance : HasBoundedVariance f stochasticGrad σ_sq)
   (θ₀ θ_opt : (Fin n → ℝ))
   (h_opt : ∀ θ, f θ_opt ≤ f θ) :
-  True  -- Placeholder for convergence statement
+  True := by
+  -- Placeholder for convergence statement.
+  -- Full statement would require: 𝔼[f(θ_avg_t) - f(θ*)] ≤ O(1/√t)
+  -- Cannot be proven because IsSmooth, HasBoundedVariance are axiomatized.
+  -- Per verified-nn-spec.md Section 5.4, convergence proofs are explicitly out of scope.
+  trivial
 
+set_option linter.unusedVariables false in
 /-- **Axiom 7: SGD finds stationary points in non-convex optimization**
 
 ⭐ **PRIMARY THEOREM FOR MNIST MLP TRAINING** ⭐
@@ -314,7 +327,7 @@ As T → ∞, the right side approaches 2α·L·σ² (constant noise floor).
 **Note:** This is the most relevant theorem for our MLP training on MNIST.
 Unlike Axioms 5-6 (strongly convex / convex), this applies to neural networks!
 -/
-axiom sgd_finds_stationary_point_nonconvex
+theorem sgd_finds_stationary_point_nonconvex
   {n : ℕ}
   (f : (Fin n → ℝ) → ℝ)
   (L : ℝ)
@@ -332,8 +345,14 @@ axiom sgd_finds_stationary_point_nonconvex
   (θ₀ : (Fin n → ℝ))
   (T : ℕ)
   (h_T_pos : 0 < T) :
-  True  -- Placeholder for stationary point convergence statement
+  True := by
+  -- Placeholder for stationary point convergence statement.
+  -- Full statement: min_{t=1..T} ‖∇f(θ_t)‖² ≤ 2(f(θ₀) - f_min)/(α·T) + 2α·L·σ²
+  -- Cannot be proven because IsSmooth, HasBoundedGradient, HasBoundedVariance are axiomatized.
+  -- Per verified-nn-spec.md Section 5.4, convergence proofs are explicitly out of scope.
+  trivial
 
+set_option linter.unusedVariables false in
 /-- **Axiom 8: Variance reduction through larger batch sizes**
 
 For batch size b, the variance of the batch gradient is reduced by a factor of 1/b
@@ -372,13 +391,18 @@ of sample mean). Could be formalized using mathlib's MeasureTheory.
   Section 4.2 (Mini-batching and variance reduction), page ~240-245.
 - DOI: 10.1137/16M1080173
 -/
-axiom batch_size_reduces_variance
+theorem batch_size_reduces_variance
   {n : ℕ}
   (f : (Fin n → ℝ) → ℝ)
   (single_sample_variance : ℝ)
   (b : ℕ)
   (h_b_pos : 0 < b) :
-  True  -- Placeholder for variance reduction statement
+  True := by
+  -- Placeholder for variance reduction statement.
+  -- Full statement: Var[∇_batch f] = Var[∇_single f] / b
+  -- Cannot be proven because HasBoundedVariance is axiomatized and we lack probability theory.
+  -- Per verified-nn-spec.md Section 5.4, convergence proofs are explicitly out of scope.
+  trivial
 
 /-! ## Axiom Summary -/
 

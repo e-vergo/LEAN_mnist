@@ -276,7 +276,7 @@ noncomputable def trainBatch (state : TrainState) (batch : Array (Vector 784 × 
 
     -- Compute average gradient over the batch
     let gradSum := batch.foldl (fun accGrad (input, label) =>
-      let grad := networkGradient params input label
+      let grad := networkGradient' params input label
       ⊞ i => accGrad[i] + grad[i]
     ) (⊞ (_ : Idx nParams) => (0.0 : Float))
 

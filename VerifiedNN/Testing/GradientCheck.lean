@@ -31,25 +31,11 @@ approximations.
 The finite difference method itself is not formally verified, but serves as a
 numerical sanity check for symbolic gradient computations.
 
-**Sorry Count:** 20 total (all index bounds for array access)
-- `testLinearGradient`: 12 sorries (lines 228-230, 260-261)
-- `testProductGradient`: 8 sorries (lines 321, 332, 334, 350-351)
+**Sorry Count:** 0 (all proofs completed)
 
-**Index Bounds Strategy:** Test functions use `by sorry` for trivial array index
-bounds proofs (e.g., proving `0 < 3`, `1 < 2`, and USize range constraints).
-This is an expedient testing pattern that prioritizes rapid numerical validation
-over proof completeness.
-
-**Justification:** These are computational tests where correctness is validated
-numerically through finite difference comparison. The index bounds are statically
-obvious (literal constants like `0 < 3`). Adding proof terms would require ~10
-additional lines of boilerplate per test (defining helper theorems or using
-`decide`/`omega` tactics) without improving the numerical validation quality.
-
-**Could be completed by:** Replace each `by sorry` with `by decide` (Lean's
-reflection-based decision procedure for decidable propositions) or `by omega`
-(linear arithmetic solver). See detailed completion strategies in function
-docstrings for `testLinearGradient` and `testProductGradient`.
+**Array Indexing:** Uses SciLean's simplified array indexing notation (e.g., `x[0]`,
+`x[1]`) which handles index bounds automatically. This is cleaner than explicit
+proof terms and leverages SciLean's indexing infrastructure.
 
 **Test Framework:** All tests use IO-based assertions (no LSpec dependency) for
 compatibility with the broader codebase.
@@ -204,45 +190,15 @@ def testQuadraticGradient (n : Nat) : IO Unit := do
 
 /-- Test gradient of linear function: f(x) = a·x has gradient ∇f = a
 
-**Index Bounds Strategy:** This test uses `by sorry` for array index bounds proofs
-at lines 204-206 and 236-237. These are trivial arithmetic facts that could be proven
-as follows:
-
-```lean
--- Proper proofs (not used here to keep test code concise):
-theorem zero_lt_three : 0 < 3 := by decide
-theorem one_lt_three : 1 < 3 := by decide
-theorem two_lt_three : 2 < 3 := by decide
-```
-
-**Justification for sorry:** This is a numerical validation test, not a proof-carrying
-program. The index bounds are statically known to be correct, and the test validates
-gradient correctness through numerical comparison with finite differences. Using
-`sorry` here is an expedient pattern that prioritizes rapid test development over
-proof completeness. The alternative would be to define helper lemmas or use `decide`
-tactics, which would add ~10 lines of boilerplate per test without improving the
-numerical validation.
-
-**Could be completed by:**
-- Replace each `by sorry` with `by decide` (Lean's reflection-based decision procedure)
-- Or define helper lemmas: `theorem idx_0_lt_3 : 0 < 3 := by omega` and reference them
-- Or use anonymous `omega` tactic: `by omega`
-
-**References:**
-- Nat.zero_lt_succ: Proves 0 < n.succ for all n
-- decide tactic: Reflection-based decision procedure for decidable propositions
-- omega tactic: Linear arithmetic solver for natural number inequalities
+Validates that the analytical gradient [2, 3, 5] matches the finite difference
+approximation for the linear function f(x) = 2x₀ + 3x₁ + 5x₂.
 -/
 def testLinearGradient : IO Unit := do
   IO.println "\n=== Linear Function Gradient Test ==="
 
   -- Define f(x) = 2x₀ + 3x₁ + 5x₂
-  -- TODO: Replace index bound sorries with `by decide` or `by omega`
-  -- These are trivial proofs: 0 < 3, 1 < 3, 2 < 3, and USize bounds
   let f : Vector 3 → Float := fun x =>
-    2.0 * x[⟨⟨0, by sorry⟩, by sorry⟩] +  -- sorry proves: 0 < 3 and USize bounds
-    3.0 * x[⟨⟨1, by sorry⟩, by sorry⟩] +  -- sorry proves: 1 < 3 and USize bounds
-    5.0 * x[⟨⟨2, by sorry⟩, by sorry⟩]    -- sorry proves: 2 < 3 and USize bounds
+    2.0 * x[0] + 3.0 * x[1] + 5.0 * x[2]
 
   -- Analytical gradient: ∇f = [2, 3, 5]
   let grad_f : Vector 3 → Vector 3 := fun _ =>
@@ -269,11 +225,10 @@ def testLinearGradient : IO Unit := do
     let error := gradientRelativeError f grad_f x 1e-5
     IO.println s!"  Relative error: {error}"
     -- Print analytical and numerical for debugging
-    -- TODO: Same index bound sorries as above (0 < 3, 1 < 3, 2 < 3)
     let analytical := grad_f x
     let numerical := finiteDifferenceGradient f x 1e-5
-    IO.println s!"  Analytical: [{analytical[⟨⟨0, by sorry⟩, by sorry⟩]}, {analytical[⟨⟨1, by sorry⟩, by sorry⟩]}, {analytical[⟨⟨2, by sorry⟩, by sorry⟩]}]"
-    IO.println s!"  Numerical:  [{numerical[⟨⟨0, by sorry⟩, by sorry⟩]}, {numerical[⟨⟨1, by sorry⟩, by sorry⟩]}, {numerical[⟨⟨2, by sorry⟩, by sorry⟩]}]"
+    IO.println s!"  Analytical: [{analytical[0]}, {analytical[1]}, {analytical[2]}]"
+    IO.println s!"  Numerical:  [{numerical[0]}, {numerical[1]}, {numerical[2]}]"
 
 /-- Test gradient of polynomial: f(x) = Σ xᵢ² + 3xᵢ + 2 -/
 def testPolynomialGradient : IO Unit := do
@@ -305,48 +260,24 @@ def testPolynomialGradient : IO Unit := do
 
 /-- Test gradient of product: f(x,y) = x₀·x₁ for 2D vector
 
-**Index Bounds Strategy:** This test uses `by sorry` for array index bounds proofs
-at lines 280, 291, 293, 309-310. These are trivial arithmetic inequalities.
-
-**Proper proofs would be:**
-```lean
-theorem zero_lt_two : 0 < 2 := by decide
-theorem one_lt_two : 1 < 2 := by decide
-```
-
-**Justification:** Same as testLinearGradient above. These are numerical tests where
-correctness is validated through finite difference comparison, not formal proof. The
-index bounds are statically obvious and could be proven with `decide` or `omega`,
-but doing so adds verbosity without improving the numerical validation quality.
-
-**Could be completed by:**
-- Replace `by sorry` with `by decide` (single tactic, no helper theorems needed)
-- Or use `by omega` (slightly more powerful linear arithmetic solver)
-
-**References:**
-- decide tactic: Solves decidable propositions via reflection
-- omega tactic: Linear arithmetic decision procedure
+Validates that the analytical gradient [x₁, x₀] matches the finite difference
+approximation for the product function f(x) = x₀·x₁ at test point [3.0, 4.0].
 -/
 def testProductGradient : IO Unit := do
   IO.println "\n=== Product Gradient Test ==="
 
   -- Define f(x) = x₀ · x₁
-  -- TODO: Replace sorries with `by decide` (proves 0 < 2, 1 < 2, and USize bounds)
   let f : Vector 2 → Float := fun x =>
-    x[⟨⟨0, by sorry⟩, by sorry⟩] * x[⟨⟨1, by sorry⟩, by sorry⟩]  -- sorries prove index bounds
+    x[0] * x[1]
 
   -- Test point: [3.0, 4.0]
   let x : Vector 2 := ⊞ (i : Idx 2) =>
     if i.1.toFin == 0 then 3.0 else 4.0
 
   -- Analytical gradient: ∇f = [x₁, x₀] = [4, 3]
-  -- TODO: Replace sorries with `by decide` (same index bounds as above)
   let grad_f : Vector 2 → Vector 2 := fun x =>
     ⊞ (i : Idx 2) =>
-      if i.1.toFin == 0 then
-        x[⟨⟨1, by sorry⟩, by sorry⟩]  -- ∂f/∂x₀ = x₁, sorry: 1 < 2 and USize bounds
-      else
-        x[⟨⟨0, by sorry⟩, by sorry⟩]  -- ∂f/∂x₁ = x₀, sorry: 0 < 2 and USize bounds
+      if i.1.toFin == 0 then x[1] else x[0]
 
   let result := checkGradient f grad_f x 1e-5 1e-5
 
@@ -359,11 +290,10 @@ def testProductGradient : IO Unit := do
     let error := gradientRelativeError f grad_f x 1e-5
     IO.println s!"  Relative error: {error}"
     -- Print for debugging
-    -- TODO: Same index bound sorries (0 < 2, 1 < 2)
     let analytical := grad_f x
     let numerical := finiteDifferenceGradient f x 1e-5
-    IO.println s!"  Analytical: [{analytical[⟨⟨0, by sorry⟩, by sorry⟩]}, {analytical[⟨⟨1, by sorry⟩, by sorry⟩]}]"
-    IO.println s!"  Numerical:  [{numerical[⟨⟨0, by sorry⟩, by sorry⟩]}, {numerical[⟨⟨1, by sorry⟩, by sorry⟩]}]"
+    IO.println s!"  Analytical: [{analytical[0]}, {analytical[1]}]"
+    IO.println s!"  Numerical:  [{numerical[0]}, {numerical[1]}]"
 
 /-- Run all gradient check tests -/
 def runAllGradientTests : IO Unit := do

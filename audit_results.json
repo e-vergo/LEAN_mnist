@@ -1,0 +1,874 @@
+{
+  "files": [
+    "/Users/eric/LEAN_mnist/VerifiedNN/Core.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Core/Activation.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Core/DataTypes.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Core/LinearAlgebra.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Data.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Data/Iterator.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Data/MNIST.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Data/Preprocessing.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Examples/MNISTTrain.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Examples/SimpleExample.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Layer.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Layer/Composition.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Layer/Dense.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Layer/Properties.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Loss/CrossEntropy.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Loss/Gradient.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Loss/Properties.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Loss/Test.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Network/Architecture.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Network/Gradient.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Network/Initialization.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Optimizer.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Optimizer/Momentum.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Optimizer/SGD.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Optimizer/Update.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/FullIntegration.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/GradientCheck.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/Integration.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/MNISTIntegration.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/MNISTLoadTest.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/OptimizerTests.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/OptimizerVerification.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/RunTests.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/SmokeTest.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/UnitTests.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Training.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Training/Batch.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Training/Loop.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Training/Metrics.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Verification.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Verification/Convergence.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Verification/Convergence/Axioms.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Verification/Convergence/Lemmas.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Verification/GradientCorrectness.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Verification/Tactics.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Verification/TypeSafety.lean"
+  ],
+  "results": {
+    "/Users/eric/LEAN_mnist/VerifiedNN/Core.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Core/Activation.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Core/DataTypes.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Core/LinearAlgebra.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Data.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Data/Iterator.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Data/MNIST.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Data/Preprocessing.lean": {
+      "keywords": {
+        "trivial": [
+          {
+            "line": 211,
+            "text": "-- The bound is mathematically trivial given hbound",
+            "in_comment": true
+          }
+        ]
+      },
+      "patterns": {},
+      "stats": {
+        "trivial": 1,
+        "trivial_in_comment": 1
+      }
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Examples/MNISTTrain.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Examples/SimpleExample.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Layer.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Layer/Composition.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Layer/Dense.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Layer/Properties.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Loss/CrossEntropy.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Loss/Gradient.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Loss/Properties.lean": {
+      "keywords": {
+        "axiom": [
+          {
+            "line": 32,
+            "text": "| Lower bound = 0 | \u2713 Proven | Via axiom | lines 259-262 |",
+            "in_comment": false
+          },
+          {
+            "line": 37,
+            "text": "- `loss_nonneg_real`: Cross-entropy \u2265 0 on \u211d (axiom-free proof)",
+            "in_comment": false
+          },
+          {
+            "line": 38,
+            "text": "- `float_crossEntropy_preserves_nonneg`: Float bridge axiom (59-line justification)",
+            "in_comment": false
+          },
+          {
+            "line": 49,
+            "text": "- All proofs on \u211d use mathlib's Real arithmetic (axiom-free modulo foundations)",
+            "in_comment": false
+          },
+          {
+            "line": 58,
+            "text": "- \u2713 Float bridge axiom with 59-line justification",
+            "in_comment": false
+          },
+          {
+            "line": 90,
+            "text": "2. **loss_nonneg**: Bridge to Float implementation via correspondence axiom",
+            "in_comment": false
+          },
+          {
+            "line": 92,
+            "text": "This approach isolates the Float\u2192\u211d gap to a single, well-documented axiom.",
+            "in_comment": false
+          },
+          {
+            "line": 141,
+            "text": "**This is a complete, axiom-free proof** (modulo mathlib's axioms).",
+            "in_comment": true
+          },
+          {
+            "line": 151,
+            "text": "This axiom bridges the gap between our mathematical proof on real numbers and the",
+            "in_comment": false
+          },
+          {
+            "line": 173,
+            "text": "This axiom is explicitly sanctioned by the project's verification philosophy:",
+            "in_comment": false
+          },
+          {
+            "line": 176,
+            "text": "mathlib in theorem `loss_nonneg_real` (lines 143-146). That proof is axiom-free",
+            "in_comment": false
+          },
+          {
+            "line": 186,
+            "text": "4. **Acceptable axiom category:** Per CLAUDE.md \"Axiom Usage\" guidelines: \"Acceptable",
+            "in_comment": false
+          },
+          {
+            "line": 195,
+            "text": "- Acceptable axiom policy: CLAUDE.md section \"Axiom Usage\"",
+            "in_comment": false
+          },
+          {
+            "line": 200,
+            "text": "- `loss_nonneg`: Public theorem using this axiom (line 248)",
+            "in_comment": false
+          },
+          {
+            "line": 207,
+            "text": "axiom float_crossEntropy_preserves_nonneg {n : Nat} (pred : Vector n) (target : Nat) :",
+            "in_comment": false
+          },
+          {
+            "line": 221,
+            "text": "- Mathematical property: \u2713 **PROVEN** on \u211d (loss_nonneg_real, lines 143-146, axiom-free using mathlib)",
+            "in_comment": false
+          },
+          {
+            "line": 245,
+            "text": "This axiom bridges the gap between proven mathematical correctness (\u211d) and",
+            "in_comment": false
+          }
+        ]
+      },
+      "patterns": {
+        "axiom_declaration": [
+          {
+            "line": 58,
+            "text": "- \u2713 Float bridge axiom with 59-line justification"
+          },
+          {
+            "line": 151,
+            "text": "This axiom bridges the gap between our mathematical proof on real numbers and the"
+          },
+          {
+            "line": 173,
+            "text": "This axiom is explicitly sanctioned by the project's verification philosophy:"
+          },
+          {
+            "line": 186,
+            "text": "4. **Acceptable axiom category:** Per CLAUDE.md \"Axiom Usage\" guidelines: \"Acceptable"
+          },
+          {
+            "line": 195,
+            "text": "- Acceptable axiom policy: CLAUDE.md section \"Axiom Usage\""
+          },
+          {
+            "line": 207,
+            "text": "axiom float_crossEntropy_preserves_nonneg {n : Nat} (pred : Vector n) (target : Nat) :"
+          },
+          {
+            "line": 223,
+            "text": "- Axiom justification: Float \u2248 \u211d correspondence (acceptable per CLAUDE.md)"
+          },
+          {
+            "line": 245,
+            "text": "This axiom bridges the gap between proven mathematical correctness (\u211d) and"
+          }
+        ]
+      },
+      "stats": {
+        "axiom": 17,
+        "pattern_axiom_declaration": 8,
+        "axiom_in_comment": 1
+      }
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Loss/Test.lean": {
+      "keywords": {
+        "axiom": [
+          {
+            "line": 24,
+            "text": "- **Non-negativity:** Loss \u2265 0 for all inputs (validates axiom empirically)",
+            "in_comment": false
+          }
+        ]
+      },
+      "patterns": {
+        "axiom_declaration": [
+          {
+            "line": 24,
+            "text": "- **Non-negativity:** Loss \u2265 0 for all inputs (validates axiom empirically)"
+          }
+        ]
+      },
+      "stats": {
+        "axiom": 1,
+        "pattern_axiom_declaration": 1
+      }
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Network/Architecture.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Network/Gradient.lean": {
+      "keywords": {
+        "axiom": [
+          {
+            "line": 29,
+            "text": "- See comprehensive documentation on axiom for justification",
+            "in_comment": false
+          },
+          {
+            "line": 221,
+            "text": "This axiom is consistent with the definitions of `flattenParams` and `unflattenParams`,",
+            "in_comment": false
+          },
+          {
+            "line": 222,
+            "text": "which implement inverse index transformations by construction. The axiom merely asserts",
+            "in_comment": false
+          },
+          {
+            "line": 226,
+            "text": "Could be proven if SciLean provided `DataArray.ext` as a proven lemma rather than axiom.",
+            "in_comment": false
+          },
+          {
+            "line": 229,
+            "text": "DataArray into quotient!\"). Once SciLean addresses this, this axiom could be replaced",
+            "in_comment": false
+          },
+          {
+            "line": 237,
+            "text": "Using this axiom does not introduce inconsistency beyond what SciLean already assumes.",
+            "in_comment": false
+          },
+          {
+            "line": 380,
+            "text": "index transformations. The axiom asserts this algorithmic fact.",
+            "in_comment": false
+          },
+          {
+            "line": 455,
+            "text": "-- Use the axiom to convert membership to bound",
+            "in_comment": true
+          },
+          {
+            "line": 484,
+            "text": "-- Use the axiom to convert membership to bound",
+            "in_comment": true
+          }
+        ],
+        "sorry": [
+          {
+            "line": 35,
+            "text": "The 4 `sorry` occurrences at lines 294, 315, 339, 360 are **documentation markers**",
+            "in_comment": false
+          },
+          {
+            "line": 243,
+            "text": "sorry",
+            "in_comment": false
+          },
+          {
+            "line": 268,
+            "text": "DataArrayN.ext becomes available. The `sorry` placeholders below are NOT compiled",
+            "in_comment": false
+          },
+          {
+            "line": 301,
+            "text": "sorry  -- DOCUMENTATION MARKER: Index arithmetic automation for USize \u2194 Nat \u2194 Idx chain",
+            "in_comment": false
+          },
+          {
+            "line": 322,
+            "text": "sorry  -- DOCUMENTATION MARKER: Similar to case 1, requires branch selection automation",
+            "in_comment": false
+          },
+          {
+            "line": 346,
+            "text": "sorry  -- DOCUMENTATION MARKER: Constant arithmetic normalization required",
+            "in_comment": false
+          },
+          {
+            "line": 367,
+            "text": "sorry  -- DOCUMENTATION MARKER: Final case, constant arithmetic + branch selection",
+            "in_comment": false
+          },
+          {
+            "line": 397,
+            "text": "sorry",
+            "in_comment": false
+          }
+        ],
+        "sorry_proof": [
+          {
+            "line": 45,
+            "text": "is itself axiomatized as sorry_proof, so we inherit this limitation.",
+            "in_comment": false
+          },
+          {
+            "line": 208,
+            "text": "currently axiomatized as `sorry_proof` in SciLean (see SciLean/Data/DataArray/DataArray.lean:130).",
+            "in_comment": false
+          }
+        ]
+      },
+      "patterns": {
+        "axiom_declaration": [
+          {
+            "line": 29,
+            "text": "- See comprehensive documentation on axiom for justification"
+          },
+          {
+            "line": 221,
+            "text": "This axiom is consistent with the definitions of `flattenParams` and `unflattenParams`,"
+          },
+          {
+            "line": 222,
+            "text": "which implement inverse index transformations by construction. The axiom merely asserts"
+          },
+          {
+            "line": 229,
+            "text": "DataArray into quotient!\"). Once SciLean addresses this, this axiom could be replaced"
+          },
+          {
+            "line": 237,
+            "text": "Using this axiom does not introduce inconsistency beyond what SciLean already assumes."
+          },
+          {
+            "line": 380,
+            "text": "index transformations. The axiom asserts this algorithmic fact."
+          },
+          {
+            "line": 455,
+            "text": "-- Use the axiom to convert membership to bound"
+          },
+          {
+            "line": 484,
+            "text": "-- Use the axiom to convert membership to bound"
+          }
+        ]
+      },
+      "stats": {
+        "axiom": 9,
+        "pattern_axiom_declaration": 8,
+        "sorry": 8,
+        "sorry_proof": 2,
+        "axiom_in_comment": 2
+      }
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Network/Initialization.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Optimizer.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Optimizer/Momentum.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Optimizer/SGD.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Optimizer/Update.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/FullIntegration.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/GradientCheck.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/Integration.lean": {
+      "keywords": {
+        "trivial": [
+          {
+            "line": 99,
+            "text": "-- This creates a deterministic but non-trivial classification problem",
+            "in_comment": true
+          }
+        ]
+      },
+      "patterns": {},
+      "stats": {
+        "trivial": 1,
+        "trivial_in_comment": 1
+      }
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/MNISTIntegration.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/MNISTLoadTest.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/OptimizerTests.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/OptimizerVerification.lean": {
+      "keywords": {
+        "trivial": [
+          {
+            "line": 24,
+            "text": "**Proof Strategy:** All dimension preservation theorems use `trivial` because",
+            "in_comment": true
+          },
+          {
+            "line": 181,
+            "text": "True := trivial  -- Type system enforces this by construction",
+            "in_comment": false
+          },
+          {
+            "line": 185,
+            "text": "True := trivial  -- Type system enforces this by construction",
+            "in_comment": false
+          },
+          {
+            "line": 189,
+            "text": "True := trivial  -- Type system enforces this by construction",
+            "in_comment": false
+          }
+        ]
+      },
+      "patterns": {},
+      "stats": {
+        "trivial": 4,
+        "trivial_in_comment": 1
+      }
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/RunTests.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/SmokeTest.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Testing/UnitTests.lean": {
+      "keywords": {
+        "sorry": [
+          {
+            "line": 55,
+            "text": "- \u26a0 Matrix-vector multiplication: pending implementation (contains sorry)",
+            "in_comment": false
+          },
+          {
+            "line": 179,
+            "text": "IO.println \"Note: Linear algebra operations not yet implemented (contain sorry)\"",
+            "in_comment": false
+          }
+        ]
+      },
+      "patterns": {},
+      "stats": {
+        "sorry": 2
+      }
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Training.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Training/Batch.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Training/Loop.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Training/Metrics.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Verification.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Verification/Convergence.lean": {
+      "keywords": {},
+      "patterns": {
+        "axiom_declaration": [
+          {
+            "line": 47,
+            "text": "**Primary Theorem:** Axiom 7 (`sgd_finds_stationary_point_nonconvex`)"
+          },
+          {
+            "line": 62,
+            "text": "- Variance reduction: Var[\u2207_batch] = Var[\u2207_single] / b (Axiom 8)"
+          },
+          {
+            "line": 67,
+            "text": "- Convergence rate: O(1/T) for gradient norm (Axiom 7)"
+          }
+        ]
+      },
+      "stats": {
+        "pattern_axiom_declaration": 3
+      }
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Verification/Convergence/Axioms.lean": {
+      "keywords": {
+        "axiom": [
+          {
+            "line": 6,
+            "text": "This module contains axiom statements for SGD convergence properties. Per the project",
+            "in_comment": false
+          },
+          {
+            "line": 67,
+            "text": "axiom IsSmooth {n : \u2115} (f : (Fin n \u2192 \u211d) \u2192 \u211d) (L : \u211d) : Prop",
+            "in_comment": false
+          },
+          {
+            "line": 95,
+            "text": "axiom IsStronglyConvex {n : \u2115} (f : (Fin n \u2192 \u211d) \u2192 \u211d) (\u03bc : \u211d) : Prop",
+            "in_comment": false
+          },
+          {
+            "line": 125,
+            "text": "axiom HasBoundedVariance {n : \u2115} (loss : (Fin n \u2192 \u211d) \u2192 \u211d) (stochasticGrad : (Fin n \u2192 \u211d) \u2192 (Fin n \u2192 \u211d)) (\u03c3_sq : \u211d) : Prop",
+            "in_comment": false
+          },
+          {
+            "line": 158,
+            "text": "axiom HasBoundedGradient {n : \u2115} (f : (Fin n \u2192 \u211d) \u2192 \u211d) (G : \u211d) : Prop",
+            "in_comment": false
+          }
+        ],
+        "trivial": [
+          {
+            "line": 221,
+            "text": "trivial",
+            "in_comment": false
+          },
+          {
+            "line": 278,
+            "text": "trivial",
+            "in_comment": false
+          },
+          {
+            "line": 353,
+            "text": "trivial",
+            "in_comment": false
+          },
+          {
+            "line": 405,
+            "text": "trivial",
+            "in_comment": false
+          }
+        ]
+      },
+      "patterns": {
+        "axiom_declaration": [
+          {
+            "line": 6,
+            "text": "This module contains axiom statements for SGD convergence properties. Per the project"
+          },
+          {
+            "line": 18,
+            "text": "**\u2b50 MNIST MLP Applicability:** Axiom 7 (sgd_finds_stationary_point_nonconvex) is the"
+          },
+          {
+            "line": 20,
+            "text": "so strongly convex (Axiom 5) and convex (Axiom 6) convergence results do not apply."
+          },
+          {
+            "line": 39,
+            "text": "/-! ## Axiom Definitions -/"
+          },
+          {
+            "line": 41,
+            "text": "/-- **Axiom 1: L-smoothness**"
+          },
+          {
+            "line": 67,
+            "text": "axiom IsSmooth {n : \u2115} (f : (Fin n \u2192 \u211d) \u2192 \u211d) (L : \u211d) : Prop"
+          },
+          {
+            "line": 69,
+            "text": "/-- **Axiom 2: \u03bc-strong convexity**"
+          },
+          {
+            "line": 95,
+            "text": "axiom IsStronglyConvex {n : \u2115} (f : (Fin n \u2192 \u211d) \u2192 \u211d) (\u03bc : \u211d) : Prop"
+          },
+          {
+            "line": 97,
+            "text": "/-- **Axiom 3: Bounded variance**"
+          },
+          {
+            "line": 125,
+            "text": "axiom HasBoundedVariance {n : \u2115} (loss : (Fin n \u2192 \u211d) \u2192 \u211d) (stochasticGrad : (Fin n \u2192 \u211d) \u2192 (Fin n \u2192 \u211d)) (\u03c3_sq : \u211d) : Prop"
+          },
+          {
+            "line": 127,
+            "text": "/-- **Axiom 4: Bounded gradient**"
+          },
+          {
+            "line": 158,
+            "text": "axiom HasBoundedGradient {n : \u2115} (f : (Fin n \u2192 \u211d) \u2192 \u211d) (G : \u211d) : Prop"
+          },
+          {
+            "line": 161,
+            "text": "/-- **Axiom 5: SGD convergence for strongly convex functions**"
+          },
+          {
+            "line": 224,
+            "text": "/-- **Axiom 6: SGD convergence for convex (not strongly convex) functions**"
+          },
+          {
+            "line": 281,
+            "text": "/-- **Axiom 7: SGD finds stationary points in non-convex optimization**"
+          },
+          {
+            "line": 356,
+            "text": "/-- **Axiom 8: Variance reduction through larger batch sizes**"
+          },
+          {
+            "line": 407,
+            "text": "/-! ## Axiom Summary -/"
+          },
+          {
+            "line": 410,
+            "text": "# Axiom Catalog"
+          },
+          {
+            "line": 421,
+            "text": "**Axiom Listing:**"
+          }
+        ]
+      },
+      "stats": {
+        "axiom": 5,
+        "pattern_axiom_declaration": 19,
+        "trivial": 4
+      }
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Verification/Convergence/Lemmas.lean": {
+      "keywords": {
+        "sorry": [
+          {
+            "line": 84,
+            "text": "**Status:** \u2713 PROVEN (no sorry)",
+            "in_comment": true
+          }
+        ]
+      },
+      "patterns": {},
+      "stats": {
+        "sorry": 1,
+        "sorry_in_comment": 1
+      }
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Verification/GradientCorrectness.lean": {
+      "keywords": {
+        "trivial": [
+          {
+            "line": 89,
+            "text": "This is a trivial result from mathlib, stated here for clarity.",
+            "in_comment": false
+          }
+        ]
+      },
+      "patterns": {},
+      "stats": {
+        "trivial": 1
+      }
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Verification/Tactics.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Verification/TypeSafety.lean": {
+      "keywords": {
+        "trivial": [
+          {
+            "line": 31,
+            "text": "All dimension preservation theorems are proven, most by `trivial` or `rfl` because",
+            "in_comment": false
+          },
+          {
+            "line": 44,
+            "text": "Many theorems are proven by `trivial` or `rfl` because they formalize properties that",
+            "in_comment": false
+          },
+          {
+            "line": 93,
+            "text": "lemma type_guarantees_dimension {n : Nat} (_ : Float^[n]) : True := trivial",
+            "in_comment": false
+          },
+          {
+            "line": 106,
+            "text": "theorem vector_type_correct {n : Nat} (_ : Vector n) : True := trivial",
+            "in_comment": false
+          },
+          {
+            "line": 115,
+            "text": "theorem matrix_type_correct {m n : Nat} (_ : Matrix m n) : True := trivial",
+            "in_comment": false
+          },
+          {
+            "line": 123,
+            "text": "theorem batch_type_correct {b n : Nat} (_ : Batch b n) : True := trivial",
+            "in_comment": false
+          }
+        ],
+        "axiom": [
+          {
+            "line": 324,
+            "text": "The axiom is necessary due to SciLean's array extensionality being axiomatized.",
+            "in_comment": false
+          },
+          {
+            "line": 326,
+            "text": "**Cross-reference:** This theorem delegates to Network/Gradient.lean axiom to avoid duplication.",
+            "in_comment": true
+          },
+          {
+            "line": 346,
+            "text": "**Cross-reference:** This theorem delegates to Network/Gradient.lean axiom to avoid duplication.",
+            "in_comment": true
+          }
+        ]
+      },
+      "patterns": {
+        "axiom_declaration": [
+          {
+            "line": 324,
+            "text": "The axiom is necessary due to SciLean's array extensionality being axiomatized."
+          },
+          {
+            "line": 326,
+            "text": "**Cross-reference:** This theorem delegates to Network/Gradient.lean axiom to avoid duplication."
+          },
+          {
+            "line": 346,
+            "text": "**Cross-reference:** This theorem delegates to Network/Gradient.lean axiom to avoid duplication."
+          }
+        ]
+      },
+      "stats": {
+        "trivial": 6,
+        "axiom": 3,
+        "pattern_axiom_declaration": 3,
+        "axiom_in_comment": 2
+      }
+    }
+  }
+}
