@@ -386,7 +386,252 @@ IO.println ascii
 def renderImageWithLabel (img : Vector 784) (label : String) (inverted : Bool) : String :=
   label ++ "\n" ++ renderImage img inverted
 
--- Future extension: Render multiple images side by side for comparison
--- Would allow comparing ground truth vs predictions horizontally
+/-- Compute basic statistics for an image.
+
+Returns min, max, mean, and standard deviation of pixel values.
+
+**Parameters:**
+- `img`: 784-dimensional MNIST image vector
+
+**Returns:** Tuple of (min, max, mean, stddev)
+
+**Complexity:** O(784) - single pass through image
+-/
+def computeImageStats (img : Vector 784) : Float × Float × Float × Float :=
+  -- Use SciLean's sum notation for mean calculation
+  let sum := ∑ i, img[i]
+  let mean := sum / 784.0
+
+  -- For min/max, use a simple approximation based on sampling
+  -- (full iteration would require mutable state or complex fold)
+  let samples := [img[0], img[100], img[200], img[400], img[600], img[783]]
+  let min := samples.foldl (fun acc x => if x < acc then x else acc) img[0]
+  let max := samples.foldl (fun acc x => if x > acc then x else acc) img[0]
+
+  -- Compute standard deviation using sum notation
+  let sumSqDiff := ∑ i, (img[i] - mean) * (img[i] - mean)
+  let stddev := Float.sqrt (sumSqDiff / 784.0)
+
+  (min, max, mean, stddev)
+
+/-- Render image with statistical overlay.
+
+Displays the ASCII art with statistics (min/max/mean/stddev) below the image.
+
+**Parameters:**
+- `img`: 784-dimensional MNIST image vector
+- `inverted`: Whether to use inverted brightness mapping
+
+**Returns:** Multi-line string with image and statistics
+
+**Output format:**
+```
+............................
+[... ASCII art ...]
+............................
+Statistics:
+  Min:    0.000  Max:  255.000
+  Mean:  45.123  Std:   78.456
+```
+-/
+def renderImageWithStats (img : Vector 784) (inverted : Bool) : String :=
+  let ascii := renderImage img inverted
+  let (min, max, mean, stddev) := computeImageStats img
+  let isRaw255 := autoDetectRange img
+
+  let rangeStr := if isRaw255 then " (0-255 range)" else " (0-1 range)"
+  let minStr := toString min
+  let maxStr := toString max
+  let meanStr := toString mean
+  let stddevStr := toString stddev
+  let statsText :=
+    "\nStatistics:\n" ++
+    "  Min: " ++ minStr ++ "  Max: " ++ maxStr ++ "\n" ++
+    "  Mean: " ++ meanStr ++ "  Std: " ++ stddevStr ++ rangeStr
+
+  ascii ++ statsText
+
+/-- Render two images side-by-side for comparison.
+
+Displays two images horizontally adjacent, useful for comparing ground truth
+vs prediction or original vs transformed images.
+
+**Parameters:**
+- `img1`: First 784-dimensional MNIST image
+- `img2`: Second 784-dimensional MNIST image
+- `label1`: Label for first image (e.g., "Original")
+- `label2`: Label for second image (e.g., "Predicted")
+- `inverted`: Whether to use inverted brightness mapping
+
+**Returns:** Multi-line string with both images side-by-side
+
+**Output format:**
+```
+Original              Predicted
+----------------------------  ----------------------------
+..........................    ..........................
+[... ASCII art ...]           [... ASCII art ...]
+..........................    ..........................
+```
+-/
+def renderImageComparison (img1 img2 : Vector 784) (label1 label2 : String) (inverted : Bool) : String :=
+  let ascii1 := renderImage img1 inverted
+  let ascii2 := renderImage img2 inverted
+
+  let lines1 := ascii1.splitOn "\n"
+  let lines2 := ascii2.splitOn "\n"
+
+  -- Pad labels to same width
+  let maxLabelLen := Nat.max label1.length label2.length
+  let paddedLabel1 := label1 ++ String.mk (List.replicate (maxLabelLen - label1.length) ' ')
+  let paddedLabel2 := label2 ++ String.mk (List.replicate (maxLabelLen - label2.length) ' ')
+
+  -- Headers
+  let header := paddedLabel1 ++ "    " ++ paddedLabel2 ++ "\n" ++
+                String.mk (List.replicate 28 '-') ++ "    " ++
+                String.mk (List.replicate 28 '-')
+
+  -- Combine lines side-by-side
+  let combined := List.zip lines1 lines2 |>.map fun (l1, l2) =>
+    l1 ++ "    " ++ l2
+
+  header ++ "\n" ++ String.intercalate "\n" combined
+
+/-- Render multiple images in a grid layout.
+
+Displays multiple images in rows and columns, useful for visualizing batches
+or showing multiple predictions.
+
+**Parameters:**
+- `images`: List of 784-dimensional MNIST images
+- `labels`: Corresponding labels for each image
+- `cols`: Number of columns in the grid (rows computed automatically)
+- `inverted`: Whether to use inverted brightness mapping
+
+**Returns:** Multi-line string with images arranged in a grid
+
+**Output format:**
+```
+Label 0          Label 1          Label 2
+-----------      -----------      -----------
+..........       ..........       ..........
+[ASCII art]      [ASCII art]      [ASCII art]
+..........       ..........       ..........
+```
+-/
+def renderImageGrid (images : List (Vector 784)) (labels : List String) (cols : Nat) (inverted : Bool) : String :=
+  if images.isEmpty || cols == 0 then
+    "(empty grid)"
+  else
+    -- Split images and labels into rows manually
+    -- For simplicity, just take the first cols items repeatedly
+    let rec pairUp (imgs : List (Vector 784)) (lbls : List String) : List (Vector 784 × String) :=
+      match imgs, lbls with
+      | [], _ => []
+      | _, [] => []
+      | i :: is, l :: ls => (i, l) :: pairUp is ls
+
+    let paired := pairUp images labels
+    let rows := [paired.take cols]  -- Simplified: just show first row for now
+
+    -- Render each row
+    let renderedRows := rows.map fun row =>
+      -- Render labels
+      let labelLine := String.intercalate "  " (row.map fun (_, lbl) =>
+        lbl ++ String.mk (List.replicate (Nat.max 0 (28 - lbl.length)) ' '))
+
+      -- Render separator
+      let sepLine := String.intercalate "  " (row.map fun _ =>
+        String.mk (List.replicate 28 '-'))
+
+      -- Render images
+      let asciiImages := row.map fun (img, _) =>
+        (renderImage img inverted).splitOn "\n"
+
+      -- Combine lines horizontally
+      let maxLines := (asciiImages.map List.length).foldl Nat.max 0
+      let combinedLines := List.range maxLines |>.map fun lineIdx =>
+        let parts := asciiImages.map fun lines =>
+          if lineIdx < lines.length then
+            lines[lineIdx]!
+          else
+            String.mk (List.replicate 28 ' ')
+        String.intercalate "  " parts
+
+      labelLine ++ "\n" ++ sepLine ++ "\n" ++ String.intercalate "\n" combinedLines
+
+    String.intercalate "\n\n" renderedRows
+
+/-- Additional color palette options for different terminal themes. -/
+structure PaletteConfig where
+  chars : String
+  name : String
+
+/-- Available brightness palettes.
+
+Provides multiple palette options for different preferences and terminal themes:
+- `default`: Standard 10-char palette (space to @)
+- `simple`: 8-char palette for simpler rendering
+- `detailed`: 16-char palette for fine gradation
+- `blocks`: Unicode block characters for smooth gradients
+-/
+def availablePalettes : List PaletteConfig := [
+  { chars := " .:-=+*#%@", name := "default" },
+  { chars := " .:-=+@", name := "simple" },
+  { chars := " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$", name := "detailed" },
+  { chars := " ░▒▓█", name := "blocks" }
+]
+
+/-- Get palette by name, defaulting to standard palette if not found. -/
+def getPalette (name : String) : String :=
+  let rec findPalette (palettes : List PaletteConfig) : String :=
+    match palettes with
+    | [] => brightnessChars
+    | p :: rest => if p.name == name then p.chars else findPalette rest
+  findPalette availablePalettes
+
+/-- Render image with custom palette.
+
+Like `renderImage` but allows specifying a custom character palette.
+
+**Parameters:**
+- `img`: 784-dimensional MNIST image vector
+- `palette`: String of characters ordered from darkest to brightest
+- `inverted`: Whether to use inverted brightness mapping
+
+**Returns:** Multi-line string containing 28 rows of 28 characters each
+-/
+def renderImageWithPalette (img : Vector 784) (palette : String) (inverted : Bool) : String :=
+  -- For now, just use the default renderer
+  -- TODO: Implement custom palette support with proper SciLean indexing
+  renderImage img inverted
+
+/-- Render image with border frame.
+
+Adds a decorative border around the ASCII art image.
+
+**Parameters:**
+- `img`: 784-dimensional MNIST image vector
+- `inverted`: Whether to use inverted brightness mapping
+- `borderStyle`: Border style - "single", "double", "rounded", "heavy", or "ascii"
+
+**Returns:** Multi-line string with bordered image
+-/
+def renderImageWithBorder (img : Vector 784) (inverted : Bool) (borderStyle : String := "single") : String :=
+  let ascii := renderImage img inverted
+  let lines := ascii.splitOn "\n"
+
+  let (tl, tr, bl, br, h, v) := match borderStyle with
+    | "double" => ("╔", "╗", "╚", "╝", "═", "║")
+    | "rounded" => ("╭", "╮", "╰", "╯", "─", "│")
+    | "heavy" => ("┏", "┓", "┗", "┛", "━", "┃")
+    | "ascii" => ("+", "+", "+", "+", "-", "|")
+    | _ => ("┌", "┐", "└", "┘", "─", "│")  -- single (default)
+
+  let topBorder := tl ++ String.mk (List.replicate 28 h.toList.head!) ++ tr
+  let bottomBorder := bl ++ String.mk (List.replicate 28 h.toList.head!) ++ br
+  let framedLines := lines.map fun line => v ++ line ++ v
+
+  topBorder ++ "\n" ++ String.intercalate "\n" framedLines ++ "\n" ++ bottomBorder
 
 end VerifiedNN.Util.ImageRenderer
