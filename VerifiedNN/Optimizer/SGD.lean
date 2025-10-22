@@ -1,7 +1,18 @@
-/-
+import VerifiedNN.Core.DataTypes
+import SciLean
+
+/-!
 # Stochastic Gradient Descent
 
 SGD optimizer implementation for neural network parameter updates.
+
+## Main Definitions
+
+- `SGDState n`: Optimizer state containing parameters, learning rate, and epoch counter
+- `sgdStep`: Basic SGD parameter update step
+- `sgdStepClipped`: SGD step with gradient norm clipping
+- `initSGD`: Initialize SGD state from parameters
+- `updateLearningRate`: Update learning rate for scheduling
 
 ## Algorithm
 
@@ -15,27 +26,34 @@ where:
 - ∇L(θ_t) is the gradient of the loss function at parameters θ_t
 - t is the iteration/epoch counter
 
-## Features
+## Main Results
 
-- **Basic SGD step:** Standard parameter update with configurable learning rate
-- **Gradient clipping:** Prevents gradient explosion by bounding gradient norm
-- **Learning rate scheduling:** Dynamic learning rate updates during training
-- **Type-safe dimensions:** Dependent types ensure parameter-gradient consistency
+- Dimension consistency: Type system guarantees parameter-gradient dimension matching
+- Gradient clipping preserves direction while bounding magnitude
+- Updates are deterministic and dimension-preserving by construction
+
+## Implementation Notes
+
+- Uses dependent types to enforce compile-time dimension safety
+- Functions marked `@[inline]` for hot-path optimization
+- Gradient clipping uses squared norm comparison to avoid unnecessary sqrt
+- Learning rate scheduling handled via `updateLearningRate`
 
 ## Verification Status
 
-Implementation complete. Formal verification of convergence properties is out of
-scope (optimization theory), but dimension consistency is maintained by construction
-via dependent types. All parameter updates preserve dimension invariants.
+**Verified:**
+- Dimension consistency (by dependent types)
+- Type safety of all operations
+
+**Out of scope:**
+- Convergence properties (optimization theory)
+- Numerical stability of Float operations (ℝ vs Float gap)
 
 ## References
 
-- Robbins, H., & Monro, S. (1951). "A Stochastic Approximation Method"
-- Bottou, L. (2010). "Large-Scale Machine Learning with Stochastic Gradient Descent"
+- Robbins, H., & Monro, S. (1951). "A Stochastic Approximation Method". *Annals of Mathematical Statistics*.
+- Bottou, L. (2010). "Large-Scale Machine Learning with Stochastic Gradient Descent". *COMPSTAT*.
 -/
-
-import VerifiedNN.Core.DataTypes
-import SciLean
 
 namespace VerifiedNN.Optimizer
 

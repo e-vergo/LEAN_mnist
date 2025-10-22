@@ -1,60 +1,37 @@
-/-
+import VerifiedNN.Optimizer.SGD
+import VerifiedNN.Optimizer.Momentum
+import VerifiedNN.Optimizer.Update
+import SciLean
+
+/-!
 # Optimizer Tests
 
 Test suite for verifying optimizer parameter update operations.
 
-Tests:
-- SGD parameter updates
-- Momentum parameter updates with velocity tracking
-- Learning rate scheduling
-- Gradient accumulation
-- Unified optimizer interface
+## Main Tests
 
-## Test Coverage Summary
+- `testSGDUpdate`: Validates basic SGD parameter update θ' = θ - η∇L
+- `testMomentumUpdate`: Validates momentum velocity tracking and accumulation
+- `testLRScheduling`: Validates learning rate schedules (constant, step, exponential, warmup)
+- `testGradientAccumulation`: Validates gradient averaging over multiple batches
+- `testUnifiedInterface`: Validates polymorphic optimizer operations (SGD and Momentum)
+- `testGradientClipping`: Validates norm-based gradient scaling
 
-### SGD (Optimizer.SGD)
-- ✓ testSGDUpdate: basic parameter update θ' = θ - η∇L
-- ✓ Validates epoch incrementing
-- ✓ Validates parameter dimension preservation
-- ✓ Tests gradient clipping with maximum norm constraint
+## Implementation Notes
 
-### Momentum (Optimizer.Momentum)
-- ✓ testMomentumUpdate: velocity tracking and accumulation
-- ✓ Validates β-weighted velocity update
-- ✓ Tests multi-step momentum accumulation
-- ✓ Validates epoch incrementing
+**Coverage Status:** All optimizer tests are fully implemented and passing.
+No blockers or pending work.
 
-### Learning Rate Scheduling (Optimizer.Update)
-- ✓ testLRScheduling: constant, step, exponential schedules
-- ✓ Validates warmup schedule (linear increase)
-- ✓ Tests schedule application at different epochs
+**Test Strategy:** Each test verifies correct implementation of optimizer update
+formulas, dimension preservation, and state management. Tests use IO-based
+assertions with diagnostic output.
 
-### Gradient Accumulation
-- ✓ testGradientAccumulation: accumulator initialization
-- ✓ Validates gradient averaging over multiple batches
-- ✓ Tests reset functionality
-
-### Unified Optimizer Interface
-- ✓ testUnifiedInterface: polymorphic SGD and Momentum
-- ✓ Validates getParams, updateOptimizerLR, getEpoch
-- ✓ Tests optimizer state switching
-
-### Gradient Clipping
-- ✓ testGradientClipping: norm-based gradient scaling
-- ✓ Validates large gradient handling
-
-## Current Status
-
-All optimizer tests are fully implemented and passing. No blockers.
-
-| Test Suite | Functions Tested | Status |
-|------------|------------------|--------|
-| SGD | initSGD, sgdStep, sgdStepClipped | ✓ Complete |
-| Momentum | initMomentum, momentumStep | ✓ Complete |
-| LR Scheduling | All schedule types, warmup | ✓ Complete |
-| Gradient Accumulation | init, add, getAndReset | ✓ Complete |
-| Unified Interface | All OptimizerState operations | ✓ Complete |
-| Gradient Clipping | sgdStepClipped | ✓ Complete |
+**Validated Operations:**
+- SGD: Parameter updates, epoch tracking, gradient clipping
+- Momentum: Velocity accumulation, β-weighted updates, multi-step behavior
+- LR Scheduling: Constant, step decay, exponential decay, warmup
+- Gradient Accumulation: Initialization, averaging, reset functionality
+- Unified Interface: Polymorphic access to optimizer parameters and state
 
 ## Usage
 
@@ -65,12 +42,13 @@ lake build VerifiedNN.Testing.OptimizerTests
 # Run tests
 lake env lean --run VerifiedNN/Testing/OptimizerTests.lean
 ```
--/
 
-import VerifiedNN.Optimizer.SGD
-import VerifiedNN.Optimizer.Momentum
-import VerifiedNN.Optimizer.Update
-import SciLean
+## References
+
+- SGD update rule: θ' = θ - η∇L
+- Momentum update: v' = βv + ∇L, θ' = θ - ηv'
+- Gradient clipping: g' = min(max_norm, ‖g‖) · (g / ‖g‖)
+-/
 
 namespace VerifiedNN.Testing.OptimizerTests
 

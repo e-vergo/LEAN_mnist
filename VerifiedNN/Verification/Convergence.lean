@@ -1,77 +1,91 @@
-/-
+import VerifiedNN.Verification.Convergence.Axioms
+import VerifiedNN.Verification.Convergence.Lemmas
+
+/-!
 # Convergence Properties
 
 Formal statements of convergence theorems for stochastic gradient descent.
 
-This module provides formal specifications of SGD convergence properties on ℝ.
-These theorems state the mathematical conditions under which SGD converges,
-establishing the theoretical foundation for the training algorithm.
+This module provides formal specifications of SGD convergence properties on ℝ, establishing
+the theoretical foundation for the training algorithm. While convergence proofs are out of
+scope (per project specification), precise mathematical statements are provided for
+theoretical completeness and potential future formalization.
 
-**Module Structure:**
-- `Convergence/Axioms.lean`: 8 axiomatized convergence theorems
-- `Convergence/Lemmas.lean`: Robbins-Monro learning rate schedule lemmas
-- `Convergence.lean`: Re-exports both modules (this file)
+## Module Structure
 
-**Verification Status:**
-- Convergence theorem statements: Complete (8 axioms)
-- Learning rate lemmas: 1 proven (one_over_t_plus_one_satisfies_robbins_monro)
-- Full proofs: Not required (explicitly out of scope per project spec)
+- `Convergence/Axioms.lean`: 8 axiomatized convergence theorems with detailed justifications
+- `Convergence/Lemmas.lean`: Robbins-Monro learning rate schedule lemmas (1 proven)
+- `Convergence.lean`: Re-exports and helper definitions (this file)
 
-**Scope Note:**
-Per the project specification (verified-nn-spec.md Section 5.4), convergence proofs
-are explicitly out of scope. This module provides precise mathematical statements
-that can be axiomatized or proven in future work.
+## Main Axioms
 
-**Mathematical Context:**
-These theorems are on ℝ (real numbers), not Float. They establish the theoretical
-soundness of SGD, separate from implementation details or floating-point numerics.
+1. `IsSmooth`: L-smoothness (gradient Lipschitz continuity)
+2. `IsStronglyConvex`: μ-strong convexity
+3. `HasBoundedVariance`: Bounded stochastic gradient variance
+4. `HasBoundedGradient`: Bounded gradient norm
+5. `sgd_converges_strongly_convex`: Linear convergence (strongly convex case)
+6. `sgd_converges_convex`: Sublinear convergence (convex case)
+7. `sgd_finds_stationary_point_nonconvex`: **PRIMARY FOR MNIST** - Stationary point convergence
+8. `batch_size_reduces_variance`: Variance reduction via larger batches
 
-**Axiom Summary:**
-1. IsSmooth - L-smoothness (gradient Lipschitz continuity)
-2. IsStronglyConvex - μ-strong convexity
-3. HasBoundedVariance - Bounded stochastic gradient variance
-4. HasBoundedGradient - Bounded gradient norm
-5. sgd_converges_strongly_convex - Linear convergence for strongly convex functions
-6. sgd_converges_convex - Sublinear convergence for convex functions
-7. sgd_finds_stationary_point_nonconvex - Stationary point convergence (neural networks)
-8. batch_size_reduces_variance - Variance reduction with larger batches
+## Verification Status
 
-**Practical Implications for MNIST Training:**
+**Axiomatized:** 8 convergence theorems (all in Axioms.lean)
+- Explicitly out of scope per verified-nn-spec.md Section 5.4
+- Well-established results from optimization literature
+- Precisely stated for theoretical completeness
 
-The MNIST MLP (784 → 128 → 10 with ReLU) has a non-convex loss landscape.
-Theoretical guarantees from axiom 7 (sgd_finds_stationary_point_nonconvex):
-- SGD finds stationary points (∇L ≈ 0), not necessarily global optima
-- Gradient norm decreases to zero as training progresses
-- Final accuracy depends on which local minimum is found
+**Proven:** 1 lemma in Lemmas.lean
+- `one_over_t_plus_one_satisfies_robbins_monro`: α_t = 1/(t+1) learning rate schedule
 
-Hyperparameter guidance from theory:
-1. **Learning rate:** α ∈ [0.001, 0.1] for MNIST
+**Future Work:** Convergence proofs would be a separate major project (6-12 months estimated)
+
+## Applicability to MNIST MLP
+
+**Network:** 784 → 128 → 10 with ReLU activation (non-convex loss landscape)
+
+**Primary Theorem:** Axiom 7 (`sgd_finds_stationary_point_nonconvex`)
+- Applies to neural networks (unlike Axioms 5-6 which require convexity)
+- Guarantees: SGD finds stationary points where ∇L ≈ 0
+- Caveat: May be local minima, saddle points, or global minima
+- Empirically: Over-parameterized networks have benign landscapes (many good local minima)
+
+**Hyperparameter Guidance:**
+
+1. **Learning rate:** α ∈ [0.001, 0.1] typical for MNIST
+   - Theory requires: α < 1/L (smoothness constant)
    - Too large: oscillation/divergence
    - Too small: slow convergence
-   - Use decay for better final accuracy
+   - Use diminishing schedule (e.g., 1/(t+1)) for provable convergence
 
-2. **Batch size:** b ∈ [16, 128] for MNIST
-   - Larger batches: more stable, lower variance
-   - Smaller batches: help escape poor local minima
-   - Variance reduction: Var[∇_batch] = Var[∇_single] / b (axiom 8)
+2. **Batch size:** b ∈ [16, 128] common for MNIST
+   - Variance reduction: Var[∇_batch] = Var[∇_single] / b (Axiom 8)
+   - Larger batches: more stable, better final accuracy
+   - Smaller batches: faster iterations, help escape poor local minima
 
-3. **Number of epochs:** 10-50 epochs typical for MNIST
-   - Monitor validation loss (early stopping)
-   - Loss decreases on average (not monotonically)
+3. **Training duration:** 10-50 epochs typical
+   - Convergence rate: O(1/T) for gradient norm (Axiom 7)
+   - Monitor validation loss for early stopping
 
-**References:**
-- Bottou et al. (2018): "Optimization methods for large-scale machine learning"
-- Allen-Zhu et al. (2018): "A convergence theory for deep learning"
-- Robbins & Monro (1951): "A stochastic approximation method"
+## Mathematical Context
 
-See Convergence/Axioms.lean for detailed references and mathematical statements.
+All theorems are stated on ℝ (real numbers), not Float. They establish theoretical
+soundness of SGD independent of floating-point implementation details.
+
+## Implementation Notes
+
+- Convergence axioms provide theoretical justification, not implementation requirements
+- Numerical validation via loss curves and gradient norms complements formal theory
+- Float→ℝ gap acknowledged: convergence guarantees assume exact arithmetic
+
+## References
+
+- Bottou, L., Curtis, F. E., & Nocedal, J. (2018). "Optimization methods for large-scale machine learning." SIAM Review.
+- Allen-Zhu, Z., Li, Y., & Song, Z. (2018). "A convergence theory for deep learning via over-parameterization." arXiv:1811.03962.
+- Robbins, H., & Monro, S. (1951). "A stochastic approximation method." Ann. Math. Stat.
+
+See Convergence/Axioms.lean for detailed mathematical statements and complete references.
 -/
-
--- Re-export convergence axioms
-import VerifiedNN.Verification.Convergence.Axioms
-
--- Re-export convergence lemmas (Robbins-Monro schedules)
-import VerifiedNN.Verification.Convergence.Lemmas
 
 -- Re-export key definitions for convenience
 namespace VerifiedNN.Verification.Convergence

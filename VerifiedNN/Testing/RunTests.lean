@@ -1,26 +1,42 @@
-/-
+import VerifiedNN.Testing.UnitTests
+import VerifiedNN.Testing.OptimizerTests
+import VerifiedNN.Testing.Integration
+
+/-!
 # Test Runner
 
 Entry point for running all VerifiedNN tests.
 
-This module provides a unified test runner that executes all available test
-suites and reports comprehensive results.
+## Main Definition
 
-## Test Suites Available
+- `runAllTests`: Unified test runner that executes all available test suites
+  and reports comprehensive results
 
-1. **Unit Tests** - Component-level tests for activations, data types
-2. **Optimizer Tests** - Parameter update operations (fully functional)
-3. **Integration Tests** - End-to-end pipeline tests (dataset generation ready)
-4. **Gradient Check** - Numerical validation (infrastructure ready, blocked by Network.Gradient)
+## Test Suites
 
-## Test Organization
+This runner executes the following test suites in order:
 
-Tests are organized by dependency level:
+1. **Unit Tests** - Component-level tests for activations, data types (✓ Working)
+2. **Optimizer Tests** - Parameter update operations (✓ Working)
+3. **Integration Tests** - End-to-end pipeline tests (⚠ Partial, dataset generation ready)
+
+## Implementation Notes
+
+**Test Organization:** Tests are organized by dependency level:
 - **Level 0**: Core functionality (activations, data types) - WORKING
 - **Level 1**: Optimizer operations - WORKING
 - **Level 2**: Dataset generation - WORKING
 - **Level 3**: Gradient checking - READY (blocked by Network.Gradient)
 - **Level 4**: Full integration - PLANNED (blocked by Training.Loop)
+
+**Status Reporting:** The runner provides clear visual separation between test
+suites and reports pass/fail status for each test.
+
+## Current Status
+
+- ✓ Ready to run: UnitTests, OptimizerTests, Integration (partial)
+- ⚠ Infrastructure ready: GradientCheck (blocked by Network.Gradient)
+- ⚠ Planned: Full integration tests (blocked by Training.Loop)
 
 ## Usage
 
@@ -34,17 +50,7 @@ lake env lean --run VerifiedNN/Testing/UnitTests.lean
 lake env lean --run VerifiedNN/Testing/OptimizerTests.lean
 lake env lean --run VerifiedNN/Testing/Integration.lean
 ```
-
-## Current Status
-
-✓ Ready to run: UnitTests, OptimizerTests, Integration (partial)
-⚠ Blocked: GradientCheck (needs Network.Gradient)
-⚠ Planned: Full integration tests (needs Training.Loop)
 -/
-
-import VerifiedNN.Testing.UnitTests
-import VerifiedNN.Testing.OptimizerTests
-import VerifiedNN.Testing.Integration
 
 namespace VerifiedNN.Testing.Runner
 
@@ -52,7 +58,24 @@ open VerifiedNN.Testing.UnitTests
 open VerifiedNN.Testing.OptimizerTests
 open VerifiedNN.Testing.Integration
 
-/-- Run all available test suites with comprehensive reporting -/
+/-- Run all available test suites with comprehensive reporting.
+
+Executes the following test suites in order:
+1. Unit Tests: Activation functions, data types, approximate equality
+2. Optimizer Tests: SGD, momentum, learning rate scheduling, gradient accumulation
+3. Integration Tests: Dataset generation and placeholder tests for full pipeline
+
+**Returns:** IO Unit - Prints test results to stdout with visual separators
+
+**Usage:**
+```lean
+-- From Lean code
+RunAllTests.runAllTests
+
+-- From command line
+lake env lean --run VerifiedNN/Testing/RunTests.lean
+```
+-/
 def runAllTests : IO Unit := do
   IO.println "=========================================="
   IO.println "VerifiedNN Complete Test Suite"
@@ -84,7 +107,19 @@ def runAllTests : IO Unit := do
   IO.println "✓ All Test Suites Complete"
   IO.println "=========================================="
 
-/-- Quick smoke test for rapid iteration -/
+/-- Quick smoke test for rapid iteration.
+
+Tests basic functionality without running full test suites:
+- ReLU activation on positive and negative inputs
+- Sigmoid activation at zero (should be ~0.5)
+- Tanh activation at zero (should be 0.0)
+- Approximate equality function
+
+**Expected runtime:** <1 second
+
+**Usage:** Useful during development to quickly verify core functions work
+without waiting for full test suite execution.
+-/
 def smokeTest : IO Unit := do
   IO.println "=========================================="
   IO.println "VerifiedNN Test Suite - Smoke Test"

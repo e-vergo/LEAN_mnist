@@ -1,7 +1,20 @@
-/-
+import VerifiedNN.Core.DataTypes
+import SciLean
+
+/-!
 # SGD with Momentum
 
 SGD optimizer with momentum for improved convergence and reduced oscillation.
+
+## Main Definitions
+
+- `MomentumState n`: Optimizer state with parameters, velocity, and hyperparameters
+- `momentumStep`: Classical momentum update step
+- `momentumStepClipped`: Momentum step with gradient clipping
+- `nesterovStep`: Nesterov accelerated gradient (look-ahead) update
+- `initMomentum`: Initialize momentum optimizer state
+- `updateLearningRate`: Update learning rate
+- `updateMomentum`: Update momentum coefficient
 
 ## Classical Momentum Algorithm
 
@@ -17,6 +30,21 @@ where:
 - θ ∈ ℝⁿ are the model parameters
 - ∇L(θ_t) is the gradient of the loss function
 
+## Main Results
+
+- Dimension consistency guaranteed by dependent types
+- Momentum accumulation preserves direction and dimension
+- Nesterov variant provides look-ahead gradient evaluation
+- All updates are deterministic and dimension-preserving
+
+## Implementation Notes
+
+- Classical momentum accumulates velocity before parameter update
+- Nesterov momentum evaluates gradient at look-ahead position (2× cost)
+- Gradient clipping applied to instantaneous gradient, not velocity
+- Functions marked `@[inline]` for hot-path optimization
+- Velocity initialized to zero vector
+
 ## Benefits
 
 Momentum helps accelerate SGD in relevant directions and dampens oscillations, leading to
@@ -28,26 +56,22 @@ faster convergence especially in the presence of:
 The momentum term accumulates velocity in directions of consistent gradient, allowing
 the optimizer to build up speed and overcome local variations.
 
-## Nesterov Momentum
-
-This module also provides Nesterov Accelerated Gradient (NAG), which evaluates the
-gradient at a "look-ahead" position for improved convergence properties.
-
 ## Verification Status
 
-Implementation complete. Convergence properties verified informally but not formally
-proven (optimization theory out of scope). Dimension consistency maintained by dependent
-types. All updates preserve dimension invariants.
+**Verified:**
+- Dimension consistency (by dependent types)
+- Type safety of all operations
+
+**Out of scope:**
+- Convergence acceleration properties (optimization theory)
+- Numerical stability of Float operations (ℝ vs Float gap)
 
 ## References
 
-- Polyak, B. T. (1964). "Some methods of speeding up the convergence of iteration methods"
-- Nesterov, Y. (1983). "A method for solving the convex programming problem..."
-- Sutskever et al. (2013). "On the importance of initialization and momentum in deep learning"
+- Polyak, B. T. (1964). "Some methods of speeding up the convergence of iteration methods". *USSR Computational Mathematics and Mathematical Physics*.
+- Nesterov, Y. (1983). "A method for solving the convex programming problem with convergence rate O(1/k²)". *Soviet Mathematics Doklady*.
+- Sutskever, I., Martens, J., Dahl, G., & Hinton, G. (2013). "On the importance of initialization and momentum in deep learning". *ICML*.
 -/
-
-import VerifiedNN.Core.DataTypes
-import SciLean
 
 namespace VerifiedNN.Optimizer.Momentum
 

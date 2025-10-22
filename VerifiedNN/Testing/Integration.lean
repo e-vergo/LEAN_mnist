@@ -1,61 +1,59 @@
-/-
+import VerifiedNN.Network.Architecture
+import VerifiedNN.Training.Loop
+import VerifiedNN.Core.DataTypes
+import VerifiedNN.Core.Activation
+import VerifiedNN.Loss.CrossEntropy
+import SciLean
+
+/-!
 # Integration Tests
 
 End-to-end integration tests for the training pipeline.
 
-These tests validate that all components work together correctly by:
-- Creating synthetic datasets
-- Initializing networks
-- Running training loops
-- Checking that loss decreases
-- Verifying gradient flow
+## Main Tests
 
-**Testing Philosophy:**
-Integration tests check system-level behavior, not individual component
-correctness. They ensure the full pipeline from data to trained model works.
+- `testDatasetGeneration`: Validates synthetic dataset structure and distribution (✓ Working)
+- `testNetworkCreation`: Network initialization validation (⚠ Placeholder)
+- `testGradientComputation`: Gradient computation correctness (⚠ Placeholder)
+- `testTrainingOnTinyDataset`: Basic training loop functionality (⚠ Placeholder)
+- `testOverfitting`: Validates network can memorize small dataset (⚠ Placeholder)
+- `testGradientFlow`: End-to-end gradient propagation (⚠ Placeholder)
+- `testBatchProcessing`: Mini-batch handling validation (⚠ Placeholder)
+
+## Helper Functions
+
+- `generateSyntheticDataset`: Creates deterministic pattern-based training data
+- `generateOverfitDataset`: Creates small fixed dataset for overfitting tests
+- `checkLossDecreased`: Validates loss improvement over training
+- `computeAccuracy`: Computes prediction accuracy on test set
+- `smokeTest`: Minimal integration sanity check
+
+## Implementation Notes
+
+**Testing Philosophy:** Integration tests check system-level behavior, not
+individual component correctness. They ensure the full pipeline from data to
+trained model works correctly.
 
 **Verification Status:** These are computational validation tests. They verify
 that the implementation behaves as expected but do not constitute formal proofs.
 
-## Test Coverage Summary
-
-### Dataset Generation
-- ✓ generateSyntheticDataset: deterministic pattern-based data
-- ✓ generateOverfitDataset: small fixed dataset for overfitting tests
-- ✓ testDatasetGeneration: validates dataset structure and distribution
-
-### Integration Test Suites (Planned)
-- ⚠ testNetworkCreation: blocked by Network.Architecture implementation
-- ⚠ testGradientComputation: blocked by Network.Gradient implementation
-- ⚠ testTrainingOnTinyDataset: blocked by Training.Loop implementation
-- ⚠ testOverfitting: blocked by full training pipeline
-- ⚠ testGradientFlow: blocked by GradientCheck integration
-- ⚠ testBatchProcessing: blocked by Training.Batch implementation
-
-### Helper Functions
-- ✓ checkLossDecreased: validates loss improvement
-- ✓ computeAccuracy: prediction accuracy computation
-- ✓ smokeTest: minimal integration sanity check
+**Development Approach:** Integration tests are written as placeholders that
+document expected behavior, print informative messages about blocking dependencies,
+and return success to avoid breaking the test runner. They will be filled in as
+components become available.
 
 ## Current Status
 
-| Test Suite | Status | Blocking Dependency |
-|------------|--------|---------------------|
-| Dataset Generation | ✓ Working | None |
-| Network Creation | ⚠ Placeholder | Network.Architecture |
-| Gradient Computation | ⚠ Placeholder | Network.Gradient |
-| Training on Tiny Dataset | ⚠ Placeholder | Training.Loop |
-| Overfitting Test | ⚠ Placeholder | Full training pipeline |
-| Gradient Flow | ⚠ Placeholder | GradientCheck + Network |
-| Batch Processing | ⚠ Placeholder | Training.Batch |
+**Working (1/7):**
+- Dataset Generation: ✓ Complete
 
-## Development Approach
-
-Integration tests are written as placeholders that:
-1. Document expected behavior
-2. Print informative messages about blocking dependencies
-3. Return `true` to avoid breaking the test runner
-4. Will be filled in as components become available
+**Planned (6/7):**
+- Network Creation: ⚠ Blocked by Network.Architecture
+- Gradient Computation: ⚠ Blocked by Network.Gradient
+- Training on Tiny Dataset: ⚠ Blocked by Training.Loop
+- Overfitting Test: ⚠ Blocked by full training pipeline
+- Gradient Flow: ⚠ Blocked by GradientCheck + Network
+- Batch Processing: ⚠ Blocked by Training.Batch
 
 ## Usage
 
@@ -67,13 +65,6 @@ lake build VerifiedNN.Testing.Integration
 lake env lean --run VerifiedNN/Testing/Integration.lean
 ```
 -/
-
-import VerifiedNN.Network.Architecture
-import VerifiedNN.Training.Loop
-import VerifiedNN.Core.DataTypes
-import VerifiedNN.Core.Activation
-import VerifiedNN.Loss.CrossEntropy
-import SciLean
 
 namespace VerifiedNN.Testing.Integration
 

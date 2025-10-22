@@ -1,48 +1,75 @@
-/-
-# Loss Function Properties
-
-Formal properties of the cross-entropy loss function.
-
-This module establishes mathematical properties of cross-entropy loss that hold on ℝ.
-These properties are fundamental to understanding the loss function's behavior and
-proving gradient correctness.
-
-**Verification Philosophy:**
-- Properties are stated for ℝ (real numbers), not Float
-- Float implementation approximates these ideal properties
-- The gap between ℝ and Float is acknowledged and documented
-- Focus on symbolic mathematical correctness
-
-**Key Properties:**
-1. Non-negativity: L(pred, target) ≥ 0 for all inputs
-2. Differentiability: L is differentiable with respect to predictions
-3. Convexity: L is convex in the predictions (log-space)
-4. Minimum at target: L is minimized when predictions = one-hot(target)
-
-**Current Status:**
-This file contains theorem statements with proofs deferred (sorry). Most theorems are
-commented out due to type issues with Fin vs Idx that need to be resolved.
-
-**Development Philosophy:**
-Following the project's iterative approach, we establish theorem statements first to
-document the mathematical properties we aim to prove, then complete proofs as the
-codebase stabilizes and type system challenges are resolved.
-
-**Priority for Future Work:**
-1. loss_nonneg (fundamental property, needed for optimization theory)
-2. loss_differentiable (required for gradient correctness proofs)
-3. gradient_sum_zero (numerical validation property)
-4. loss_convex (important for optimization guarantees)
-
-TODO: Fix type issues and complete proofs for key theorems.
--/
-
 import VerifiedNN.Loss.CrossEntropy
 import VerifiedNN.Loss.Gradient
 import Mathlib.Analysis.Calculus.FDeriv.Basic
 import Mathlib.Analysis.Convex.Basic
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.SpecialFunctions.Exp
+
+/-!
+# Loss Function Properties
+
+Formal mathematical properties of the cross-entropy loss function proven on ℝ.
+
+This module establishes the theoretical foundations for cross-entropy loss used in neural
+network training. Properties are rigorously proven using mathlib's real analysis library,
+then bridged to Float implementation via well-documented axioms.
+
+## Verification Philosophy
+
+**Two-tier approach:**
+1. **Mathematical correctness:** Prove properties on ℝ (real numbers) using mathlib
+2. **Computational implementation:** Bridge to Float via correspondence axioms
+
+This separation isolates the Float→ℝ gap to explicit, well-justified axioms while
+maintaining rigorous mathematical proofs for the underlying theory.
+
+## Key Properties
+
+| Property | ℝ Status | Float Status | Location |
+|----------|----------|--------------|----------|
+| Non-negativity | ✓ Proven | ⚠ Axiomatized | lines 143-146, 207-208, 248-252 |
+| log-sum-exp inequality | ✓ Proven | N/A | lines 108-133 |
+| Lower bound = 0 | ✓ Proven | Via axiom | lines 259-262 |
+
+## Main Definitions
+
+- `Real.logSumExp_ge_component`: Key inequality log(∑ exp(xᵢ)) ≥ xⱼ
+- `loss_nonneg_real`: Cross-entropy ≥ 0 on ℝ (axiom-free proof)
+- `float_crossEntropy_preserves_nonneg`: Float bridge axiom (59-line justification)
+- `loss_nonneg`: Public theorem for Float implementation
+
+## Main Results
+
+- **Theorem `Real.logSumExp_ge_component`**: Proven using mathlib, foundation for non-negativity
+- **Theorem `loss_nonneg_real`**: Complete proof that cross-entropy ≥ 0 on ℝ
+- **Axiom `float_crossEntropy_preserves_nonneg`**: Float correspondence (1 of 9 project axioms)
+
+## Implementation Notes
+
+- All proofs on ℝ use mathlib's Real arithmetic (axiom-free modulo foundations)
+- Float implementation validated through comprehensive testing (Test.lean)
+- Type system issues (Fin vs Idx) prevent some theorems; marked for future work
+- Following iterative development: working implementation first, formal proofs as design stabilizes
+
+## Development Status
+
+**Completed:**
+- ✓ Non-negativity proven on ℝ with complete proof
+- ✓ Float bridge axiom with 59-line justification
+- ✓ All required theorems for current training implementation
+
+**Future Work (see line 268 for full list):**
+1. loss_differentiable (required for gradient correctness proofs)
+2. loss_convex (important for optimization guarantees)
+3. gradient_sum_zero (numerical validation property)
+4. Fix Fin vs Idx type issues to uncomment deferred theorems
+
+## References
+
+- Bishop, *Pattern Recognition and Machine Learning* (2006), Section 4.3.4
+- Murphy, *Machine Learning: A Probabilistic Perspective* (2012), Section 8.2.3
+- Mathlib documentation on Analysis.Calculus.FDeriv
+-/
 
 namespace VerifiedNN.Loss.Properties
 
@@ -146,7 +173,7 @@ None of these exist in the current Lean 4 ecosystem.
 This axiom is explicitly sanctioned by the project's verification philosophy:
 
 1. **Mathematical correctness proven:** The property is rigorously proven on ℝ using
-   mathlib in theorem `loss_nonneg_real` (lines 116-119). That proof is axiom-free
+   mathlib in theorem `loss_nonneg_real` (lines 143-146). That proof is axiom-free
    (modulo mathlib's foundational axioms) and uses only standard real analysis.
 
 2. **Float is implementation detail:** Per CLAUDE.md: "Mathematical properties proven
@@ -163,15 +190,15 @@ This axiom is explicitly sanctioned by the project's verification philosophy:
    codebase to bridge the ℝ/Float gap, all similarly justified.
 
 **References:**
-- Mathematical proof on ℝ: `loss_nonneg_real` (line 116)
+- Mathematical proof on ℝ: `loss_nonneg_real` (line 143)
 - Project philosophy: CLAUDE.md section "Verification Philosophy"
 - Acceptable axiom policy: CLAUDE.md section "Axiom Usage"
-- Numerical validation: VerifiedNN/Loss/Test.lean lines 45-49
+- Numerical validation: VerifiedNN/Loss/Test.lean lines 88-92
 
 **Related theorems:**
-- `Real.logSumExp_ge_component`: Key inequality for the ℝ proof (line 81)
-- `loss_nonneg`: Public theorem using this axiom (line 208)
-- `loss_lower_bound`: Corollary (line 219)
+- `Real.logSumExp_ge_component`: Key inequality for the ℝ proof (line 108)
+- `loss_nonneg`: Public theorem using this axiom (line 248)
+- `loss_lower_bound`: Corollary (line 259)
 
 This represents an **acknowledged limitation** in Lean's Float theory, not a proof
 obligation we failed to discharge. The mathematical correctness is established on ℝ;
@@ -191,7 +218,7 @@ L = -log(softmax(pred)[target]) = -log(p) where p ∈ (0,1]
 Since log(p) ≤ 0 for p ∈ (0,1], we have -log(p) ≥ 0.
 
 **Verification Status:**
-- Mathematical property: ✓ **PROVEN** on ℝ (loss_nonneg_real, lines 107-110, axiom-free using mathlib)
+- Mathematical property: ✓ **PROVEN** on ℝ (loss_nonneg_real, lines 143-146, axiom-free using mathlib)
 - Float implementation: ✓ **AXIOMATIZED** (float_crossEntropy_preserves_nonneg)
 - Axiom justification: Float ≈ ℝ correspondence (acceptable per CLAUDE.md)
 

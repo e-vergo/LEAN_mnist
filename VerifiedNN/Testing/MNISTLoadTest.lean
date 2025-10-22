@@ -5,13 +5,59 @@ import SciLean
 /-!
 # MNIST Loading Test
 
-Simple test program to verify MNIST dataset loading works correctly.
+Comprehensive test suite to verify MNIST dataset loading works correctly.
 
-This program loads the MNIST training and test sets and validates:
-- Correct number of samples (60,000 training, 10,000 test)
-- Correct image dimensions (784 pixels = 28×28)
-- Valid label range (0-9)
-- Basic data integrity checks
+## Main Tests
+
+- `testTrainingSet`: Validates training set loading (60,000 samples)
+- `testTestSet`: Validates test set loading (10,000 samples)
+- `testImageData`: Basic image data integrity checks
+- `testConvenienceFunctions`: Tests high-level loading functions
+- `main`: Runs all tests and reports results
+
+## Implementation Notes
+
+**Test Strategy:** This is a detailed validation suite that checks all aspects
+of MNIST data loading. Unlike MNISTIntegration.lean (which is a fast smoke test),
+this suite performs thorough validation including individual file loading and
+convenience function testing.
+
+**Verification Status:** This is a computational validation test that verifies
+the MNIST data loading implementation against the IDX file format specification.
+
+**Validated Properties:**
+- Training images: 60,000 samples, 784 dimensions each
+- Test images: 10,000 samples, 784 dimensions each
+- All labels in valid range [0-9]
+- Correct IDX file format parsing
+- Convenience functions (`loadMNISTTrain`, `loadMNISTTest`) work correctly
+
+**What's Not Validated:**
+- Pixel value distributions (statistical validation)
+- Image content verification (requires visual inspection)
+- Performance benchmarks (separate concern)
+
+## Usage
+
+```bash
+# Download MNIST dataset first
+./scripts/download_mnist.sh
+
+# Build tests
+lake build VerifiedNN.Testing.MNISTLoadTest
+
+# Run tests
+lake env lean --run VerifiedNN/Testing/MNISTLoadTest.lean
+
+# Expected runtime: <30 seconds
+```
+
+## References
+
+- MNIST dataset: http://yann.lecun.com/exdb/mnist/
+- IDX file format: http://yann.lecun.com/exdb/mnist/ (documentation section)
+- Data loading implementation: See VerifiedNN.Data.MNIST
+- Quick smoke test: See VerifiedNN.Testing.MNISTIntegration
 -/
 
 namespace VerifiedNN.Testing.MNISTLoadTest

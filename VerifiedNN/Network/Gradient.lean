@@ -1,4 +1,8 @@
-/-
+import VerifiedNN.Network.Architecture
+import VerifiedNN.Loss.CrossEntropy
+import SciLean
+
+/-!
 # Network Gradient Computation
 
 Gradient computation using SciLean's automatic differentiation.
@@ -19,13 +23,19 @@ Parameters are flattened in this order:
 
 ## Verification Status
 
-**2 axioms, 0 sorries:**
+**2 axioms, 0 executable sorries:**
 - **Axiom:** `unflatten_flatten_id` - Round-trip identity (flattening then unflattening)
   - Requires SciLean array extensionality (currently axiomatized in SciLean itself)
   - See comprehensive documentation on axiom for justification
 - **Axiom:** `flatten_unflatten_id` - Round-trip identity (unflattening then flattening)
   - Dual of above, requires same extensionality infrastructure
   - Together these establish bijection between MLPArchitecture and Vector nParams
+
+**Note on "sorries" in this file:**
+The 4 `sorry` occurrences at lines 294, 315, 339, 360 are **documentation markers**
+within a proof sketch comment, NOT executable code. They serve as placeholders in
+the proof roadmap showing how `flatten_unflatten_id` would be proven once DataArrayN.ext
+becomes available. These do not compile into the binary.
 
 **Previously eliminated:**
 - `array_range_mem_bound` - Now proven using `Array.mem_def`, `Array.toList_range`, and `List.mem_range`
@@ -34,10 +44,6 @@ The remaining two axioms are **essential and justified** - they axiomatize what 
 algorithmically true but unprovable without array extensionality. SciLean's DataArray.ext
 is itself axiomatized as sorry_proof, so we inherit this limitation.
 -/
-
-import VerifiedNN.Network.Architecture
-import VerifiedNN.Loss.CrossEntropy
-import SciLean
 
 namespace VerifiedNN.Network.Gradient
 
@@ -255,28 +261,118 @@ infrastructure. The proof would require:
    - If k ∈ [100480, 101760), then `flatten(unflatten(params))[k] = params[k]` by weight2 mapping
    - If k ∈ [101760, 101770), then `flatten(unflatten(params))[k] = params[k]` by bias2 mapping
 
-**Proof Sketch:**
+**Proof Sketch (NOT EXECUTED - for documentation only):**
+
+The following is a detailed roadmap showing how this proof would proceed once
+DataArrayN.ext becomes available. The `sorry` placeholders below are NOT compiled
+into the binary - they exist purely as documentation markers within this comment.
+
 ```lean
+-- TODO: Complete this proof when SciLean provides DataArrayN.ext or project adds it
+-- Strategy: Prove pointwise equality using array extensionality
 apply DataArrayN.ext
 intro k
--- Case split on k's range
+-- Case split on k's range to determine which network component it belongs to
 by_cases h1 : k.1.toNat < 784 * 128
-· -- Layer 1 weights range
+· -- Layer 1 weights range: indices [0, 100352)
+  -- Goal: flatten(unflatten(params))[k] = params[k]
   simp [flattenParams, unflattenParams]
   -- Index arithmetic: row = k / 784, col = k % 784
-  -- unflatten creates weights[row, col] = params[k]
-  -- flatten reads weights[row, col] at index k
-  -- Hence round-trip preserves params[k]
-  sorry  -- Needs index arithmetic automation
+  -- unflatten reads: params[k] and writes to weights[row, col]
+  -- flatten reads: weights[row, col] and writes to index k
+  -- Need to show: (k / 784) * 784 + (k % 784) = k
+  -- This follows from Nat.div_add_mod: ∀ n k, k * (n / k) + n % k = n
+  rw [Nat.div_add_mod]
+
+  -- TODO [PROOF SKETCH MARKER]: Handle Idx ↔ Nat conversions and if-then-else branch selection
+  -- Strategy:
+  --   1. Apply if_pos to select first branch using h1 : k.1.toNat < 784 * 128
+  --   2. Prove natToIdx_toNat_inverse: (natToIdx n i h).1.toNat = i
+  --   3. Simplify nested natToIdx applications using USize ↔ Nat equivalence
+  --   4. Use IndexType lemmas from SciLean to eliminate Idx.finEquiv roundtrips
+  -- Needs:
+  --   - Custom lemma: if_pos for Decidable branching
+  --   - Custom lemma: natToIdx_toNat_inverse
+  --   - SciLean lemmas: Idx.finEquiv properties, IndexType simplifications
+  -- References:
+  --   - Mathlib: if_pos, if_neg from Logic.Basic
+  --   - SciLean: Idx.finEquiv, IndexType.toFin, IndexType.fromFin
+  sorry  -- DOCUMENTATION MARKER: Index arithmetic automation for USize ↔ Nat ↔ Idx chain
+
 by_cases h2 : k.1.toNat < 784 * 128 + 128
-· -- Layer 1 bias range (similar)
-  sorry
+· -- Layer 1 bias range: indices [100352, 100480)
+  -- Goal: flatten(unflatten(params))[k] = params[k]
+  simp [flattenParams, unflattenParams]
+  -- Index arithmetic: bidx = k - 100352
+  -- unflatten reads: params[k] and writes to bias[bidx]
+  -- flatten reads: bias[bidx] and writes to index 100352 + bidx = k
+  -- Need to show: 100352 + (k - 100352) = k
+  -- This follows from Nat.add_sub_cancel' when 100352 ≤ k
+  have h_ge : 784 * 128 ≤ k.1.toNat := by omega
+  rw [Nat.add_sub_cancel' h_ge]
+
+  -- TODO [PROOF SKETCH MARKER]: Handle if-then-else branch selection and Idx conversions
+  -- Strategy:
+  --   1. Apply if_neg to skip first branch using ¬h1 : ¬(k.1.toNat < 784 * 128)
+  --   2. Apply if_pos to select second branch using h2
+  --   3. Apply same Idx ↔ Nat simplification strategy as case 1
+  -- Needs: Same infrastructure as Layer 1 weights case
+  -- References: Same as above
+  sorry  -- DOCUMENTATION MARKER: Similar to case 1, requires branch selection automation
+
 by_cases h3 : k.1.toNat < 784 * 128 + 128 + 128 * 10
-· -- Layer 2 weights range (similar)
-  sorry
-· -- Layer 2 bias range (similar)
-  sorry
+· -- Layer 2 weights range: indices [100480, 101760)
+  -- Goal: flatten(unflatten(params))[k] = params[k]
+  simp [flattenParams, unflattenParams]
+  -- Index arithmetic: offset = k - 100480, row = offset / 128, col = offset % 128
+  -- unflatten reads: params[k] and writes to weights[row, col]
+  -- flatten reads: weights[row, col] and writes to index 100480 + row * 128 + col = k
+  -- Need to show: 100480 + (k - 100480) / 128 * 128 + (k - 100480) % 128 = k
+  -- This follows from Nat.div_add_mod applied to (k - 100480)
+  have h_ge : 784 * 128 + 128 ≤ k.1.toNat := by omega
+  have offset_eq : k.1.toNat - (784 * 128 + 128) = k.1.toNat - 100480 := by norm_num
+  rw [offset_eq, Nat.div_add_mod]
+  rw [Nat.add_sub_cancel' h_ge]
+
+  -- TODO [PROOF SKETCH MARKER]: Simplify constant arithmetic and handle if-then-else
+  -- Strategy:
+  --   1. Use norm_num to reduce 784 * 128 + 128 = 100480
+  --   2. Apply if_neg twice (skip branches 1 and 2)
+  --   3. Apply if_pos for third branch using h3
+  --   4. Apply Idx ↔ Nat simplification from previous cases
+  -- Needs: norm_num tactic for constant folding + branch automation
+  -- References: Mathlib.Tactic.NormNum for constant reduction
+  sorry  -- DOCUMENTATION MARKER: Constant arithmetic normalization required
+
+· -- Layer 2 bias range: indices [101760, 101770)
+  -- Goal: flatten(unflatten(params))[k] = params[k]
+  simp [flattenParams, unflattenParams]
+  -- Index arithmetic: bidx = k - 101760
+  -- unflatten reads: params[k] and writes to bias[bidx]
+  -- flatten reads: bias[bidx] and writes to index 101760 + bidx = k
+  -- Need to show: 101760 + (k - 101760) = k
+  -- This follows from Nat.add_sub_cancel' when 101760 ≤ k
+  have h_ge : 784 * 128 + 128 + 128 * 10 ≤ k.1.toNat := by omega
+  rw [Nat.add_sub_cancel' h_ge]
+
+  -- TODO [PROOF SKETCH MARKER]: Handle if-then-else and constant normalization
+  -- Strategy:
+  --   1. Use norm_num to reduce 784*128+128+128*10 = 101760
+  --   2. Apply if_neg three times (skip all previous branches)
+  --   3. Final else-branch is automatically selected
+  --   4. Apply Idx ↔ Nat simplification
+  -- Needs: Same infrastructure as previous cases
+  -- References: Same as above
+  sorry  -- DOCUMENTATION MARKER: Final case, constant arithmetic + branch selection
 ```
+
+**Key Lemmas Needed:**
+- `Nat.div_add_mod : ∀ n k, k * (n / k) + n % k = n` (standard library)
+- `Nat.add_sub_cancel' : ∀ {n m}, n ≤ m → n + (m - n) = m` (standard library)
+- Custom: `if_pos : ∀ {c : Prop} [Decidable c] {α} (h : c) (a b : α), (if c then a else b) = a`
+- Custom: `if_neg : ∀ {c : Prop} [Decidable c] {α} (h : ¬c) (a b : α), (if c then a else b) = b`
+- Custom: `natToIdx_toNat_inverse : ∀ n i (h : i < n), (natToIdx n i h).1.toNat = i`
+- SciLean: `DataArrayN.ext : ∀ {n} (a b : DataArrayN n), (∀ i, a[i] = b[i]) → a = b`
 
 **Consistency:**
 The definitions of `flattenParams` and `unflattenParams` implement mathematically inverse

@@ -1,42 +1,67 @@
-/-
-# Weight Initialization
-
-Weight initialization strategies for neural networks.
-
-This module implements Xavier/Glorot and He initialization methods,
-which are designed to maintain proper gradient flow during training by
-setting initial weight scales based on layer dimensions.
-
-## Initialization Strategies
-
-**Xavier/Glorot Initialization:**
-- Distribution: Uniform over [-√(6/(n_in + n_out)), √(6/(n_in + n_out))]
-- Purpose: General-purpose initialization maintaining activation variance
-- Use case: Good default for tanh/sigmoid activations
-
-**He Initialization:**
-- Distribution: Normal with mean 0, std √(2/n_in)
-- Purpose: Specifically designed for ReLU activations
-- Use case: Preferred for this MLP architecture (uses ReLU)
-
-## Implementation Details
-
-- Random number generation via IO monad (system RNG)
-- Box-Muller transform for normal distribution sampling
-- Biases initialized to zero by default
-- Functional DataArrayN construction from random arrays
-
-## Verification Status
-
-- No sorries in this module
-- Pure randomness interface (no verification of statistical properties)
-- Type safety ensures correct dimension initialization
--/
-
 import VerifiedNN.Network.Architecture
 import VerifiedNN.Layer.Dense
 import VerifiedNN.Core.DataTypes
 import SciLean
+
+/-!
+# Weight Initialization
+
+Weight initialization strategies for neural networks.
+
+This module implements Xavier/Glorot and He initialization methods, which are
+designed to maintain proper gradient flow during training by setting initial
+weight scales based on layer dimensions. Proper initialization prevents gradient
+vanishing or explosion in deep networks.
+
+## Main Definitions
+
+- `initializeNetwork`: Xavier/Glorot initialization (uniform distribution)
+- `initializeNetworkHe`: He initialization (normal distribution, preferred for ReLU)
+- `initializeNetworkCustom`: Manual scale control for experimentation
+- `initDenseLayerXavier`: Xavier initialization for a single dense layer
+- `initDenseLayerHe`: He initialization for a single dense layer
+- `randomFloat`: Uniform random number generation in [min, max)
+- `randomNormal`: Standard normal distribution N(0,1) via Box-Muller transform
+
+## Initialization Strategies
+
+**Xavier/Glorot Initialization:**
+- **Distribution:** Uniform over [-√(6/(n_in + n_out)), √(6/(n_in + n_out))]
+- **Purpose:** Maintains activation variance across layers
+- **Theory:** Variance of activations ≈ Variance of gradients
+- **Use case:** General-purpose, good for tanh/sigmoid activations
+
+**He Initialization:**
+- **Distribution:** Normal with mean 0, std √(2/n_in)
+- **Purpose:** Specifically designed for ReLU activations
+- **Theory:** Accounts for ReLU killing half of activations (outputs 0)
+- **Use case:** Preferred for this MLP architecture (uses ReLU)
+
+## Implementation Notes
+
+- Random number generation via `IO.rand` (Lean's system RNG)
+- Box-Muller transform converts uniform random variables to normal distribution:
+  If U1, U2 ~ Uniform(0,1), then Z = √(-2 ln(U1)) cos(2π U2) ~ N(0,1)
+- Biases initialized to zero by default (standard practice)
+- Functional DataArrayN construction using ⊞ notation
+- No seeding interface (for reproducible experiments, seed at OS level)
+
+## Verification Status
+
+- **Sorries:** 0 (complete implementation)
+- **Axioms:** 0 (no formal verification of statistical properties)
+- **Build status:** ✅ Compiles successfully
+- **Type safety:** Dimension specifications ensure correct initialization sizes
+
+## References
+
+- **Xavier Initialization:** Glorot & Bengio, "Understanding the difficulty of
+  training deep feedforward neural networks" (AISTATS 2010)
+- **He Initialization:** He et al., "Delving Deep into Rectifiers: Surpassing
+  Human-Level Performance on ImageNet Classification" (ICCV 2015)
+- Network architecture: `VerifiedNN.Network.Architecture`
+- Dense layer definition: `VerifiedNN.Layer.Dense`
+-/
 
 namespace VerifiedNN.Network.Initialization
 

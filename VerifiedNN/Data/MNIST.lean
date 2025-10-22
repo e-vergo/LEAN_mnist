@@ -6,6 +6,9 @@ import SciLean
 
 Functions for loading MNIST dataset from IDX binary format.
 
+Provides I/O utilities for parsing the MNIST handwritten digit database, which consists
+of 70,000 labeled 28×28 grayscale images (60,000 training, 10,000 test).
+
 ## Main definitions
 
 * `loadMNISTImages`: Parse IDX image file into array of 784-dimensional vectors
@@ -23,8 +26,16 @@ The IDX file format is a simple binary format:
 
 All multi-byte integers are stored in big-endian format.
 
-Pixel values are stored as UInt8 (0-255) and converted to Float.
-This is an unverified implementation - no formal proofs of correctness.
+Pixel values are stored as UInt8 (0-255) and converted to Float without normalization
+(normalization is applied separately via `VerifiedNN.Data.Preprocessing`).
+
+**Verification status:** This is an unverified implementation operating on `Float` values.
+No formal proofs of IDX parsing correctness or file I/O safety.
+
+## References
+
+* MNIST Database: http://yann.lecun.com/exdb/mnist/
+* LeCun et al., "Gradient-Based Learning Applied to Document Recognition" (Proc. IEEE 1998)
 -/
 
 namespace VerifiedNN.Data.MNIST
@@ -32,7 +43,15 @@ namespace VerifiedNN.Data.MNIST
 open VerifiedNN.Core
 open SciLean
 
-/-- Read big-endian 32-bit unsigned integer from byte array. -/
+/-- Read big-endian 32-bit unsigned integer from byte array.
+
+**Parameters:**
+- `bytes`: Byte array to read from
+- `offset`: Starting position in the array
+
+**Returns:** `some value` if 4 bytes available at offset, `none` if out of bounds
+
+**Implementation notes:** Decodes big-endian format (most significant byte first) -/
 private def readU32BE (bytes : ByteArray) (offset : Nat) : Option UInt32 := do
   if offset + 4 > bytes.size then
     none
@@ -44,17 +63,37 @@ private def readU32BE (bytes : ByteArray) (offset : Nat) : Option UInt32 := do
     some ((b0.toUInt32 <<< 24) ||| (b1.toUInt32 <<< 16) |||
           (b2.toUInt32 <<< 8) ||| b3.toUInt32)
 
-/-- Convert byte (0-255) to Float. -/
+/-- Convert byte (0-255) to Float.
+
+**Parameters:**
+- `b`: UInt8 value (0-255) representing pixel intensity
+
+**Returns:** Float representation of the byte value -/
 private def byteToFloat (b : UInt8) : Float :=
   b.toNat.toFloat
 
 /-- Load MNIST images from IDX file format.
 
-The IDX format for MNIST images has magic number 2051 (0x00000803),
-followed by image count, dimensions (28×28), and pixel data (1 byte per pixel, 0-255).
+Parses binary IDX3 format files containing MNIST digit images. The format specification:
+- Magic number: 2051 (0x00000803) - identifies unsigned byte 3D tensor
+- Number of images: UInt32 (big-endian)
+- Number of rows: UInt32 (28 for MNIST)
+- Number of columns: UInt32 (28 for MNIST)
+- Pixel data: UInt8 values (0-255) in row-major order
 
-Returns array of 784-dimensional vectors (flattened 28×28 images), or empty array on error.
-Errors are logged to stderr. -/
+**Parameters:**
+- `path`: File path to IDX image file (e.g., `train-images-idx3-ubyte`)
+
+**Returns:** Array of 784-dimensional Float vectors (flattened 28×28 images in row-major order),
+or empty array on error (errors logged to stderr)
+
+**Implementation notes:**
+- Validates magic number, dimensions, and file size
+- Converts UInt8 pixels (0-255) to Float without normalization
+- Uses SciLean `⊞` notation for efficient vector construction
+
+**Error handling:** Returns empty array and logs to stderr on file I/O errors, invalid format,
+or truncated data -/
 def loadMNISTImages (path : System.FilePath) : IO (Array (Vector 784)) := do
   try
     -- Read entire file as ByteArray
@@ -104,11 +143,23 @@ def loadMNISTImages (path : System.FilePath) : IO (Array (Vector 784)) := do
 
 /-- Load MNIST labels from IDX file format.
 
-The IDX format for MNIST labels has magic number 2049 (0x00000801),
-followed by label count and label data (1 byte per label, 0-9).
+Parses binary IDX1 format files containing MNIST digit labels. The format specification:
+- Magic number: 2049 (0x00000801) - identifies unsigned byte 1D tensor
+- Number of labels: UInt32 (big-endian)
+- Label data: UInt8 values (0-9) representing digit classes
 
-Returns array of natural numbers representing digit classes, or empty array on error.
-Errors are logged to stderr. -/
+**Parameters:**
+- `path`: File path to IDX label file (e.g., `train-labels-idx1-ubyte`)
+
+**Returns:** Array of natural numbers in range [0, 9] representing digit classes,
+or empty array on error (errors logged to stderr)
+
+**Implementation notes:**
+- Validates magic number and label values (must be 0-9)
+- Checks for truncated files
+
+**Error handling:** Returns empty array and logs to stderr on file I/O errors, invalid format,
+invalid label values, or truncated data -/
 def loadMNISTLabels (path : System.FilePath) : IO (Array Nat) := do
   try
     -- Read entire file as ByteArray
@@ -147,10 +198,19 @@ def loadMNISTLabels (path : System.FilePath) : IO (Array Nat) := do
 
 /-- Load full MNIST dataset by combining images and labels.
 
-Returns array of (image, label) pairs where image is a 784-dimensional Float vector
-and label is a Nat in range [0-9].
+Loads and combines image and label files into paired dataset format.
 
-If image and label counts don't match, returns only matching pairs and logs warning. -/
+**Parameters:**
+- `imagePath`: File path to IDX image file
+- `labelPath`: File path to IDX label file
+
+**Returns:** Array of (image, label) pairs where:
+- `image`: 784-dimensional Float vector (unnormalized, values in [0, 255])
+- `label`: Nat in range [0, 9] representing digit class
+
+**Error handling:**
+- If image and label counts don't match, returns only matching pairs (min of both) and logs warning
+- Propagates empty arrays from failed image/label loading -/
 def loadMNIST (imagePath : System.FilePath) (labelPath : System.FilePath) :
     IO (Array (Vector 784 × Nat)) := do
   let images ← loadMNISTImages imagePath
@@ -172,7 +232,16 @@ def loadMNIST (imagePath : System.FilePath) (labelPath : System.FilePath) :
 
 /-- Load standard MNIST training set (60,000 samples).
 
-Expects files `train-images-idx3-ubyte` and `train-labels-idx1-ubyte` in `dataDir`. -/
+Convenience function for loading the standard MNIST training dataset.
+
+**Parameters:**
+- `dataDir`: Directory containing MNIST files
+
+**Returns:** Array of 60,000 (image, label) pairs, or fewer on error
+
+**Expects files:**
+- `train-images-idx3-ubyte` (47 MB, 60,000 images)
+- `train-labels-idx1-ubyte` (60 KB, 60,000 labels) -/
 def loadMNISTTrain (dataDir : System.FilePath) : IO (Array (Vector 784 × Nat)) := do
   let imagePath := dataDir / "train-images-idx3-ubyte"
   let labelPath := dataDir / "train-labels-idx1-ubyte"
@@ -180,7 +249,16 @@ def loadMNISTTrain (dataDir : System.FilePath) : IO (Array (Vector 784 × Nat)) 
 
 /-- Load standard MNIST test set (10,000 samples).
 
-Expects files `t10k-images-idx3-ubyte` and `t10k-labels-idx1-ubyte` in `dataDir`. -/
+Convenience function for loading the standard MNIST test dataset.
+
+**Parameters:**
+- `dataDir`: Directory containing MNIST files
+
+**Returns:** Array of 10,000 (image, label) pairs, or fewer on error
+
+**Expects files:**
+- `t10k-images-idx3-ubyte` (7.8 MB, 10,000 images)
+- `t10k-labels-idx1-ubyte` (10 KB, 10,000 labels) -/
 def loadMNISTTest (dataDir : System.FilePath) : IO (Array (Vector 784 × Nat)) := do
   let imagePath := dataDir / "t10k-images-idx3-ubyte"
   let labelPath := dataDir / "t10k-labels-idx1-ubyte"

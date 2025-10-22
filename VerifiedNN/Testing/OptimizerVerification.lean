@@ -1,22 +1,40 @@
-/-
+import VerifiedNN.Optimizer.SGD
+import VerifiedNN.Optimizer.Momentum
+import VerifiedNN.Optimizer.Update
+import SciLean
+
+/-!
 # Optimizer Verification
 
-Compile-time verification that optimizer implementations are complete and well-typed.
+Compile-time verification that optimizer implementations are type-safe and
+dimension-consistent.
 
-This file verifies:
-- All optimizer functions compile and have correct type signatures
-- Parameter update operations preserve dimension consistency
-- Integration points with Network module are well-defined
+## Main Theorems
 
-## Verification Approach
+- `sgdStep_preserves_dimension`: SGD step preserves parameter dimensions
+- `momentumStep_preserves_dimension`: Momentum step preserves parameter dimensions
+- `optimizerStep_preserves_dimension`: Unified optimizer interface preserves dimensions
 
-This module uses **type-checking as proof** - if the definitions compile with
-explicit type signatures, then Lean's type system has verified the properties.
-This is more powerful than runtime testing for dimension consistency.
+## Implementation Notes
 
-## What Is Verified
+**Verification Approach:** This module uses type-checking as proof. If the
+definitions compile with explicit type signatures, then Lean's type system has
+verified dimension consistency. This is more powerful than runtime testing.
 
-### Type Checking (Compile-time)
+**Proof Strategy:** All dimension preservation theorems use `trivial` because
+Lean's dependent type system enforces dimension preservation automatically.
+The fact that the code compiles IS the proof.
+
+**Compile-time Verification:** This file serves as a compile-time test suite.
+If it builds successfully, then all optimizer implementations:
+1. Have correct type signatures
+2. Preserve parameter dimensions
+3. Are compatible with the training loop interface
+4. Can be used interchangeably via OptimizerState
+
+## Verified Properties
+
+**Type Checking (Compile-time):**
 - ✓ SGDState structure has correct field types
 - ✓ MomentumState structure has correct field types
 - ✓ sgdStep preserves parameter dimensions (by type)
@@ -25,30 +43,10 @@ This is more powerful than runtime testing for dimension consistency.
 - ✓ Gradient accumulator operations are well-typed
 - ✓ Unified optimizer interface is type-safe
 
-### Dimension Consistency Theorems
-- ✓ sgdStep_preserves_dimension: proved by construction
-- ✓ momentumStep_preserves_dimension: proved by construction
-- ✓ optimizerStep_preserves_dimension: proved by construction
-
-These theorems use `trivial` because Lean's dependent type system
-enforces dimension preservation automatically. The fact that the code
-compiles IS the proof.
-
-### Integration Points
+**Integration Points:**
 - ✓ Documents Network.flattenParams/unflattenParams pattern
 - ✓ Shows example integration with fixed-size parameter vectors
 - ✓ Demonstrates unified optimizer interface usage
-
-## Verification Summary
-
-This file serves as a **compile-time test suite**. If it builds successfully,
-then all optimizer implementations:
-1. Have correct type signatures
-2. Preserve parameter dimensions
-3. Are compatible with the training loop interface
-4. Can be used interchangeably via OptimizerState
-
-No runtime tests are needed for these properties - the type checker proves them.
 
 ## Usage
 
@@ -58,12 +56,13 @@ lake build VerifiedNN.Testing.OptimizerVerification
 
 # This file has no main function - it's a compile-time verification only
 ```
--/
 
-import VerifiedNN.Optimizer.SGD
-import VerifiedNN.Optimizer.Momentum
-import VerifiedNN.Optimizer.Update
-import SciLean
+## References
+
+- Dependent type theory: Dimension consistency enforced by type system
+- SGD update: θ' = θ - η∇L preserves dimension by construction
+- Momentum update: v' = βv + ∇L, θ' = θ - ηv' preserves dimension by construction
+-/
 
 namespace VerifiedNN.Testing.OptimizerVerification
 

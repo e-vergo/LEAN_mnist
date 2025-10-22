@@ -4,16 +4,50 @@ import VerifiedNN.Core.DataTypes
 /-!
 # MNIST Integration Test
 
-Minimal integration test to verify MNIST data can be loaded from disk.
+Minimal integration smoke test to verify MNIST dataset can be loaded from disk.
 
-This test validates:
-- Training images and labels load successfully
-- Test images and labels load successfully
-- Image and label counts match expected values (60,000 training, 10,000 test)
-- All labels are in valid range [0-9]
+## Main Tests
 
-**Note:** This is a simple smoke test. Detailed validation of pixel values
-requires DataArrayN iteration utilities not yet available in SciLean.
+- `main`: Loads MNIST training and test sets, validates basic integrity
+
+## Implementation Notes
+
+**Test Strategy:** This is a fast smoke test (<5 seconds) that validates MNIST
+data loading without extensive validation. It's designed for rapid iteration
+and CI/CD pipelines where full validation would be too slow.
+
+**Verification Status:** This is a computational validation test that checks
+implementation correctness through basic integrity checks (correct counts,
+valid label ranges). It complements the detailed validation in MNISTLoadTest.lean.
+
+**Validated Properties:**
+- Training set: 60,000 samples loaded successfully
+- Test set: 10,000 samples loaded successfully
+- All labels in valid range [0-9]
+- Basic data structure integrity
+
+**What's Not Validated:**
+- Pixel value ranges (requires DataArrayN iteration utilities)
+- Image content correctness (visual inspection needed)
+- Data preprocessing correctness (handled separately in Preprocessing.lean)
+
+## Usage
+
+```bash
+# Build
+lake build VerifiedNN.Testing.MNISTIntegration
+
+# Run (requires MNIST data in data/ directory)
+lake env lean --run VerifiedNN/Testing/MNISTIntegration.lean
+
+# Expected runtime: <5 seconds
+```
+
+## References
+
+- Full validation: See VerifiedNN.Testing.MNISTLoadTest
+- Data loading: See VerifiedNN.Data.MNIST
+- Dataset download: Run ./scripts/download_mnist.sh
 -/
 
 namespace VerifiedNN.Testing.MNISTIntegration

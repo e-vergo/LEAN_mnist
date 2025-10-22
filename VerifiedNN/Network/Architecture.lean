@@ -1,31 +1,59 @@
-/-
+import VerifiedNN.Layer.Dense
+import VerifiedNN.Core.Activation
+import SciLean
+
+/-!
 # Network Architecture
 
 MLP architecture definition and forward pass implementation.
 
-This module defines a two-layer multilayer perceptron (MLP) for MNIST classification:
-- **Architecture:** 784 → 128 → 10
-- **Activations:** ReLU (hidden layer), Softmax (output layer)
-- **Purpose:** Digit classification (0-9)
+This module defines a two-layer multilayer perceptron (MLP) for MNIST classification.
+The architecture uses dependent types to enforce dimension consistency at compile time,
+preventing shape mismatches between layers.
 
-## Key Components
+## Main Definitions
 
-- `MLPArchitecture`: Network structure containing two dense layers
-- `forward`: Single-sample forward pass
-- `forwardBatch`: Efficient batched forward pass
-- `predict`: Class prediction from network output
-- `argmax`: Helper function to find maximum element index
+- `MLPArchitecture`: Network structure containing two dense layers (784 → 128 → 10)
+- `MLPArchitecture.forward`: Single-sample forward pass with ReLU and Softmax activations
+- `MLPArchitecture.forwardBatch`: Efficient batched forward pass for training
+- `MLPArchitecture.predict`: Class prediction from network output (argmax)
+- `MLPArchitecture.forwardLogits`: Forward pass without final softmax (for numerical stability)
+- `MLPArchitecture.predictBatch`: Batched prediction for multiple inputs
+- `argmax`: Functional argmax implementation finding maximum element index
+- `softmaxBatch`: Row-wise softmax for batch processing
+
+## Architecture Details
+
+**Layer Structure:** 784 → 128 → 10
+- Input layer: 784 dimensions (28×28 pixel images flattened)
+- Hidden layer: 128 dimensions with ReLU activation
+- Output layer: 10 dimensions (digit classes 0-9) with Softmax activation
+
+**Type Safety:**
+The type system enforces that `layer1.outDim = layer2.inDim`, preventing
+dimension mismatches at compile time. All batch operations maintain dimension
+consistency through dependent type specifications.
+
+## Implementation Notes
+
+- `argmax` uses functional recursion over `Fin n` indices to avoid `Idx` type complexity
+- `softmaxBatch` applies softmax independently to each row of a batch
+- `forwardLogits` provides unnormalized scores for numerically stable loss computation
+- All batch operations use DataArrayN matrix notation (⊞) for efficiency
 
 ## Verification Status
 
-- No sorries in this module
-- All dimension specifications enforced by dependent types
-- Compile-time guarantees on layer compatibility
--/
+- **Sorries:** 0 (complete implementation)
+- **Axioms:** 0 (no axiomatized properties)
+- **Build status:** ✅ Compiles successfully
+- **Type safety:** All dimension specifications enforced by dependent types
 
-import VerifiedNN.Layer.Dense
-import VerifiedNN.Core.Activation
-import SciLean
+## References
+
+- Dense layer implementation: `VerifiedNN.Layer.Dense`
+- Activation functions: `VerifiedNN.Core.Activation`
+- Training usage: `VerifiedNN.Training.Loop`
+-/
 
 namespace VerifiedNN.Network
 

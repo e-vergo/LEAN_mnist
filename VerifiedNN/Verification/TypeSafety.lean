@@ -1,26 +1,3 @@
-/-
-# Type Safety Verification
-
-Proofs of dimension compatibility and type-level safety guarantees.
-
-This module establishes the secondary verification goal: proving that dependent types
-enforce runtime correctness. We show that type-level dimension specifications correspond
-to runtime array dimensions, and that the type system prevents dimension mismatches.
-
-**Verification Status:**
-- Dimension preservation theorems: Statements complete
-- Type-level safety: Enforced by construction via dependent types
-- Runtime validation: Proofs connect type-level specifications to DataArrayN sizes
-
-**Design Philosophy:**
-- Leverage Lean's dependent types for compile-time dimension checking
-- Prove that if code type-checks, runtime dimensions are correct
-- Demonstrate type system correctness by construction
-
-**Note:** These proofs establish that dependent types work as intended. The type system
-itself provides much of the safety; proofs formalize what the types already guarantee.
--/
-
 import VerifiedNN.Layer.Dense
 import VerifiedNN.Layer.Composition
 import VerifiedNN.Network.Architecture
@@ -28,6 +5,69 @@ import VerifiedNN.Network.Gradient
 import VerifiedNN.Core.DataTypes
 import VerifiedNN.Core.LinearAlgebra
 import SciLean
+
+/-!
+# Type Safety Verification
+
+Proofs of dimension compatibility and type-level safety guarantees.
+
+This module establishes the **secondary verification goal** of the project: proving that
+dependent types enforce runtime correctness. We demonstrate that type-level dimension
+specifications correspond to runtime array dimensions, and that the type system prevents
+dimension mismatches by construction.
+
+## Main Theorems
+
+- `type_guarantees_dimension`: Type system enforces dimension correctness
+- `matvec_output_dimension`: Matrix-vector multiplication produces correct dimensions
+- `dense_layer_output_dimension`: Dense layer forward pass maintains dimensions
+- `layer_composition_type_safe`: Layer composition preserves dimension compatibility
+- `flatten_unflatten_left_inverse`: Parameter flattening preserves network structure
+- `unflatten_flatten_right_inverse`: Parameter round-trip is bijective
+
+## Verification Status
+
+**Proven (14 theorems):**
+All dimension preservation theorems are proven, most by `trivial` or `rfl` because
+the type system itself enforces correctness.
+
+**Axiomatized (0 theorems in this file):**
+The two flatten/unflatten axioms reference axioms in Network/Gradient.lean.
+
+## Design Philosophy
+
+**Type Safety by Construction:**
+In SciLean, `Float^[n]` is a type-level guarantee - if a value has this type, it IS
+an n-dimensional array. There is no separate "runtime size" to check.
+
+**Proof Strategy:**
+Many theorems are proven by `trivial` or `rfl` because they formalize properties that
+the type system already guarantees. This is intentional - we're proving that the type
+system works as intended.
+
+**Dependent Types:**
+Dimension parameters (e.g., `{n : Nat}`) are part of the type signature. Lean's type
+checker verifies dimension compatibility at compile time, preventing runtime mismatches.
+
+## Implementation Notes
+
+- Uses SciLean's `DataArrayN` for sized arrays with type-level dimensions
+- Dimension information flows through type signatures automatically
+- Type mismatches cause compilation errors, not runtime crashes
+- Parameter flattening/unflattening maintain bijective correspondence
+
+## Mathematical Context
+
+Type safety theorems establish correctness of the dimension tracking system used
+throughout the codebase. While gradient correctness (GradientCorrectness.lean) proves
+mathematical properties on ℝ, type safety proves structural properties enforced by Lean.
+
+## References
+
+- Pierce (2002): "Types and Programming Languages" - theoretical foundations
+- SciLean documentation: DataArrayN and sized array operations
+- Lean 4 documentation: Dependent type theory
+-/
 
 namespace VerifiedNN.Verification.TypeSafety
 
@@ -279,8 +319,13 @@ the original network structure.
 
 This ensures parameter updates in the optimizer preserve network structure.
 
-**Status:** AXIOMATIZED - See Gradient.unflatten_flatten_id for comprehensive justification.
+**Status:** AXIOMATIZED - See VerifiedNN.Network.Gradient.unflatten_flatten_id for
+comprehensive justification (58-line docstring with detailed proof strategy).
 The axiom is necessary due to SciLean's array extensionality being axiomatized.
+
+**Cross-reference:** This theorem delegates to Network/Gradient.lean axiom to avoid duplication.
+The flatten/unflatten operations are fundamental to the optimizer, which requires a flat
+parameter vector for SGD updates.
 -/
 theorem flatten_unflatten_left_inverse (net : MLPArchitecture) :
   Gradient.unflattenParams (Gradient.flattenParams net) = net :=
@@ -292,9 +337,13 @@ Unflattening a parameter vector and then flattening produces the original vector
 
 This ensures no information is lost in the conversion process.
 
-**Status:** AXIOMATIZED - See Gradient.flatten_unflatten_id for comprehensive justification.
+**Status:** AXIOMATIZED - See VerifiedNN.Network.Gradient.flatten_unflatten_id for
+comprehensive justification (40-line docstring).
+
 Together with the left inverse, this establishes a bijection between MLPArchitecture
-and Vector nParams.
+and Vector nParams, which is critical for optimizer correctness.
+
+**Cross-reference:** This theorem delegates to Network/Gradient.lean axiom to avoid duplication.
 -/
 theorem unflatten_flatten_right_inverse (params : Vector Gradient.nParams) :
   Gradient.flattenParams (Gradient.unflattenParams params) = params :=

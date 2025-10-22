@@ -1,22 +1,82 @@
-/-
+import VerifiedNN.Core.DataTypes
+import SciLean
+import Mathlib.Algebra.BigOperators.Group.Finset.Basic
+
+/-!
 # Linear Algebra Operations
 
 Matrix and vector operations using SciLean primitives with automatic differentiation support.
 
-**Implementation Notes:**
-- Uses SciLean's DataArrayN (Float^[n]) for performance and AD support
+This module provides fundamental linear algebra operations for neural network computations,
+including matrix-vector multiplication, vector arithmetic, batch operations, and transpose.
+All operations preserve dimension information through dependent types and are designed to
+work with SciLean's automatic differentiation system.
+
+## Main Definitions
+
+**Vector Operations:**
+- `vadd` - Vector addition
+- `vsub` - Vector subtraction
+- `smul` - Scalar-vector multiplication
+- `vmul` - Element-wise vector multiplication (Hadamard product)
+- `dot` - Vector dot product
+- `normSq` - Squared L2 norm
+- `norm` - L2 norm
+
+**Matrix Operations:**
+- `matvec` - Matrix-vector multiplication
+- `matmul` - Matrix-matrix multiplication
+- `transpose` - Matrix transpose
+- `matAdd` - Matrix addition
+- `matSub` - Matrix subtraction
+- `matSmul` - Scalar-matrix multiplication
+- `outer` - Outer product of two vectors
+
+**Batch Operations:**
+- `batchMatvec` - Batch matrix-vector multiplication (efficient forward pass)
+- `batchAddVec` - Add vector to each row of batch (bias addition)
+
+## Main Results
+
+**Linearity Properties (Proven):**
+- `vadd_comm` - Vector addition is commutative
+- `vadd_assoc` - Vector addition is associative
+- `smul_vadd_distrib` - Scalar multiplication distributes over vector addition
+- `matvec_linear` - Matrix-vector multiplication is linear
+- `affine_combination_identity` - Affine combination property for scaled vectors
+
+All theorems are proven with zero sorries using mathlib's `Finset.sum` properties.
+
+## Implementation Notes
+
+**Performance:**
+- Uses SciLean's `DataArrayN` (Float^[n]) for efficient memory layout
+- Operations marked `@[inline]` for performance
+- Indexed sums (`∑`) and array constructors (`⊞`) are SciLean primitives optimized for AD
+- Integration with OpenBLAS for optimized linear algebra (via SciLean)
+
+**Automatic Differentiation:**
 - All operations are automatically differentiable via SciLean's `fun_trans` system
-- Indexed sums (∑) and array constructors (⊞) are SciLean primitives optimized for AD
+- TODO: Register operations with `@[fun_trans]` and `@[fun_prop]` attributes
+- Gradients computed symbolically on ℝ, executed on Float
 
-**Verification Status:**
-- Differentiation properties: TODO - Register with @[fun_trans] and @[fun_prop]
-- Dimension consistency: Enforced by dependent types
-- Numerical correctness: Validated via gradient checking tests
+**Type Safety:**
+- Dimension consistency enforced by dependent types at compile time
+- Type system prevents dimension mismatches (e.g., cannot multiply incompatible matrices)
+
+## Verification Status
+
+- **Linearity proofs:** ✅ Complete (5 theorems proven)
+- **Differentiation properties:** ⚠️ TODO - Register with `@[fun_trans]` and `@[fun_prop]`
+- **Dimension consistency:** ✅ Enforced by type system
+- **Numerical correctness:** ✅ Validated via gradient checking tests
+
+## References
+
+- SciLean DataArrayN documentation: https://github.com/lecopivo/SciLean
+- Mathlib BigOperators: `Mathlib.Algebra.BigOperators.Group.Finset.Basic`
+- Project specification: verified-nn-spec.md
 -/
-
-import VerifiedNN.Core.DataTypes
-import SciLean
-import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 
 namespace VerifiedNN.Core.LinearAlgebra
 
@@ -24,139 +84,338 @@ open SciLean
 open VerifiedNN.Core
 open BigOperators
 
-/-- Matrix-vector multiplication: A * x
-    Computes y[i] = Σⱼ A[i,j] * x[j] for each row i
+/-- Matrix-vector multiplication: `A * x`.
 
-    TODO: Add differentiation properties:
-    - @[fun_prop] theorem matvec_differentiable
-    - @[fun_trans] theorem matvec_fderiv -/
+Computes the product of matrix `A` with vector `x`, producing vector `y` where
+`y[i] = Σⱼ A[i,j] * x[j]` for each row `i`.
+
+**Mathematical interpretation:** Standard matrix-vector product from linear algebra.
+
+**Type safety:** Dimensions are checked at compile time - matrix columns must match vector dimension.
+
+**Parameters:**
+- `A` : Matrix of dimensions `m × n`
+- `x` : Vector of dimension `n`
+
+**Returns:** Vector of dimension `m`
+
+**Verified properties:**
+- Linearity: See `matvec_linear` theorem
+
+**TODO:** Register differentiation properties:
+- `@[fun_prop] theorem matvec_differentiable`
+- `@[fun_trans] theorem matvec_fderiv`
+
+**Usage:** Forward pass in dense layers, computing `W * x` for weight matrix `W`. -/
 @[inline]
 def matvec {m n : Nat} (A : Matrix m n) (x : Vector n) : Vector m :=
   ⊞ i => ∑ j, A[i,j] * x[j]
 
-/-- Matrix-matrix multiplication: A * B
-    Computes C[i,k] = Σⱼ A[i,j] * B[j,k]
+/-- Matrix-matrix multiplication: `A * B`.
 
-    TODO: Add differentiation properties. -/
+Computes the product of matrices `A` and `B`, producing matrix `C` where
+`C[i,k] = Σⱼ A[i,j] * B[j,k]` for each row `i` and column `k`.
+
+**Mathematical interpretation:** Standard matrix multiplication from linear algebra.
+
+**Type safety:** Dimensions are checked at compile time - `A` must have as many columns as `B` has rows.
+
+**Parameters:**
+- `A` : Matrix of dimensions `m × n`
+- `B` : Matrix of dimensions `n × p`
+
+**Returns:** Matrix of dimensions `m × p`
+
+**TODO:** Register differentiation properties:
+- `@[fun_prop] theorem matmul_differentiable`
+- `@[fun_trans] theorem matmul_fderiv`
+
+**Usage:** Composing weight matrices or computing products in backpropagation. -/
 @[inline]
 def matmul {m n p : Nat} (A : Matrix m n) (B : Matrix n p) : Matrix m p :=
   ⊞ (i, k) => ∑ j, A[i,j] * B[j,k]
 
-/-- Vector addition: x + y
-    Element-wise addition of two vectors
+/-- Vector addition: `x + y`.
 
-    TODO: Add differentiation properties (should be identity for both arguments). -/
+Element-wise addition of two vectors, producing `z[i] = x[i] + y[i]` for each index `i`.
+
+**Mathematical interpretation:** Vector addition in ℝⁿ.
+
+**Verified properties:**
+- Commutativity: `vadd_comm`
+- Associativity: `vadd_assoc`
+- Distributivity with scalar multiplication: `smul_vadd_distrib`
+
+**Parameters:**
+- `x` : Vector of dimension `n`
+- `y` : Vector of dimension `n`
+
+**Returns:** Vector of dimension `n`
+
+**TODO:** Register differentiation properties (gradient is identity for both arguments).
+
+**Usage:** Adding gradients, bias terms, or residual connections. -/
 @[inline]
 def vadd {n : Nat} (x y : Vector n) : Vector n :=
   ⊞ i => x[i] + y[i]
 
-/-- Vector subtraction: x - y
-    Element-wise subtraction of two vectors
+/-- Vector subtraction: `x - y`.
 
-    TODO: Add differentiation properties. -/
+Element-wise subtraction of two vectors, producing `z[i] = x[i] - y[i]` for each index `i`.
+
+**Mathematical interpretation:** Vector subtraction in ℝⁿ.
+
+**Parameters:**
+- `x` : Vector of dimension `n`
+- `y` : Vector of dimension `n`
+
+**Returns:** Vector of dimension `n`
+
+**TODO:** Register differentiation properties (gradient is +1 for x, -1 for y).
+
+**Usage:** Computing prediction errors, gradient differences, or residuals. -/
 @[inline]
 def vsub {n : Nat} (x y : Vector n) : Vector n :=
   ⊞ i => x[i] - y[i]
 
-/-- Scalar-vector multiplication: c * x
-    Multiply each element of vector by scalar
+/-- Scalar-vector multiplication: `c * x`.
 
-    TODO: Add differentiation properties. -/
+Multiply each element of vector `x` by scalar `c`, producing `y[i] = c * x[i]` for each index `i`.
+
+**Mathematical interpretation:** Scalar multiplication in ℝⁿ.
+
+**Verified properties:**
+- Distributivity: `smul_vadd_distrib` shows `c * (x + y) = c * x + c * y`
+
+**Parameters:**
+- `c` : Scalar multiplier (Float)
+- `x` : Vector of dimension `n`
+
+**Returns:** Vector of dimension `n`
+
+**TODO:** Register differentiation properties (gradient w.r.t. x is c, w.r.t. c is x).
+
+**Usage:** Scaling gradients in optimization, learning rate application. -/
 @[inline]
 def smul {n : Nat} (c : Float) (x : Vector n) : Vector n :=
   ⊞ i => c * x[i]
 
-/-- Element-wise vector multiplication (Hadamard product)
-    Multiply corresponding elements: z[i] = x[i] * y[i]
+/-- Element-wise vector multiplication (Hadamard product): `x ⊙ y`.
 
-    TODO: Add differentiation properties. -/
+Multiply corresponding elements of two vectors, producing `z[i] = x[i] * y[i]` for each index `i`.
+
+**Mathematical interpretation:** Hadamard (element-wise) product, not to be confused with dot product.
+
+**Parameters:**
+- `x` : Vector of dimension `n`
+- `y` : Vector of dimension `n`
+
+**Returns:** Vector of dimension `n`
+
+**TODO:** Register differentiation properties (gradient w.r.t. x is y, w.r.t. y is x).
+
+**Usage:** Applying activation derivatives in backpropagation, gating mechanisms. -/
 @[inline]
 def vmul {n : Nat} (x y : Vector n) : Vector n :=
   ⊞ i => x[i] * y[i]
 
-/-- Vector dot product: ⟨x, y⟩
-    Computes Σᵢ x[i] * y[i]
+/-- Vector dot product: `⟨x, y⟩`.
 
-    TODO: Add differentiation properties. -/
+Computes the inner product of two vectors: `⟨x, y⟩ = Σᵢ x[i] * y[i]`.
+
+**Mathematical interpretation:** Standard inner product in ℝⁿ.
+
+**Parameters:**
+- `x` : Vector of dimension `n`
+- `y` : Vector of dimension `n`
+
+**Returns:** Scalar (Float) representing the inner product
+
+**TODO:** Register differentiation properties (gradient w.r.t. x is y, w.r.t. y is x).
+
+**Usage:** Computing similarities, loss functions, or vector projections. -/
 @[inline]
 def dot {n : Nat} (x y : Vector n) : Float :=
   ∑ i, x[i] * y[i]
 
-/-- Vector L2 norm squared: ‖x‖²
-    Computes Σᵢ x[i]²
+/-- Vector L2 norm squared: `‖x‖²`.
 
-    TODO: Add differentiation properties. -/
+Computes the squared L2 norm of vector `x`: `‖x‖² = Σᵢ x[i]²`.
+
+**Mathematical interpretation:** Squared Euclidean norm in ℝⁿ.
+
+**Parameters:**
+- `x` : Vector of dimension `n`
+
+**Returns:** Scalar (Float) representing `‖x‖²`
+
+**TODO:** Register differentiation properties (gradient is `2 * x`).
+
+**Usage:** Regularization terms, gradient magnitude checks, avoiding sqrt for efficiency. -/
 @[inline]
 def normSq {n : Nat} (x : Vector n) : Float :=
   ∑ i, x[i] * x[i]
 
-/-- Vector L2 norm: ‖x‖
-    Computes √(Σᵢ x[i]²)
+/-- Vector L2 norm: `‖x‖`.
 
-    TODO: Add differentiation properties (requires handling zero case). -/
+Computes the L2 norm of vector `x`: `‖x‖ = √(Σᵢ x[i]²)`.
+
+**Mathematical interpretation:** Euclidean norm (length) in ℝⁿ.
+
+**Parameters:**
+- `x` : Vector of dimension `n`
+
+**Returns:** Scalar (Float) representing `‖x‖`
+
+**TODO:** Register differentiation properties.
+Gradient is `x / ‖x‖` when `x ≠ 0`, undefined at zero.
+
+**Note:** Gradient clipping and some regularization terms use this.
+Consider `normSq` for efficiency when the square root is not needed.
+
+**Usage:** Gradient clipping, normalization, computing distances. -/
 @[inline]
 def norm {n : Nat} (x : Vector n) : Float :=
   Float.sqrt (normSq x)
 
-/-- Matrix transpose: Aᵀ
-    Swaps rows and columns: Aᵀ[j,i] = A[i,j]
+/-- Matrix transpose: `Aᵀ`.
 
-    TODO: Add differentiation properties. -/
+Swaps rows and columns of matrix `A`, producing `Aᵀ[j,i] = A[i,j]` for all indices.
+
+**Mathematical interpretation:** Standard matrix transpose from linear algebra.
+
+**Parameters:**
+- `A` : Matrix of dimensions `m × n`
+
+**Returns:** Matrix of dimensions `n × m`
+
+**TODO:** Register differentiation properties (gradient w.r.t. A is also transposed).
+
+**Usage:** Backpropagation through dense layers, computing `Wᵀ * δ`. -/
 @[inline]
 def transpose {m n : Nat} (A : Matrix m n) : Matrix n m :=
   ⊞ (j, i) => A[i,j]
 
-/-- Matrix addition
-    Element-wise addition: C[i,j] = A[i,j] + B[i,j]
+/-- Matrix addition: `A + B`.
 
-    TODO: Add differentiation properties. -/
+Element-wise addition of two matrices, producing `C[i,j] = A[i,j] + B[i,j]` for all indices.
+
+**Mathematical interpretation:** Matrix addition in ℝᵐˣⁿ.
+
+**Parameters:**
+- `A` : Matrix of dimensions `m × n`
+- `B` : Matrix of dimensions `m × n`
+
+**Returns:** Matrix of dimensions `m × n`
+
+**TODO:** Register differentiation properties (gradient is identity for both arguments).
+
+**Usage:** Accumulating weight gradients, residual connections. -/
 @[inline]
 def matAdd {m n : Nat} (A B : Matrix m n) : Matrix m n :=
   ⊞ (i, j) => A[i,j] + B[i,j]
 
-/-- Matrix subtraction
-    Element-wise subtraction: C[i,j] = A[i,j] - B[i,j]
+/-- Matrix subtraction: `A - B`.
 
-    TODO: Add differentiation properties. -/
+Element-wise subtraction of two matrices, producing `C[i,j] = A[i,j] - B[i,j]` for all indices.
+
+**Mathematical interpretation:** Matrix subtraction in ℝᵐˣⁿ.
+
+**Parameters:**
+- `A` : Matrix of dimensions `m × n`
+- `B` : Matrix of dimensions `m × n`
+
+**Returns:** Matrix of dimensions `m × n`
+
+**TODO:** Register differentiation properties (gradient is +1 for A, -1 for B).
+
+**Usage:** Computing weight differences, gradient updates. -/
 @[inline]
 def matSub {m n : Nat} (A B : Matrix m n) : Matrix m n :=
   ⊞ (i, j) => A[i,j] - B[i,j]
 
-/-- Scalar-matrix multiplication
-    Multiply each element by scalar: B[i,j] = c * A[i,j]
+/-- Scalar-matrix multiplication: `c * A`.
 
-    TODO: Add differentiation properties. -/
+Multiply each element of matrix `A` by scalar `c`, producing `B[i,j] = c * A[i,j]` for all indices.
+
+**Mathematical interpretation:** Scalar multiplication in ℝᵐˣⁿ.
+
+**Parameters:**
+- `c` : Scalar multiplier (Float)
+- `A` : Matrix of dimensions `m × n`
+
+**Returns:** Matrix of dimensions `m × n`
+
+**TODO:** Register differentiation properties (gradient w.r.t. A is c, w.r.t. c is A).
+
+**Usage:** Scaling weight matrices, applying learning rates to weight gradients. -/
 @[inline]
 def matSmul {m n : Nat} (c : Float) (A : Matrix m n) : Matrix m n :=
   ⊞ (i, j) => c * A[i,j]
 
-/-- Batch matrix-vector multiplication: X * A^T where X is batch
-    For each row in batch, compute: Y[k,i] = Σⱼ A[i,j] * X[k,j]
-    This is equivalent to Y = X * A^T
+/-- Batch matrix-vector multiplication: `X * Aᵀ`.
 
-    Used for efficient forward pass in batched neural network training.
+For each row in batch, compute matrix-vector product with transpose:
+`Y[k,i] = Σⱼ A[i,j] * X[k,j]` which is equivalent to `Y = X * Aᵀ`.
 
-    TODO: Add differentiation properties. -/
+**Mathematical interpretation:** Batched application of linear transformation Aᵀ.
+
+**Type safety:** Batch feature dimension must match matrix columns.
+
+**Parameters:**
+- `A` : Matrix of dimensions `m × n`
+- `X` : Batch of `b` samples, each of dimension `n`
+
+**Returns:** Batch of `b` samples, each of dimension `m`
+
+**TODO:** Register differentiation properties.
+
+**Usage:** Efficient forward pass in batched neural network training.
+This computes `W * xᵢ` for all `b` samples simultaneously. -/
 @[inline]
 def batchMatvec {b m n : Nat} (A : Matrix m n) (X : Batch b n) : Batch b m :=
   ⊞ (k, i) => ∑ j, A[i,j] * X[k,j]
 
-/-- Add a vector to each row of a batch (broadcasting)
-    Adds vector v to each row: Y[k,j] = X[k,j] + v[j]
+/-- Add a vector to each row of a batch (broadcasting): `X .+ v`.
 
-    Used for adding biases in neural network layers.
+Adds vector `v` to each row of batch `X`, producing `Y[k,j] = X[k,j] + v[j]` for all indices.
 
-    TODO: Add differentiation properties. -/
+**Mathematical interpretation:** Broadcasting addition - adds same vector to all samples.
+
+**Parameters:**
+- `X` : Batch of `b` samples, each of dimension `n`
+- `v` : Vector of dimension `n`
+
+**Returns:** Batch of `b` samples, each of dimension `n`
+
+**TODO:** Register differentiation properties.
+Gradient w.r.t. X is identity, gradient w.r.t. v is sum over batch.
+
+**Usage:** Adding bias vectors in neural network layers during forward pass.
+Computes `W * x + b` for all batch samples efficiently. -/
 @[inline]
 def batchAddVec {b n : Nat} (X : Batch b n) (v : Vector n) : Batch b n :=
   ⊞ (k, j) => X[k,j] + v[j]
 
-/-- Outer product of two vectors: x ⊗ y
-    Creates matrix: A[i,j] = x[i] * y[j]
+/-- Outer product of two vectors: `x ⊗ y`.
 
-    Useful for gradient computations in backpropagation.
+Creates matrix from two vectors where `A[i,j] = x[i] * y[j]` for all indices.
 
-    TODO: Add differentiation properties. -/
+**Mathematical interpretation:** Outer product (tensor product) in ℝᵐ ⊗ ℝⁿ.
+
+**Parameters:**
+- `x` : Vector of dimension `m`
+- `y` : Vector of dimension `n`
+
+**Returns:** Matrix of dimensions `m × n`
+
+**TODO:** Register differentiation properties.
+Gradient w.r.t. x is `A_grad * y`, gradient w.r.t. y is `Aᵀ_grad * x`.
+
+**Usage:** Computing weight gradients in backpropagation.
+The gradient of a dense layer weight is `δ ⊗ input` where δ is the output gradient.
+
+**Example:** For layer `f(x) = W * x`, the weight gradient is `∂L/∂W = (∂L/∂f) ⊗ x`. -/
 @[inline]
 def outer {m n : Nat} (x : Vector m) (y : Vector n) : Matrix m n :=
   ⊞ (i, j) => x[i] * y[j]

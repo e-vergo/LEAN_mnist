@@ -1,16 +1,28 @@
-/-
+import VerifiedNN.Optimizer.SGD
+import VerifiedNN.Optimizer.Momentum
+import VerifiedNN.Core.DataTypes
+import SciLean
+
+/-!
 # Parameter Update Logic
 
 Unified parameter update interface and learning rate scheduling.
 
-## Overview
+## Main Definitions
 
-This module provides infrastructure for flexible optimizer configuration and training:
-
-1. **Learning Rate Scheduling:** Multiple strategies for dynamic learning rate adjustment
-2. **Gradient Accumulation:** Simulate large batch sizes with limited memory
-3. **Unified Optimizer Interface:** Generic API for different optimizer types
-4. **State Management:** Utilities for accessing and modifying optimizer state
+- `LRSchedule`: Learning rate scheduling strategies (constant, step, exponential, cosine)
+- `applySchedule`: Apply learning rate schedule at given epoch
+- `warmupSchedule`: Linear warmup schedule
+- `warmupThenSchedule`: Combine warmup with main schedule
+- `GradientAccumulator n`: Gradient accumulation state
+- `initAccumulator`: Initialize gradient accumulator
+- `addGradient`: Add gradient to accumulator
+- `getAndReset`: Get averaged gradient and reset accumulator
+- `OptimizerState n`: Generic optimizer state (SGD or Momentum)
+- `optimizerStep`: Apply optimizer step with appropriate update rule
+- `getParams`: Extract parameters from optimizer state
+- `updateOptimizerLR`: Update learning rate in optimizer
+- `getEpoch`: Get current epoch from optimizer
 
 ## Learning Rate Schedules
 
@@ -48,16 +60,38 @@ effective batch size of K × batch_size with memory usage of single batch:
 
 where g_i is the gradient from mini-batch i.
 
+## Main Results
+
+- All scheduling functions are deterministic and pure
+- Gradient accumulation maintains dimension consistency
+- Unified optimizer interface supports polymorphic optimizer selection
+- All operations preserve type-level dimension guarantees
+
+## Implementation Notes
+
+- Schedule application handles edge cases (division by zero, epoch bounds)
+- Cosine schedule uses Float approximation of π
+- Warmup supports zero warmup epochs (immediate full learning rate)
+- Gradient accumulator safely handles zero-count case
+- OptimizerState uses inductive type for type-safe dispatch
+- Functions marked `@[inline]` where appropriate for performance
+
 ## Verification Status
 
-Implementation complete. Scheduling logic is deterministic and dimension-preserving
-by construction. All operations maintain type-level dimension guarantees.
--/
+**Verified:**
+- Dimension consistency (by dependent types)
+- Type safety of all operations
+- Deterministic scheduling logic
 
-import VerifiedNN.Optimizer.SGD
-import VerifiedNN.Optimizer.Momentum
-import VerifiedNN.Core.DataTypes
-import SciLean
+**Out of scope:**
+- Learning rate schedule optimality (hyperparameter tuning)
+- Numerical precision of Float operations (ℝ vs Float gap)
+
+## References
+
+- Loshchilov, I., & Hutter, F. (2017). "SGDR: Stochastic Gradient Descent with Warm Restarts". *ICLR*.
+- Goyal, P., et al. (2017). "Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour". *arXiv:1706.02677*.
+-/
 
 namespace VerifiedNN.Optimizer.Update
 

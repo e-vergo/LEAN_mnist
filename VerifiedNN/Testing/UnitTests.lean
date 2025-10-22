@@ -1,55 +1,58 @@
-/-
+import VerifiedNN.Core.DataTypes
+import VerifiedNN.Core.LinearAlgebra
+import VerifiedNN.Core.Activation
+import VerifiedNN.Layer.Dense
+import SciLean
+
+/-!
 # Unit Tests
 
 Component-level unit tests for neural network building blocks.
 
-Since LSpec has version incompatibilities, this module provides manual
-test functions that can be executed via IO. Each test returns a boolean
-indicating success/failure and prints diagnostic information.
+## Main Tests
 
-**Testing Strategy:**
-- Test each component in isolation
-- Verify dimension consistency
-- Check mathematical properties (e.g., ReLU is non-negative)
-- Validate edge cases (zero inputs, large values)
+- `testReLUActivation`: Validates ReLU non-negativity and correctness
+- `testSigmoidActivation`: Validates sigmoid range (0,1) and monotonicity
+- `testTanhActivation`: Validates tanh range (-1,1) and odd function property
+- `testLeakyReLUActivation`: Validates leaky ReLU scaling behavior
+- `testActivationDerivatives`: Validates analytical derivative formulas
+- `testApproxEq`: Validates tolerance-based float comparison
 
-**Verification Status:** These are computational tests, not formal proofs.
-They validate implementation behavior against expected properties.
+## Test Infrastructure
 
-## Test Coverage Summary
+- `assertTrue`: Boolean assertion helper with diagnostic output
+- `assertApproxEq`: Float comparison with configurable tolerance
+- `assertVecApproxEq`: Vector comparison with element-wise tolerance
 
-### Activation Functions (Core.Activation)
+## Implementation Notes
+
+**Testing Strategy:** Test each component in isolation, verify dimension consistency,
+check mathematical properties (e.g., ReLU is non-negative), and validate edge cases
+(zero inputs, large values).
+
+**Verification Status:** These are computational tests, not formal proofs. They
+validate implementation behavior against expected properties.
+
+**Test Framework:** Uses IO-based assertions instead of LSpec due to version
+incompatibilities. Each test prints diagnostic information and returns a boolean
+indicating success/failure.
+
+## Coverage Status
+
+**Activation Functions (Core.Activation):**
 - ✓ ReLU: non-negativity, correctness on positive/negative/zero
 - ✓ Sigmoid: range (0,1), midpoint at 0, monotonicity
 - ✓ Tanh: range (-1,1), odd function, zero at origin
 - ✓ Leaky ReLU: positive preservation, negative scaling
 - ✓ Derivatives: analytical formulas for relu', sigmoid', tanh'
 
-### Data Types (Core.DataTypes)
+**Data Types (Core.DataTypes):**
 - ✓ Approximate equality: float comparison with tolerance
 - ⚠ Vector operations: pending SciLean API clarification
 - ⚠ Matrix operations: pending SciLean API clarification
 
-### Linear Algebra (Core.LinearAlgebra)
+**Linear Algebra (Core.LinearAlgebra):**
 - ⚠ Matrix-vector multiplication: pending implementation (contains sorry)
-- ⚠ Vector operations: pending implementation
-
-### Test Infrastructure
-- ✓ assertTrue: boolean assertion helper
-- ✓ assertApproxEq: float comparison helper
-- ✓ assertVecApproxEq: vector comparison helper
-- ✓ Test runner with pass/fail summary
-
-## Current Status
-
-| Component | Tests | Status | Notes |
-|-----------|-------|--------|-------|
-| Activation Functions | 5 suites | ✓ Working | All scalar functions tested |
-| Activation Derivatives | 1 suite | ✓ Working | Analytical formulas verified |
-| Approximate Equality | 1 suite | ✓ Working | Tolerance-based comparison |
-| Vector Construction | 1 suite | ⚠ Pending | SciLean syntax clarification |
-| Matrix Construction | 1 suite | ⚠ Pending | SciLean syntax clarification |
-| Vector Operations | 1 suite | ⚠ Blocked | LinearAlgebra.lean has sorry |
 
 ## Usage
 
@@ -61,12 +64,6 @@ lake build VerifiedNN.Testing.UnitTests
 lake env lean --run VerifiedNN/Testing/RunTests.lean
 ```
 -/
-
-import VerifiedNN.Core.DataTypes
-import VerifiedNN.Core.LinearAlgebra
-import VerifiedNN.Core.Activation
-import VerifiedNN.Layer.Dense
-import SciLean
 
 namespace VerifiedNN.Testing.UnitTests
 
