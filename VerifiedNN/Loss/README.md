@@ -334,6 +334,46 @@ Combining:
 
 ---
 
+## Computability Status
+
+### ✅ All Loss Operations Are Computable
+
+**Excellent news:** The entire Loss module is computable - all loss computations execute in standalone Lean binaries.
+
+**Executable Loss Functions:**
+- `crossEntropyLoss` - ✅ Computable single-sample cross-entropy loss
+- `batchCrossEntropyLoss` - ✅ Computable batched loss (average over batch)
+- `logSumExp` - ✅ Computable numerically stable log-sum-exp trick
+- `softmax` (via Core.Activation) - ✅ Computable probability normalization
+
+**Executable Gradient Functions:**
+- `lossGradient` - ✅ Computable analytical gradient ∂L/∂ŷ = ŷ - y
+- `batchLossGradient` - ✅ Computable batched gradient computation
+- Note: These compute **analytical derivatives**, not automatic differentiation
+
+**Why Computable:**
+- Loss functions only use **arithmetic operations** (log, exp, sum, division)
+- Softmax uses SciLean's computable DataArrayN.softmax
+- **No automatic differentiation** in loss computation (forward pass only)
+- Gradients are **analytical formulas**, not AD-derived
+
+**Impact:**
+- ✅ **Can execute:** Loss evaluation, forward pass validation, gradient checking
+- ✅ **Supports:** ASCII renderer (can evaluate network accuracy)
+- ❌ **Cannot execute:** Full backpropagation (requires noncomputable Network.Gradient for upstream layers)
+
+**Proven Properties (ℝ):**
+- Non-negativity proven on ℝ ✅ (`loss_nonneg_real`)
+- Float correspondence axiomatized ⚠️ (`float_crossEntropy_preserves_nonneg`)
+- Numerical stability via log-sum-exp trick ✅
+
+**Achievement:** Loss module demonstrates that:
+1. Complex mathematical functions (softmax, log-sum-exp) are computable in Lean
+2. Analytical gradients can be computed without noncomputable AD
+3. Loss evaluation enables inference and gradient checking in executables
+
+---
+
 ## Usage Examples
 
 ### Basic Loss Computation

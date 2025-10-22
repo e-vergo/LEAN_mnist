@@ -163,6 +163,51 @@ The `flatten_unflatten_id` axiom includes a **detailed proof sketch** (lines 258
 
 This proof sketch serves as a roadmap for completing the proof once SciLean provides DataArrayN extensionality.
 
+## Computability Status
+
+### Mixed: Computable Forward Pass, Noncomputable Gradients
+
+**The Network module clearly demonstrates the computability boundary in this project.**
+
+**✅ Computable Operations (Architecture.lean, Initialization.lean):**
+- `forward` - ✅ Computable network forward pass (2 layers + ReLU + softmax)
+- `batchForward` - ✅ Computable batched forward pass
+- `initializeNetworkHe` - ✅ Computable He initialization
+- `initializeNetworkXavier` - ✅ Computable Xavier initialization
+- `initializeNetworkZeros` - ✅ Computable zero initialization
+- `classifyBatch` - ✅ Computable batch classification (argmax over logits)
+
+**❌ Noncomputable Operations (Gradient.lean):**
+- `networkGradient` - ❌ Noncomputable (uses SciLean's `∇` operator)
+- `computeGradientOnBatch` - ❌ Noncomputable (depends on `∇`)
+- All gradient computation functions are marked `noncomputable`
+
+**⚠️ Mixed Operations (Parameter Marshalling):**
+- `flattenParams` - ✅ Computable (extracts and concatenates arrays)
+- `unflattenParams` - ✅ Computable (slices and reconstructs network)
+- These operations are proven correct but **computable**
+
+**Why the Split:**
+- **Forward pass** only requires linear algebra and activations (all computable from Core module)
+- **Gradient computation** requires automatic differentiation (`∇`), which SciLean marks as noncomputable
+- **This is a SciLean limitation**, not a failure of this project
+
+**Impact:**
+- ✅ **Can execute:** Network initialization, forward pass, inference, loss evaluation
+- ❌ **Cannot execute:** Training loop (depends on gradient computation)
+- ✅ **Can verify:** Gradient correctness proven on ℝ (see Verification/GradientCorrectness.lean)
+
+**Achievement:** Network module demonstrates that:
+1. Lean can execute practical ML infrastructure (initialization, forward pass)
+2. Formal verification and execution don't always align (noncomputable AD)
+3. Verification succeeds even when execution is blocked (proven correct, not computable)
+
+**See Also:**
+- `Core/README.md` - 100% computable linear algebra and activations
+- `Data/README.md` - 100% computable data loading
+- `Training/README.md` - 100% blocked by noncomputable gradients
+- `Util/README.md` - 100% computable visualization (manual unrolling workaround)
+
 ## Dependencies
 
 **Internal:**

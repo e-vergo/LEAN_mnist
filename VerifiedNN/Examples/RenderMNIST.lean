@@ -139,7 +139,7 @@ Loads MNIST data and renders the first N samples as ASCII art to stdout.
 If data fails to load, prints error and exits with code 1.
 Users should run `./scripts/download_mnist.sh` first.
 -/
-def main (args : List String) : IO Unit := do
+def runMain (args : List String) : IO Unit := do
   let config ← parseArgs args
 
   IO.println "=========================================="
@@ -189,3 +189,7 @@ def main (args : List String) : IO Unit := do
   IO.println "=========================================="
 
 end VerifiedNN.Examples.RenderMNIST
+
+-- Main entry point (must be at root level for executable)
+def main (args : List String) : IO Unit :=
+  VerifiedNN.Examples.RenderMNIST.runMain args

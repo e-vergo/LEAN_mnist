@@ -175,6 +175,53 @@ The training loop implements stochastic gradient descent with mini-batches:
 - `SciLean`: Automatic differentiation and numerical arrays
 - `Mathlib`: Standard library utilities
 
+## Computability Status
+
+### ❌ Training Loop Is Noncomputable (Blocked by Gradients)
+
+**Bad news:** The Training module cannot execute in standalone binaries due to noncomputable gradient computation.
+
+**❌ Noncomputable Operations:**
+- `trainEpoch` - ❌ Noncomputable (calls Network.networkGradient)
+- `trainEpochs` - ❌ Noncomputable (depends on trainEpoch)
+- `trainWithValidation` - ❌ Noncomputable (depends on trainEpoch)
+- **All training loops blocked** by noncomputable automatic differentiation
+
+**✅ Computable Helper Functions:**
+- `evaluateFull` - ✅ Computable (forward pass + loss evaluation)
+- `computeAccuracy` - ✅ Computable (classification via argmax)
+- `logMetrics` - ✅ Computable (IO logging)
+- Batch iteration logic - ✅ Computable (uses Data.Iterator)
+
+**Why Training Is Noncomputable:**
+- Training loop calls `Network.networkGradient`, which uses SciLean's `∇` operator
+- The `∇` operator is marked noncomputable in SciLean
+- This propagates through the entire training pipeline
+
+**What CAN Execute:**
+- ✅ **Evaluation:** Can compute loss and accuracy on test set (forward pass only)
+- ✅ **Inference:** Can classify images using trained parameters
+- ✅ **Metrics:** Can log and track training statistics
+
+**What CANNOT Execute:**
+- ❌ **Training:** Cannot run `trainEpochs` to update parameters
+- ❌ **Gradient Descent:** Cannot execute SGD with computed gradients
+- ❌ **Backpropagation:** Cannot compute gradients through the network
+
+**Impact on Project Goals:**
+- ✅ **Verification succeeds:** Gradient correctness proven on ℝ (see Verification/GradientCorrectness.lean)
+- ❌ **Execution blocked:** Training loop cannot build standalone executable
+- ⚠️ **Workaround:** Use symbolic execution or accept noncomputable training
+
+**Achievement:** Training module demonstrates the clear boundary between:
+1. What Lean can prove (gradient correctness)
+2. What Lean can execute (forward pass, metrics)
+3. What is blocked by SciLean limitations (automatic differentiation)
+
+**See Also:**
+- Network/README.md - Explains the noncomputable gradient boundary
+- Optimizer/README.md - Shows computable updates blocked by noncomputable gradients
+
 ## Usage Examples
 
 ### Basic Training

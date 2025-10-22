@@ -424,6 +424,43 @@ Potential extensions (not currently implemented):
 - **Weight decay**: L2 regularization in optimizer
 - **Gradient noise**: Explicit noise addition for exploration
 
+## Computability Status
+
+### ✅ Optimizer Updates Are Computable (But Blocked by Noncomputable Gradients)
+
+**Mixed status:** Optimizer operations themselves are computable, but training loops are blocked by noncomputable gradient computation.
+
+**✅ Computable Operations:**
+- `sgdStep` - ✅ Computable parameter update: θ ← θ - η∇L
+- `sgdStepWithMomentum` - ✅ Computable momentum update
+- `sgdStepWithClipping` - ✅ Computable gradient clipping
+- `batchSGDStep` - ✅ Computable batched parameter updates
+- All learning rate schedules - ✅ Computable (step decay, exponential, etc.)
+
+**Why Computable:**
+- SGD update is just **vector arithmetic**: subtraction and scalar multiplication
+- No automatic differentiation in optimizer itself
+- Depends only on Core.LinearAlgebra (all computable)
+
+**❌ The Catch - Noncomputable Gradients:**
+- While `sgdStep(params, gradient)` is computable...
+- Computing `gradient` requires Network.networkGradient, which uses noncomputable `∇`
+- **Training loop blocked:** Cannot execute `sgdStep(params, networkGradient(...))`
+
+**Impact:**
+- ✅ **Can execute:** Optimizer update logic in isolation (if gradient is provided)
+- ✅ **Can test:** Optimizer correctness with synthetic gradients
+- ❌ **Cannot execute:** Full training loop (gradient computation is noncomputable)
+
+**Proven Properties:**
+- Learning rate condition proven ✅ (Robbins-Monro theorem in Verification/Convergence)
+- Dimension preservation ✅ (parameter dimensions unchanged by updates)
+
+**Achievement:** Optimizer module demonstrates that:
+1. Parameter update algorithms are computable in Lean
+2. The noncomputable boundary is clean (gradients in, parameters out)
+3. Optimizer logic can be tested independently of AD
+
 ## Contributing
 
 When adding new optimizers:

@@ -285,6 +285,48 @@ See `Convergence/Axioms.lean` for detailed documentation of each axiom.
 
 ---
 
+## Computability Status
+
+### ✅ All Verification Code Is "Computable" (But Verification ≠ Execution)
+
+**Important distinction:** Verification code (proofs) and runtime code (executables) are different concerns.
+
+**✅ Proofs Are Always "Computable" in Lean:**
+- All 26 theorems in this directory - ✅ Can be checked by Lean's kernel
+- All proof tactics and strategies - ✅ Can be elaborated by Lean
+- Type checking and verification - ✅ Can be performed by `lake build`
+
+**What This Means:**
+- ✅ **Can verify:** All gradient correctness proofs can be checked
+- ✅ **Can build:** All verification modules compile successfully
+- ✅ **Can prove:** Theorems about noncomputable functions (∇) can be stated and proven
+
+**Verification vs Execution:**
+- **Verification (this directory):** Proves properties about functions on ℝ
+  - Example: `theorem network_gradient_correct : Differentiable ℝ networkLoss`
+  - This theorem is PROVEN (verification succeeds) ✅
+- **Execution (Training/):** Runs functions in standalone binaries
+  - Example: `trainEpochs` calls `networkGradient` (uses noncomputable `∇`)
+  - This function is NONCOMPUTABLE (execution blocked) ❌
+
+**Key Insight:**
+- You can **prove** that a noncomputable function is correct
+- You cannot **execute** a noncomputable function in a binary
+- This directory does the former, not the latter
+
+**Achievement:** Verification module demonstrates that:
+1. Formal verification succeeds even when execution is blocked
+2. Lean can prove correctness of noncomputable operations (∇)
+3. Verification provides mathematical guarantees independent of computability
+
+**Modules in This Directory:**
+- GradientCorrectness.lean - ✅ 11 proven theorems (verifiable, not executable)
+- TypeSafety.lean - ✅ 14 proven theorems (type-level, always executable)
+- Convergence/Axioms.lean - ⚠️ 8 axioms (out of scope, documented)
+- Tactics.lean - ✅ Proof automation (meta-level, always computable)
+
+---
+
 ## Mathlib Dependencies
 
 ### Core Dependencies

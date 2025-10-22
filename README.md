@@ -8,12 +8,66 @@ This project **rigorously proves** that automatic differentiation computes mathe
 
 **PRIMARY GOAL:** ✅ **PROVEN** - Gradient correctness throughout the neural network
 **SECONDARY GOAL:** ✅ **VERIFIED** - Type-level dimension specifications enforce runtime correctness
+**TERTIARY GOAL:** ⚡ **EXECUTE** - Maximum infrastructure in pure Lean
 
 **MAIN THEOREM** (`network_gradient_correct`): A 2-layer neural network with dense layers, ReLU activation, softmax output, and cross-entropy loss is **end-to-end differentiable**, proving that automatic differentiation computes mathematically correct gradients through backpropagation.
 
 **Build Status:** ✅ All 46 Lean files compile with **ZERO errors** and **ZERO active sorries**
 **Proof Status:** ✅ **26 theorems proven** (11 gradient correctness + 14 type safety + 1 convergence lemma)
 **Documentation:** ✅ Mathlib submission quality across all 10 directories
+
+---
+
+## ⚡ What Executes in Lean
+
+This project demonstrates that Lean can execute practical infrastructure alongside formal verification:
+
+### Computable Components ✅
+- **MNIST Data Loading** - Complete IDX binary parser (70,000 images)
+- **Data Preprocessing** - Normalization, batching, shuffling
+- **ASCII Visualization** - Render 28×28 MNIST digits as ASCII art ([first fully computable executable](VerifiedNN/Util/README.md))
+- **Network Initialization** - He initialization, parameter allocation
+- **Loss Evaluation** - Forward pass, softmax, cross-entropy
+
+### Noncomputable Components ❌
+- **Gradient Computation** - Blocked by SciLean's noncomputable automatic differentiation
+- **Training Loop** - Depends on gradient computation
+- **Backpropagation** - Requires computable AD (proven correct, but not computable)
+
+### Try It Yourself
+
+```bash
+# Visualize MNIST digits in ASCII art
+lake exe renderMNIST --count 5
+
+# Inverted mode for light terminals
+lake exe renderMNIST --count 3 --inverted
+
+# Training set visualization
+lake exe renderMNIST --count 10 --train
+```
+
+**Example Output:**
+```
+Sample 0 | Ground Truth: 7
+----------------------------
+
+      :*++:.
+      #%%%%%*********.
+      :=:=+%%#%%%%%%%=
+            : :::: %%-
+                  :%#
+                  %@:
+                 =%%:.
+                :%%:
+                =%*
+                #%:
+               =%*
+              :%%:
+              #%+
+```
+
+**Technical Achievement:** The ASCII renderer uses a manual unrolling workaround (28 match cases, 784 literal indices) to bypass SciLean's `DataArrayN` indexing limitation. See [Util/README.md](VerifiedNN/Util/README.md) for implementation details.
 
 ---
 

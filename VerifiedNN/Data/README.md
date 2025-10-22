@@ -153,6 +153,44 @@ for epoch in [0:numEpochs] do
       epochIter := newIter
 ```
 
+## Computability Status
+
+### ✅ All Data Operations Are Computable
+
+**Excellent news:** The entire Data module is computable and executes in standalone Lean binaries.
+
+**Executable Data Loading (5 operations):**
+- `loadMNISTImages` - ✅ Computable IDX image parser (binary file I/O)
+- `loadMNISTLabels` - ✅ Computable IDX label parser
+- `loadMNIST` - ✅ Computable combined loader
+- `loadMNISTTrain` - ✅ Computable training set loader (60,000 samples)
+- `loadMNISTTest` - ✅ Computable test set loader (10,000 samples)
+
+**Executable Preprocessing (8 operations):**
+- `normalizePixels`, `normalizeBatch` - ✅ Computable [0-255] → [0-1] normalization
+- `standardizePixels` - ✅ Computable z-score normalization
+- `centerPixels` - ✅ Computable mean-centering
+- `flattenImage`, `flattenImagePure` - ✅ Computable 28×28 → 784 flattening
+- `reshapeToImage` - ✅ Computable 784 → 28×28 reshaping
+- `clipPixels` - ✅ Computable value clamping
+
+**Executable Iteration (8 operations):**
+- `DataIterator.new`, `nextBatch`, `nextFullBatch`, `reset`, `resetWithShuffle`, `hasNext` - ✅ Computable batch iteration
+- `GenericIterator.new`, `nextBatch`, `reset`, `hasNext` - ✅ Computable polymorphic iteration
+
+**Why This Matters:**
+- **Data pipeline is fully executable** - Can load and preprocess 70,000 MNIST images in pure Lean
+- **No dependencies on noncomputable AD** - All operations are concrete transformations
+- **Powers the ASCII renderer** - Data loading enables `lake exe renderMNIST`
+- **Shuffling is computable** - Fisher-Yates algorithm with LCG works in executables
+
+**Achievement:** Data module proves Lean can handle real-world data processing tasks (binary parsing, file I/O, batch iteration) with full execution capability.
+
+**Contrast with Other Modules:**
+- Network/Gradient.lean: Uses noncomputable `∇` operator
+- Training/Loop.lean: Blocked by noncomputable gradient computation
+- **Data module: 100% computable** ✅
+
 ## Dependencies
 
 * `VerifiedNN.Core.DataTypes`: Vector and Batch type definitions

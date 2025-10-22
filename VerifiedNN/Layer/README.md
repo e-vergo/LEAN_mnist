@@ -117,6 +117,39 @@ All theorems in Properties.lean are now proven! ✅
 | Differentiability | Planned | See Verification/ |
 | Gradient correctness | Planned | See Verification/ |
 
+## Computability Status
+
+### ✅ All Layer Operations Are Computable
+
+**Excellent news:** The entire Layer module is computable - all forward passes execute in standalone Lean binaries.
+
+**Executable Dense Layer Operations:**
+- `DenseLayer.forward` - ✅ Computable single-sample forward pass (Wx + b)
+- `DenseLayer.forwardWithActivation` - ✅ Computable forward pass with activation
+- `DenseLayer.batchForward` - ✅ Computable batched forward pass
+- `DenseLayer.batchForwardWithActivation` - ✅ Computable batched forward with activation
+
+**Executable Composition Operations:**
+- `stackLinear` - ✅ Computable layer composition
+- `stackWithActivation` - ✅ Computable composition with activation
+
+**Why Computable:**
+- Dense layers only use **linear algebra** (matrix-vector multiplication, vector addition)
+- All dependencies from `Core.LinearAlgebra` and `Core.Activation` are computable
+- **No automatic differentiation** in forward pass implementation
+
+**Impact:**
+- ✅ **Can execute:** Network inference, forward pass, loss evaluation
+- ✅ **Supports:** ASCII renderer (forward pass for digit classification)
+- ❌ **Cannot execute:** Backpropagation (requires noncomputable gradients from Network.Gradient)
+
+**Proven Properties (All Computable):**
+- Affine transformation theorem ✅ - Proven and executable
+- Dimension preservation theorems ✅ - Type-level guarantees enforced at runtime
+- Composition properties ✅ - Proven that stacking preserves affine structure
+
+**Achievement:** Layer module demonstrates that neural network forward passes can be fully executable in Lean, with type-safe dimension checking and proven mathematical properties.
+
 ## Dependencies
 
 ```

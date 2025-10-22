@@ -9,6 +9,7 @@
     "/Users/eric/LEAN_mnist/VerifiedNN/Data/MNIST.lean",
     "/Users/eric/LEAN_mnist/VerifiedNN/Data/Preprocessing.lean",
     "/Users/eric/LEAN_mnist/VerifiedNN/Examples/MNISTTrain.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Examples/RenderMNIST.lean",
     "/Users/eric/LEAN_mnist/VerifiedNN/Examples/SimpleExample.lean",
     "/Users/eric/LEAN_mnist/VerifiedNN/Layer.lean",
     "/Users/eric/LEAN_mnist/VerifiedNN/Layer/Composition.lean",
@@ -39,6 +40,7 @@
     "/Users/eric/LEAN_mnist/VerifiedNN/Training/Batch.lean",
     "/Users/eric/LEAN_mnist/VerifiedNN/Training/Loop.lean",
     "/Users/eric/LEAN_mnist/VerifiedNN/Training/Metrics.lean",
+    "/Users/eric/LEAN_mnist/VerifiedNN/Util/ImageRenderer.lean",
     "/Users/eric/LEAN_mnist/VerifiedNN/Verification.lean",
     "/Users/eric/LEAN_mnist/VerifiedNN/Verification/Convergence.lean",
     "/Users/eric/LEAN_mnist/VerifiedNN/Verification/Convergence/Axioms.lean",
@@ -100,6 +102,11 @@
       }
     },
     "/Users/eric/LEAN_mnist/VerifiedNN/Examples/MNISTTrain.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Examples/RenderMNIST.lean": {
       "keywords": {},
       "patterns": {},
       "stats": {}
@@ -333,17 +340,27 @@
             "in_comment": false
           },
           {
-            "line": 380,
+            "line": 241,
+            "text": "axiom unflatten_flatten_id (net : MLPArchitecture) :",
+            "in_comment": false
+          },
+          {
+            "line": 379,
             "text": "index transformations. The axiom asserts this algorithmic fact.",
             "in_comment": false
           },
           {
-            "line": 455,
+            "line": 394,
+            "text": "axiom flatten_unflatten_id (params : Vector nParams) :",
+            "in_comment": false
+          },
+          {
+            "line": 485,
             "text": "-- Use the axiom to convert membership to bound",
             "in_comment": true
           },
           {
-            "line": 484,
+            "line": 514,
             "text": "-- Use the axiom to convert membership to bound",
             "in_comment": true
           }
@@ -355,38 +372,28 @@
             "in_comment": false
           },
           {
-            "line": 243,
-            "text": "sorry",
-            "in_comment": false
-          },
-          {
-            "line": 268,
+            "line": 267,
             "text": "DataArrayN.ext becomes available. The `sorry` placeholders below are NOT compiled",
             "in_comment": false
           },
           {
-            "line": 301,
+            "line": 300,
             "text": "sorry  -- DOCUMENTATION MARKER: Index arithmetic automation for USize \u2194 Nat \u2194 Idx chain",
             "in_comment": false
           },
           {
-            "line": 322,
+            "line": 321,
             "text": "sorry  -- DOCUMENTATION MARKER: Similar to case 1, requires branch selection automation",
             "in_comment": false
           },
           {
-            "line": 346,
+            "line": 345,
             "text": "sorry  -- DOCUMENTATION MARKER: Constant arithmetic normalization required",
             "in_comment": false
           },
           {
-            "line": 367,
+            "line": 366,
             "text": "sorry  -- DOCUMENTATION MARKER: Final case, constant arithmetic + branch selection",
-            "in_comment": false
-          },
-          {
-            "line": 397,
-            "text": "sorry",
             "in_comment": false
           }
         ],
@@ -426,23 +433,31 @@
             "text": "Using this axiom does not introduce inconsistency beyond what SciLean already assumes."
           },
           {
-            "line": 380,
+            "line": 241,
+            "text": "axiom unflatten_flatten_id (net : MLPArchitecture) :"
+          },
+          {
+            "line": 379,
             "text": "index transformations. The axiom asserts this algorithmic fact."
           },
           {
-            "line": 455,
+            "line": 394,
+            "text": "axiom flatten_unflatten_id (params : Vector nParams) :"
+          },
+          {
+            "line": 485,
             "text": "-- Use the axiom to convert membership to bound"
           },
           {
-            "line": 484,
+            "line": 514,
             "text": "-- Use the axiom to convert membership to bound"
           }
         ]
       },
       "stats": {
-        "axiom": 9,
-        "pattern_axiom_declaration": 8,
-        "sorry": 8,
+        "axiom": 11,
+        "pattern_axiom_declaration": 10,
+        "sorry": 6,
         "sorry_proof": 2,
         "axiom_in_comment": 2
       }
@@ -590,6 +605,11 @@
       "stats": {}
     },
     "/Users/eric/LEAN_mnist/VerifiedNN/Training/Metrics.lean": {
+      "keywords": {},
+      "patterns": {},
+      "stats": {}
+    },
+    "/Users/eric/LEAN_mnist/VerifiedNN/Util/ImageRenderer.lean": {
       "keywords": {},
       "patterns": {},
       "stats": {}

@@ -154,6 +154,40 @@ def softmax {n : Nat} (x : Vector n) : Vector n :=
 - ✅ Mathematical interpretations, parameters, returns, and usage examples documented
 - ✅ TODO comments specify what needs to be done for complete verification
 
+## Computability Status
+
+### ✅ All Core Operations Are Computable
+
+**Excellent news:** The entire Core module is computable and can execute in standalone Lean binaries.
+
+**Executable Linear Algebra (15 operations):**
+- `vadd`, `vsub`, `smul`, `vmul`, `dot`, `normSq`, `norm` - ✅ Computable vector operations
+- `matvec`, `matmul`, `transpose`, `matAdd`, `matSub`, `matSmul`, `outer` - ✅ Computable matrix operations
+- `batchMatvec`, `batchAddVec` - ✅ Computable batch operations
+
+**Executable Activations (11 operations):**
+- `relu`, `reluVec`, `reluBatch` - ✅ Computable ReLU family
+- `leakyRelu`, `leakyReluVec` - ✅ Computable Leaky ReLU
+- `softmax` - ✅ Computable (uses SciLean's DataArrayN.softmax)
+- `sigmoid`, `sigmoidVec`, `sigmoidBatch` - ✅ Computable sigmoid family
+- `tanh`, `tanhVec` - ✅ Computable hyperbolic tangent
+
+**Executable Utilities (7 operations):**
+- `approxEq`, `vectorApproxEq`, `matrixApproxEq` - ✅ Computable approximate equality
+- `reluDerivative`, `sigmoidDerivative`, `tanhDerivative`, `leakyReluDerivative` - ✅ Computable analytical derivatives
+
+**Why This Matters:**
+- Core module provides **zero dependencies on noncomputable AD**
+- All operations can be used in standalone executables
+- Forward pass (loss evaluation, inference) is fully computable
+- Gradient checking (finite differences) is fully computable
+
+**Contrast with Other Modules:**
+- Network/Gradient.lean: Uses noncomputable `∇` operator for backpropagation
+- Training/Loop.lean: Blocked by noncomputable gradient computation
+
+**Achievement:** Core module demonstrates that Lean can implement practical numerical computing infrastructure with full execution capability.
+
 ## Known Limitations
 
 1. **Float vs ℝ Gap:** Verification is symbolic (ℝ), implementation is Float (IEEE 754)
