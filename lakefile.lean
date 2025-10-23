@@ -42,6 +42,11 @@ lean_exe mnistTrain where
   supportInterpreter := true
   moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
 
+lean_exe trainManual where
+  root := `VerifiedNN.Examples.TrainManual
+  supportInterpreter := true
+  moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
+
 lean_exe renderMNIST where
   root := `VerifiedNN.Examples.RenderMNIST
   supportInterpreter := true
@@ -65,5 +70,10 @@ lean_exe smokeTest where
 
 lean_exe gradientCheck where
   root := `VerifiedNN.Testing.GradientCheck
+  supportInterpreter := true
+  moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
+
+lean_exe checkDataDistribution where
+  root := `CheckDataDistribution
   supportInterpreter := true
   moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]

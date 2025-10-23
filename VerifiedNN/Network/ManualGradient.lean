@@ -1,0 +1,211 @@
+import VerifiedNN.Core.DataTypes
+import VerifiedNN.Core.LinearAlgebra
+import VerifiedNN.Core.Activation
+import VerifiedNN.Layer.Dense
+import VerifiedNN.Network.Architecture
+import VerifiedNN.Loss.CrossEntropy
+import SciLean
+
+/-!
+# Manual Gradient Computation
+
+Implements backpropagation manually without using SciLean's `∇` operator.
+This makes the gradient computation computable and allows training to be compiled to native binaries.
+
+## Key Insight
+
+For a 2-layer MLP with softmax + cross-entropy loss, the gradients have closed forms:
+- Softmax + cross-entropy gradient: `softmax(logits) - one_hot(target)`
+- Dense layer gradients: standard backpropagation via chain rule
+- ReLU gradient: `(x > 0) ? 1 : 0` (element-wise)
+
+## Implementation Strategy
+
+We compute gradients layer-by-layer in reverse order (backpropagation):
+1. Output layer gradient (softmax + cross-entropy): closed form
+2. Hidden layer gradient: chain rule through second dense layer
+3. Input layer gradient: chain rule through ReLU and first dense layer
+
+All operations use only computable functions (no symbolic AD).
+
+## Verification Status
+
+These manual gradients should match the gradients proven correct in
+`VerifiedNN.Verification.GradientCorrectness`. The correspondence can be
+verified by numerical comparison (gradient checking).
+
+-/
+
+namespace VerifiedNN.Network.ManualGradient
+
+open VerifiedNN.Core
+open VerifiedNN.Core.LinearAlgebra
+open VerifiedNN.Core.Activation
+open VerifiedNN.Layer
+open VerifiedNN.Network
+open SciLean
+
+/-- One-hot encode a class label as a vector.
+
+**Parameters:**
+- `label`: Class index (0-9 for MNIST)
+
+**Returns:** Vector with 1.0 at index `label`, 0.0 elsewhere
+-/
+def oneHot {n : Nat} (label : Nat) : Vector n :=
+  ⊞ (i : Idx n) => if i.1.toNat == label then 1.0 else 0.0
+
+/-- Element-wise multiplication of two vectors.
+
+**Parameters:**
+- `a`, `b`: Input vectors
+
+**Returns:** Vector where result[i] = a[i] * b[i]
+-/
+def vecMul {n : Nat} (a b : Vector n) : Vector n :=
+  ⊞ (i : Idx n) => a[i] * b[i]
+
+/-- ReLU gradient: 1 if input > 0, else 0.
+
+**Parameters:**
+- `x`: Input vector (pre-activation values)
+
+**Returns:** Gradient vector for ReLU
+-/
+def reluGrad {n : Nat} (x : Vector n) : Vector n :=
+  ⊞ (i : Idx n) => if x[i] > 0.0 then 1.0 else 0.0
+
+/-- Outer product of two vectors to form a matrix.
+
+**Parameters:**
+- `a`: First vector (m-dimensional)
+- `b`: Second vector (n-dimensional)
+
+**Returns:** Matrix where result[i,j] = a[i] * b[j]
+-/
+def outerProduct {m n : Nat} (a : Vector m) (b : Vector n) : Matrix m n :=
+  ⊞ ((i, j) : Idx m × Idx n) => a[i] * b[j]
+
+/-- Compute gradient of loss with respect to all network parameters.
+
+This implements manual backpropagation for a 2-layer MLP:
+- Layer 1: 784 → 128 with ReLU
+- Layer 2: 128 → 10 with Softmax + CrossEntropy
+
+**Algorithm:**
+1. Forward pass: compute intermediate activations
+2. Output gradient: softmax(logits2) - one_hot(target)
+3. Layer 2 gradients: backprop through dense layer
+4. Layer 1 gradients: backprop through ReLU and dense layer
+
+**Parameters:**
+- `net`: Neural network architecture
+- `input`: Input image (784-dimensional)
+- `target`: Target class (0-9)
+
+**Returns:** Tuple of (dL/dW1, dL/db1, dL/dW2, dL/db2)
+-/
+def computeManualGradients (net : MLPArchitecture) (input : Vector 784) (target : Nat)
+    : Matrix 128 784 × Vector 128 × Matrix 10 128 × Vector 10 :=
+  -- Forward pass (save intermediate values)
+  let logits1 := vadd (matvec net.layer1.weights input) net.layer1.bias  -- 784 → 128
+  let h1 := reluVec logits1  -- ReLU activation
+  let logits2 := vadd (matvec net.layer2.weights h1) net.layer2.bias  -- 128 → 10
+  let output := softmax logits2  -- Softmax activation
+
+  -- Backward pass
+  -- Step 1: Gradient at output (softmax + cross-entropy closed form)
+  let targetOneHot : Vector 10 := oneHot target
+  let dL_dlogits2 := ⊞ (i : Idx 10) => output[i] - targetOneHot[i]
+
+  -- Step 2: Gradients for layer 2 (dense layer)
+  let dL_dW2 := outerProduct dL_dlogits2 h1  -- Gradient w.r.t. W2
+  let dL_db2 := dL_dlogits2  -- Gradient w.r.t. b2
+
+  -- Step 3: Backprop through layer 2 to hidden layer
+  let dL_dh1 := matvec (transpose net.layer2.weights) dL_dlogits2  -- W2^T * dL/dlogits2
+
+  -- Step 4: Backprop through ReLU
+  let dL_dlogits1 := vecMul dL_dh1 (reluGrad logits1)
+
+  -- Step 5: Gradients for layer 1 (dense layer)
+  let dL_dW1 := outerProduct dL_dlogits1 input  -- Gradient w.r.t. W1
+  let dL_db1 := dL_dlogits1  -- Gradient w.r.t. b1
+
+  (dL_dW1, dL_db1, dL_dW2, dL_db2)
+
+/-- Apply gradients to update network parameters using SGD.
+
+**Parameters:**
+- `net`: Current network
+- `gradients`: Tuple of (dW1, db1, dW2, db2)
+- `learningRate`: SGD step size
+
+**Returns:** Updated network
+-/
+def applyGradients (net : MLPArchitecture)
+    (gradients : Matrix 128 784 × Vector 128 × Matrix 10 128 × Vector 10)
+    (learningRate : Float) : MLPArchitecture :=
+  let (dW1, db1, dW2, db2) := gradients
+  {
+    layer1 := {
+      weights := ⊞ (i, j) => net.layer1.weights[i, j] - learningRate * dW1[i, j]
+      bias := ⊞ i => net.layer1.bias[i] - learningRate * db1[i]
+    }
+    layer2 := {
+      weights := ⊞ (i, j) => net.layer2.weights[i, j] - learningRate * dW2[i, j]
+      bias := ⊞ i => net.layer2.bias[i] - learningRate * db2[i]
+    }
+  }
+
+/-- Train on a single mini-batch using manual gradients.
+
+**Parameters:**
+- `net`: Current network
+- `batch`: Array of (input, label) pairs
+- `learningRate`: SGD step size
+
+**Returns:** Updated network after one SGD step
+-/
+def trainBatchManual (net : MLPArchitecture)
+    (batch : Array (Vector 784 × Nat))
+    (learningRate : Float) : MLPArchitecture :=
+  if batch.size == 0 then
+    net
+  else
+    -- Accumulate gradients across the batch
+    let batchSize := batch.size.toFloat
+
+    -- Initialize gradient accumulators to zero
+    let zeroMat1 : Matrix 128 784 := ⊞ ((_i, _j) : Idx 128 × Idx 784) => 0.0
+    let zeroVec1 : Vector 128 := ⊞ (_i : Idx 128) => 0.0
+    let zeroMat2 : Matrix 10 128 := ⊞ ((_i, _j) : Idx 10 × Idx 128) => 0.0
+    let zeroVec2 : Vector 10 := ⊞ (_i : Idx 10) => 0.0
+    let initGradients : Matrix 128 784 × Vector 128 × Matrix 10 128 × Vector 10 :=
+      (zeroMat1, zeroVec1, zeroMat2, zeroVec2)
+
+    -- Accumulate gradients from each example
+    let totalGradients := batch.foldl (fun accGrads (input, label) =>
+      let (accDW1, accDb1, accDW2, accDb2) := accGrads
+      let (dW1, db1, dW2, db2) := computeManualGradients net input label
+      (
+        ⊞ (i, j) => accDW1[i, j] + dW1[i, j],
+        ⊞ i => accDb1[i] + db1[i],
+        ⊞ (i, j) => accDW2[i, j] + dW2[i, j],
+        ⊞ i => accDb2[i] + db2[i]
+      )
+    ) initGradients
+
+    -- Average the gradients
+    let (avgDW1, avgDb1, avgDW2, avgDb2) := totalGradients
+    let avgGradients := (
+      ⊞ (i, j) => avgDW1[i, j] / batchSize,
+      ⊞ i => avgDb1[i] / batchSize,
+      ⊞ (i, j) => avgDW2[i, j] / batchSize,
+      ⊞ i => avgDb2[i] / batchSize
+    )
+
+    -- Apply averaged gradients
+    applyGradients net avgGradients learningRate
+
+end VerifiedNN.Network.ManualGradient

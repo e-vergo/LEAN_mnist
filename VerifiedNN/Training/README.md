@@ -100,6 +100,52 @@ Comprehensive evaluation metrics for model assessment:
 - ⏳ Confusion matrix generation (planned enhancement)
 - ⏳ Precision/recall/F1-score metrics (planned enhancement)
 
+### GradientMonitoring.lean (278 lines)
+**Gradient norm computation for training diagnostics**
+
+Tools to monitor gradient health and detect vanishing/exploding gradient problems:
+- `GradientNorms`: Structure holding norm values for all gradient components
+- `computeMatrixNorm`: Frobenius norm computation for weight gradients
+- `computeVectorNorm`: L2 norm computation for bias gradients
+- `computeGradientNorms`: Computes norms for all network parameters
+- `formatGradientNorms`: Human-readable gradient norm display
+- `checkGradientHealth`: Detects vanishing/exploding gradients
+
+**Key features:**
+- Frobenius norm for matrices: ‖A‖_F = √(Σᵢ Σⱼ aᵢⱼ²)
+- L2 norm for vectors: ‖v‖₂ = √(Σᵢ vᵢ²)
+- Automatic health checks with configurable thresholds
+- Vanishing gradient detection (norm < 0.0001)
+- Exploding gradient detection (norm > 10.0)
+- Numerical stability with epsilon regularization
+
+**Documentation:** ✅ Mathlib-quality module and function docstrings with:
+- Mathematical definitions of norms (Frobenius, L2)
+- Diagnostic guidance for gradient health
+- Threshold rationale and tuning advice
+- Usage examples integrated into training loop
+
+**Implementation status:** Complete implementation
+- ✅ Fully computable (uses only basic arithmetic)
+- ✅ Zero sorries, zero axioms
+- ✅ Integrated into Examples/TrainManual.lean
+- ✅ Displays gradient norms after each epoch
+- ✅ Flags unhealthy gradients with warnings
+
+**Diagnostic Ranges:**
+- **Normal:** Gradient norms in [0.0001, 10.0]
+- **Vanishing:** Norms < 0.0001 (learning stalls)
+- **Exploding:** Norms > 10.0 (training diverges)
+
+**Usage in training:**
+```lean
+let gradients := computeManualGradients net input label
+let norms := computeGradientNorms gradients
+IO.println (formatGradientNorms norms)
+if norms.hasVanishing || norms.hasExploding then
+  IO.println (checkGradientHealth norms)
+```
+
 ## Training Pipeline Architecture
 
 ```
@@ -375,7 +421,8 @@ lake exe mnistTrain --epochs 2 --batch-size 32 --lr 0.01
 - Batch.lean: 206 lines (comprehensive docstrings)
 - Loop.lean: 617 lines (comprehensive docstrings and structured logging)
 - Metrics.lean: 327 lines (enhanced docstrings with mathematical notation)
-- **Total: 1,150 lines**
+- GradientMonitoring.lean: 278 lines (gradient health diagnostics)
+- **Total: 1,428 lines**
 
 **Last verified:** 2025-10-22 (line length fixes applied)
 

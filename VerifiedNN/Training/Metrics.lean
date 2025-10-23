@@ -14,6 +14,8 @@ Evaluation metrics for neural network performance measurement.
 - `computeAccuracy`: Overall classification accuracy on dataset
 - `computeAverageLoss`: Average cross-entropy loss on dataset
 - `computePerClassAccuracy`: Per-class accuracy breakdown for detailed analysis
+- `formatPerClassAccuracy`: Format per-class accuracy as single-line string
+- `printPerClassAccuracy`: Print per-class accuracy with warnings for outliers
 - `printMetrics`: Convenience function for console output of accuracy and loss
 
 ## Main Results
@@ -287,6 +289,83 @@ def computePerClassAccuracy
     let c := correct[i.val]!
     if t == 0 then 0.0
     else c.toFloat / t.toFloat
+
+/-- Format per-class accuracy as a single-line string.
+
+Converts an array of per-class accuracies into a compact one-line format
+showing all 10 digits (for MNIST). Each digit shows its accuracy as a percentage.
+
+**Parameters:**
+- `accuracies`: Array of per-class accuracy values in [0, 1] (length should be 10 for MNIST)
+
+**Returns:** String formatted as "Digit 0: 45% | Digit 1: 89% | ... | Digit 9: 35%"
+
+**Example output:**
+```
+Digit 0: 45.0% | Digit 1: 89.0% | Digit 2: 12.0% | Digit 3: 38.0% | Digit 4: 40.0% | Digit 5: 32.0% | Digit 6: 48.0% | Digit 7: 41.0% | Digit 8: 29.0% | Digit 9: 35.0%
+```
+
+**Use case:** Compact display of per-class performance, useful for logging
+or console output when you want to see all classes at a glance.
+-/
+def formatPerClassAccuracy (accuracies : Array Float) : String :=
+  let parts := accuracies.mapIdx fun idx acc =>
+    s!"Digit {idx}: {Float.floor (acc * 1000.0) / 10.0}%"
+  String.intercalate " | " parts.toList
+
+/-- Print per-class accuracy with warnings for outliers.
+
+Displays per-class accuracy in a readable multi-line format, with two rows
+of 5 digits each. Adds warning symbols (⚠) for digits that are either
+overconfident (>80% accuracy) or struggling (<20% accuracy).
+
+**Parameters:**
+- `accuracies`: Array of per-class accuracy values in [0, 1] (length should be 10 for MNIST)
+
+**Returns:** IO action that prints formatted per-class accuracy
+
+**Example output:**
+```
+Per-class accuracy:
+  Digit 0: 45.0% | Digit 1: 89.0% ⚠ | Digit 2: 12.0% ⚠ | Digit 3: 38.0% | Digit 4: 40.0%
+  Digit 5: 32.0% | Digit 6: 48.0% | Digit 7: 41.0% | Digit 8: 29.0% | Digit 9: 35.0%
+```
+
+**Warning criteria:**
+- `⚠` appears if accuracy > 80% (potentially overconfident or overfitting to that class)
+- `⚠` appears if accuracy < 20% (struggling with that class)
+
+**Use case:** Diagnostic tool during training to identify which digits the
+network is learning well vs. struggling with. Helps guide data augmentation
+or architecture decisions.
+
+**Implementation notes:**
+- Splits 10 digits into two rows of 5 each for readability
+- Rounds percentages to 1 decimal place
+- Flushes output for immediate visibility
+-/
+def printPerClassAccuracy (accuracies : Array Float) : IO Unit := do
+  IO.println "Per-class accuracy:"
+
+  -- First row: digits 0-4
+  let row1Parts := (Array.range 5).map fun i =>
+    let acc := accuracies[i]!
+    let percent := Float.floor (acc * 1000.0) / 10.0
+    let warning := if acc > 0.8 || acc < 0.2 then " ⚠" else ""
+    s!"Digit {i}: {percent}%{warning}"
+  let row1 := String.intercalate " | " row1Parts.toList
+  IO.println s!"  {row1}"
+
+  -- Second row: digits 5-9
+  let row2Parts := (Array.range 5).map fun i =>
+    let idx := i + 5
+    let acc := accuracies[idx]!
+    let percent := Float.floor (acc * 1000.0) / 10.0
+    let warning := if acc > 0.8 || acc < 0.2 then " ⚠" else ""
+    s!"Digit {idx}: {percent}%{warning}"
+  let row2 := String.intercalate " | " row2Parts.toList
+  IO.println s!"  {row2}"
+  (← IO.getStdout).flush
 
 /-- Print evaluation metrics to console.
 
