@@ -8,20 +8,31 @@ import SciLean
 /-!
 # Simple Example - Real Training Demonstration
 
-Minimal pedagogical example demonstrating a complete neural network training pipeline.
+**⚠️ REFERENCE ONLY - USES AUTOMATIC DIFFERENTIATION**
+
+**For executable training with production-quality results, use `MiniTraining.lean` instead.**
+
+This example demonstrates automatic differentiation (`∇` operator) for gradient
+computation. The AD approach is marked `noncomputable unsafe` and may not execute
+in all contexts.
+
+**For production training with manual backpropagation:**
+- `MiniTraining.lean` - Quick validation (100 samples, 30 seconds)
+- `MNISTTrainMedium.lean` - Development (5K samples, 12 minutes)
+- `MNISTTrainFull.lean` - Production (60K samples, 93% accuracy)
 
 ## Purpose
 
 This example serves as a proof-of-concept showing that all training infrastructure
-components work together correctly:
+components work together correctly with automatic differentiation:
 - Network initialization (He method)
 - Forward pass computation
-- Automatic differentiation for gradient computation
+- **Automatic differentiation** for gradient computation (noncomputable)
 - SGD parameter updates
 - Loss and accuracy metrics
 - Training loop orchestration
 
-**Status:** REAL IMPLEMENTATION - All computations are genuine (no mocks or stubs)
+**Status:** REFERENCE IMPLEMENTATION - Uses AD for pedagogical comparison
 
 ## Usage
 
@@ -30,6 +41,9 @@ lake exe simpleExample
 ```
 
 Expected runtime: ~5-15 seconds (depending on hardware)
+
+**Note:** If this fails to execute, use `MiniTraining.lean` which uses manual
+backpropagation and is guaranteed computable.
 
 ## Implementation
 

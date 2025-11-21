@@ -1,7 +1,6 @@
 import VerifiedNN.Data.MNIST
 import VerifiedNN.Network.Architecture
 import VerifiedNN.Network.Initialization
-import VerifiedNN.Network.Gradient
 import VerifiedNN.Network.ManualGradient
 import VerifiedNN.Training.Metrics
 import VerifiedNN.Core.DataTypes
@@ -139,9 +138,7 @@ unsafe def main : IO Unit := do
   (← IO.getStdout).flush
   let trainDataFull ← loadMNISTTrain "data"
   let testData ← loadMNISTTest "data"
-
-  -- DEBUG: Limit to first 500 training samples for quick testing
-  let trainData := trainDataFull.extract 0 (min 500 trainDataFull.size)
+  let trainData := trainDataFull
 
   if trainData.size == 0 then
     IO.eprintln "Error: Failed to load training data"

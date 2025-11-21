@@ -1,7 +1,6 @@
 import VerifiedNN.Core.DataTypes
 import VerifiedNN.Network.Architecture
 import VerifiedNN.Network.Initialization
-import VerifiedNN.Network.Gradient
 import VerifiedNN.Network.ManualGradient
 import VerifiedNN.Training.Loop
 import VerifiedNN.Training.Metrics

@@ -15,14 +15,12 @@ Main training loop implementation for neural network training.
 ## Main Definitions
 
 - `TrainConfig`: Hyperparameter configuration (epochs, batch size, learning rate, logging)
-- `CheckpointConfig`: Checkpoint saving configuration (API defined, serialization TODO)
 - `TrainState`: Training state management (network, optimizer state, progress counters)
 - `initTrainState`: Initialize training state from network and configuration
 - `trainBatch`: Process single mini-batch with gradient computation and parameter update
 - `trainOneEpoch`: Complete pass through training data with shuffled mini-batches
 - `trainEpochs`: Simplified training interface returning just the trained network
-- `trainEpochsWithConfig`: Full-featured training with validation and checkpointing
-- `resumeTraining`: Continue training from checkpoint with optional hyperparameter changes
+- `trainEpochsWithConfig`: Full-featured training with validation
 
 ## Main Results
 
@@ -58,9 +56,6 @@ This enables pause/resume functionality via checkpointing.
 utilities for epoch start/end, batch progress, and training initialization/completion.
 This keeps main training code clean while providing detailed progress feedback.
 
-**Checkpoint API:** `CheckpointConfig`, `saveCheckpoint`, and `loadCheckpoint` define
-the checkpoint API. Actual serialization/deserialization is TODO (requires converting
-MLPArchitecture and SGDState to/from JSON or binary format).
 
 **Verification status:** Training loop itself is not formally verified. Correctness
 depends on:
@@ -116,29 +111,6 @@ structure TrainConfig where
   debugLogging : Bool := false
   deriving Repr
 
-/-- Checkpoint configuration for saving training state.
-
-Defines the API for checkpoint saving during training. Checkpoints enable
-pause/resume functionality and allow recovering training if interrupted.
-
-**Note:** Checkpoint serialization/deserialization not yet implemented.
-This structure defines the API for future checkpoint functionality.
-
-**Fields:**
-- `saveDir`: Directory to save checkpoints (default: "checkpoints")
-- `saveEveryNEpochs`: Save checkpoint every N epochs, 0 = never save (default: 0)
-- `saveOnlyBest`: Only save checkpoints that improve validation metrics (default: true)
-
-**Future implementation:** Will serialize MLPArchitecture and SGDState to JSON or binary format.
--/
-structure CheckpointConfig where
-  /-- Directory to save checkpoints -/
-  saveDir : String := "checkpoints"
-  /-- Save checkpoint every N epochs (0 = never save) -/
-  saveEveryNEpochs : Nat := 0
-  /-- Only save checkpoints that improve validation metrics -/
-  saveOnlyBest : Bool := true
-  deriving Repr
 
 -- Structured logging utilities for training progress.
 -- Provides consistent, readable logging throughout the training process.
@@ -468,80 +440,17 @@ def trainOneEpoch
   -- Return state with incremented epoch counter
   return { currentState with currentEpoch := currentState.currentEpoch + 1 }
 
-/-- Save training state checkpoint to disk.
-
-**Parameters:**
-- `state`: Training state to save
-- `epoch`: Current epoch number
-- `config`: Checkpoint configuration
-- `valAcc`: Optional validation accuracy for best-model tracking
-
-**Returns:** IO action that saves the checkpoint
-
-**TODO:** Implement actual serialization. Currently just logs the intent.
-
-**Implementation strategy:**
-1. Convert MLPArchitecture to JSON-serializable format (parameter arrays)
-2. Include optimizer state (learning rate, epoch counter)
-3. Include training metadata (validation accuracy, timestamp)
-4. Write to file using `IO.FS.writeFile`
-5. Handle errors gracefully with try/catch
-
-**Note:** Lean 4's JSON library (Lean.Data.Json) can be used for serialization.
-For binary formats, consider custom byte array serialization.
--/
-def saveCheckpoint (_state : TrainState) (epoch : Nat)
-    (config : CheckpointConfig) (valAcc : Option Float := none) : IO Unit := do
-  if config.saveEveryNEpochs == 0 then
-    return ()  -- Checkpointing disabled
-
-  if epoch % config.saveEveryNEpochs != 0 then
-    return ()  -- Not a checkpoint epoch
-
-  -- TODO: Implement actual serialization
-  let filename := s!"{config.saveDir}/checkpoint_epoch_{epoch}.json"
-  IO.println s!"[Checkpoint] Would save to: {filename}"
-  match valAcc with
-  | some acc =>
-    IO.println s!"[Checkpoint] Validation accuracy: {acc * 100.0}%"
-  | none => pure ()
-
-/-- Load training state from checkpoint.
-
-**Parameters:**
-- `path`: Path to checkpoint file
-
-**Returns:** Loaded training state
-
-**TODO:** Implement actual deserialization. Currently returns error.
-
-**Implementation strategy:**
-1. Read checkpoint file using `IO.FS.readFile`
-2. Parse JSON using `Lean.Json.parse`
-3. Reconstruct MLPArchitecture from parameter arrays
-4. Reconstruct SGDState from optimizer metadata
-5. Validate dimensions and consistency
-6. Return TrainState
-
-**Error handling:** Use IO.Error for file not found, parse errors, dimension mismatches.
--/
-def loadCheckpoint (path : String) : IO TrainState := do
-  -- TODO: Implement actual deserialization
-  IO.eprintln s!"Error: Checkpoint loading not yet implemented"
-  IO.eprintln s!"Attempted to load: {path}"
-  throw (IO.userError "loadCheckpoint: Not implemented")
 
 /-- Train network for multiple epochs with full configuration control.
 
 Main entry point for production training. Provides full control over training
-process including validation monitoring, checkpoint saving, and logging frequency.
+process including validation monitoring and logging frequency.
 
 **Parameters:**
 - `net`: Initial network (typically randomly initialized via `initializeMLPArchitecture`)
 - `trainData`: Training dataset (array of input-label pairs)
 - `config`: Training configuration (epochs, batch size, learning rate, logging)
 - `validData`: Optional validation dataset for monitoring generalization (default: none)
-- `checkpointConfig`: Optional checkpoint configuration for saving state (default: none)
 
 **Returns:** Final training state (network, optimizer state, progress counters)
 
@@ -561,7 +470,6 @@ let trainedNet := finalState.net
 **Features:**
 - Configurable logging frequency (batch progress, epoch metrics)
 - Validation set evaluation (if provided)
-- Checkpoint saving (API defined, serialization TODO)
 - Returns full training state (not just network)
 - Structured logging via `TrainingLog` namespace
 
@@ -571,7 +479,6 @@ let trainedNet := finalState.net
    - Shuffle data and create mini-batches
    - Train on all batches via `trainOneEpoch`
    - Evaluate on validation set (if configured)
-   - Save checkpoint (if configured)
 3. Return final trained state
 
 **For simple use cases:** See `trainEpochs` for a simplified interface that
@@ -583,8 +490,7 @@ def trainEpochsWithConfig
     (net : MLPArchitecture)
     (trainData : Array (Vector 784 × Nat))
     (config : TrainConfig)
-    (validData : Option (Array (Vector 784 × Nat)) := none)
-    (checkpointConfig : Option CheckpointConfig := none) : IO TrainState := do
+    (validData : Option (Array (Vector 784 × Nat)) := none) : IO TrainState := do
   -- Initialize training state
   let mut state := initTrainState net config
 
@@ -598,16 +504,6 @@ def trainEpochsWithConfig
 
     -- Train one epoch
     state ← trainOneEpoch state trainData config validData
-
-    -- Save checkpoint if configured
-    match checkpointConfig with
-    | some ckptCfg =>
-      -- Get validation accuracy for checkpoint if available
-      let valAcc := match validData with
-        | some vData => some (computeAccuracy state.net vData)
-        | none => none
-      saveCheckpoint state (epochIdx + 1) ckptCfg valAcc
-    | none => pure ()
 
   -- Compute final metrics for logging
   let finalAcc := match validData with
@@ -677,56 +573,5 @@ def trainEpochs
   -- Return just the network
   return finalState.net
 
-/-- Resume training from a checkpoint.
-
-Allows continuing training from a saved state with potentially different configuration.
-
-**Parameters:**
-- `state`: Checkpointed training state
-- `trainData`: Training dataset
-- `additionalEpochs`: Number of additional epochs to train
-- `newLearningRate`: Optional new learning rate (if None, keeps current rate)
-- `validData`: Optional validation dataset
-
-**Returns:** Updated training state
--/
-noncomputable def resumeTraining
-    (state : TrainState)
-    (trainData : Array (Vector 784 × Nat))
-    (additionalEpochs : Nat)
-    (newLearningRate : Option Float := none)
-    (validData : Option (Array (Vector 784 × Nat)) := none) : IO TrainState := do
-  -- Update learning rate if provided
-  let updatedState := match newLearningRate with
-    | some lr =>
-      { state with
-        optimState := updateLearningRate state.optimState lr
-      }
-    | none => state
-
-  -- Create config for additional training
-  let config : TrainConfig := {
-    epochs := additionalEpochs
-    batchSize := 32  -- Default batch size for resume
-    learningRate := updatedState.optimState.learningRate
-    printEveryNBatches := 100
-    evaluateEveryNEpochs := 1
-  }
-
-  -- Print resume information
-  IO.println s!"Resuming training from epoch {updatedState.currentEpoch}"
-  IO.println s!"Training for {additionalEpochs} additional epochs"
-  IO.println s!"Learning rate: {updatedState.optimState.learningRate}"
-
-  -- Train for additional epochs
-  let mut currentState := updatedState
-  for _epochIdx in [0:additionalEpochs] do
-    IO.println s!"Epoch {currentState.currentEpoch + 1}"
-    currentState ← trainOneEpoch currentState trainData config validData
-
-  IO.println "Resumed training complete!"
-
-  -- Return final state
-  return currentState
 
 end VerifiedNN.Training.Loop

@@ -104,7 +104,7 @@ This preserves all 26 existing gradient correctness theorems!
 
 - **Computable:** Yes (uses only computable operations)
 - **Correctness:** Should be validated via:
-  1. Finite difference testing (Testing/FiniteDifference.lean)
+  1. Finite difference testing (Testing/GradientCheck.lean)
   2. Proof of equivalence to `networkGradient` (future work)
 - **Performance:** Native binary execution, no interpreter needed
 
@@ -183,7 +183,7 @@ let newParams := params - learningRate • gradient
 
 **Correctness:**
 Should match `Network.Gradient.networkGradient` within numerical precision.
-Validate using `Testing.FiniteDifference.runGradientTests`.
+Validate using `Testing.GradientCheck.runAllGradientTests`.
 
 **Why This Works:**
 Manual backpropagation implements the multivariate chain rule:
@@ -273,7 +273,7 @@ This demonstrates that the gradient can be computed without any noncomputable
 operations, making it suitable for compilation to native binaries.
 
 The full validation against finite differences should be performed using
-`Testing.FiniteDifference.runGradientTests`.
+`Testing.GradientCheck.runAllGradientTests`.
 -/
 example : True := by
   -- This demonstrates the gradient can be computed
@@ -311,7 +311,7 @@ The manual gradient should match the automatic differentiation version within
 numerical precision. This can be validated using:
 
 ```lean
--- In Testing/FiniteDifference.lean
+-- In Testing/GradientCheck.lean
 def testManualVsAutomatic : IO Unit := do
   let params := initializeRandomParams()
   let input := loadTestImage()

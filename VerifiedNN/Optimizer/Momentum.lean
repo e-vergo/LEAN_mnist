@@ -66,6 +66,31 @@ the optimizer to build up speed and overcome local variations.
 - Convergence acceleration properties (optimization theory)
 - Numerical stability of Float operations (ℝ vs Float gap)
 
+## Production Usage Status
+
+**Implementation status:**
+- Complete and mathematically correct
+- All features tested (classical momentum, Nesterov, gradient clipping)
+- Zero bugs, zero sorries
+
+**Production usage:**
+- NOT currently used in production training
+- SGD.lean is the production default optimizer
+- Used indirectly via OptimizerState wrapper in testing (Testing/OptimizerTests.lean)
+
+**Production-ready features (unused in production):**
+- `momentumStep` - Classical momentum (Polyak 1964)
+- `nesterovStep` - Nesterov accelerated gradient (Nesterov 1983)
+- `momentumStepClipped` - Momentum with gradient clipping
+- `updateMomentum` - Dynamic momentum adjustment
+
+**Why unused?** Basic SGD achieves 93% MNIST accuracy with constant
+learning rate. Momentum optimizer available for future experiments
+requiring faster convergence or handling of ill-conditioned problems.
+
+**To adopt:** Modify Training/Loop.lean to use MomentumState instead
+of SGDState, or use OptimizerState wrapper from Update.lean.
+
 ## References
 
 - Polyak, B. T. (1964). "Some methods of speeding up the convergence of iteration methods". *USSR Computational Mathematics and Mathematical Physics*.

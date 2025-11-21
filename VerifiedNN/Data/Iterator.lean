@@ -12,7 +12,6 @@ shuffling, epoch management, and flexible batch sizing.
 ## Main definitions
 
 * `DataIterator`: Stateful iterator for MNIST-sized data (784-dimensional vectors)
-* `GenericIterator α`: Polymorphic iterator for arbitrary data types
 
 ## Implementation notes
 
@@ -97,25 +96,6 @@ def DataIterator.nextBatch (iter : DataIterator) :
 
     some (batch, newIter)
 
-/-- Get next full batch, skipping incomplete batches.
-
-Returns only complete batches of size `batchSize`. Useful when training requires fixed batch sizes.
-
-**Returns:**
-- `none` if insufficient data for a full batch (currentIdx + batchSize > data.size)
-- `some (batch, newIter)` where batch has exactly `batchSize` samples
-
-**Use case:** Training algorithms that cannot handle variable batch sizes -/
-def DataIterator.nextFullBatch (iter : DataIterator) :
-    Option (Array (Vector 784 × Nat) × DataIterator) :=
-  if iter.currentIdx + iter.batchSize > iter.data.size then
-    none
-  else
-    let endIdx := iter.currentIdx + iter.batchSize
-    let batch := iter.data.extract iter.currentIdx endIdx
-    let newIter := { iter with currentIdx := endIdx }
-    some (batch, newIter)
-
 /-- Reset iterator to beginning of dataset (does not shuffle).
 
 **Returns:** Iterator with currentIdx = 0 and original data order preserved
@@ -184,103 +164,5 @@ def DataIterator.resetWithShuffle (iter : DataIterator) (doShuffle : Option Bool
       seed := iter.seed + 1 }  -- Increment seed for next epoch
   else
     iter.reset
-
-/-- Get current progress through the dataset as a fraction from 0.0 to 1.0.
-
-**Returns:** Progress as Float in [0.0, 1.0] where 0.0 = start, 1.0 = end (or empty dataset) -/
-def DataIterator.progress (iter : DataIterator) : Float :=
-  if iter.data.size == 0 then 1.0
-  else iter.currentIdx.toFloat / iter.data.size.toFloat
-
-/-- Get number of complete batches remaining in the dataset.
-
-**Returns:** Number of full batches that can be extracted from current position (partial batches not counted) -/
-def DataIterator.remainingBatches (iter : DataIterator) : Nat :=
-  let remaining := iter.data.size - iter.currentIdx
-  remaining / iter.batchSize
-
-/-- Collect all batches from iterator into an array.
-
-Consumes the iterator and collects all remaining batches into an array of arrays.
-Useful for small datasets or when you need to precompute all batches.
-
-**Returns:** Array of batches, where each batch is an array of (image, label) pairs.
-May include partial batch at end if dataset size not divisible by batchSize.
-
-**Warning:** Loads all data into memory. Use iteration for large datasets. -/
-def DataIterator.collectBatches (iter : DataIterator) :
-    Array (Array (Vector 784 × Nat)) := Id.run do
-  let mut batches : Array (Array (Vector 784 × Nat)) := #[]
-  let mut current := iter
-
-  while current.hasNext do
-    match current.nextBatch with
-    | none => break
-    | some (batch, newIter) =>
-      batches := batches.push batch
-      current := newIter
-
-  pure batches
-
-/-- Generic data iterator for arbitrary data types.
-
-More flexible version that works with any data type, not just MNIST pairs.
-Provides basic iteration without shuffling support.
-
-**Type parameters:**
-- `α`: Type of data elements (can be any type)
-
-**Fields:**
-- `data`: Array of elements to iterate over
-- `currentIdx`: Current position in the dataset
-- `batchSize`: Number of elements per batch
-
-**Use cases:** Non-MNIST datasets, custom data types, when shuffling not needed -/
-structure GenericIterator (α : Type) where
-  data : Array α
-  currentIdx : Nat
-  batchSize : Nat
-
-/-- Create a generic iterator.
-
-**Parameters:**
-- `data`: Array of elements to iterate over
-- `batchSize`: Number of elements per batch
-
-**Returns:** Fresh iterator positioned at the start (currentIdx = 0) -/
-def GenericIterator.new {α : Type} (data : Array α) (batchSize : Nat) :
-    GenericIterator α :=
-  { data := data, currentIdx := 0, batchSize := batchSize }
-
-/-- Get next batch from generic iterator (may return partial batch at end).
-
-**Returns:**
-- `none` if no data remains
-- `some (batch, newIter)` where batch contains up to `batchSize` elements -/
-def GenericIterator.nextBatch {α : Type} (iter : GenericIterator α) :
-    Option (Array α × GenericIterator α) :=
-  if iter.currentIdx >= iter.data.size then
-    none
-  else
-    let remaining := iter.data.size - iter.currentIdx
-    let batchLen := min iter.batchSize remaining
-    let endIdx := iter.currentIdx + batchLen
-
-    let batch := iter.data.extract iter.currentIdx endIdx
-    let newIter := { iter with currentIdx := endIdx }
-
-    some (batch, newIter)
-
-/-- Reset generic iterator to beginning.
-
-**Returns:** Iterator with currentIdx = 0 -/
-def GenericIterator.reset {α : Type} (iter : GenericIterator α) : GenericIterator α :=
-  { iter with currentIdx := 0 }
-
-/-- Check if generic iterator has more data available.
-
-**Returns:** `true` if currentIdx < data.size -/
-def GenericIterator.hasNext {α : Type} (iter : GenericIterator α) : Bool :=
-  iter.currentIdx < iter.data.size
 
 end VerifiedNN.Data.Iterator

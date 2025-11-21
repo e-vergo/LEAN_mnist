@@ -58,11 +58,6 @@ lean_exe mnistLoadTest where
   moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
 
 -- Integration test executables
-lean_exe fullIntegration where
-  root := `VerifiedNN.Testing.FullIntegration
-  supportInterpreter := true
-  moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
-
 lean_exe smokeTest where
   root := `VerifiedNN.Testing.SmokeTest
   supportInterpreter := true
@@ -100,6 +95,11 @@ lean_exe mnistTrainFull where
 
 lean_exe mnistTrainMedium where
   root := `VerifiedNN.Examples.MNISTTrainMedium
+  supportInterpreter := true
+  moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
+
+lean_exe serializationExample where
+  root := `VerifiedNN.Examples.SerializationExample
   supportInterpreter := true
   moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
 

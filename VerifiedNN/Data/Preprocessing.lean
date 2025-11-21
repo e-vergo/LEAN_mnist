@@ -12,14 +12,12 @@ training, including scaling, standardization, and format conversion between 1D v
 ## Main definitions
 
 * `normalizePixels`: Scale pixel values from [0, 255] to [0, 1]
-* `normalizeBatch`: Batch version of pixel normalization
 * `standardizePixels`: Compute z-score normalization (zero mean, unit variance)
 * `centerPixels`: Subtract mean from pixel values
 * `flattenImage`: Convert 28×28 image to 784-dimensional vector
 * `reshapeToImage`: Convert 784-dimensional vector to 28×28 image
 * `normalizeDataset`: Apply normalization to entire dataset
 * `clipPixels`: Clamp pixel values to specified range
-* `addGaussianNoise`: Data augmentation via Gaussian noise (placeholder, not yet implemented)
 
 ## Implementation notes
 
@@ -54,19 +52,6 @@ Standard preprocessing for MNIST: scales raw pixel values to unit interval by di
 **Use case:** Apply after loading MNIST data to prepare for neural network input -/
 def normalizePixels {n : Nat} (image : Vector n) : Vector n :=
   ⊞ i => image[i] / 255.0
-
-/-- Normalize pixels from [0, 255] to [0, 1] (batch version).
-
-Applies pixel normalization to an entire batch of images simultaneously.
-
-**Parameters:**
-- `batch`: Batch of b images, each with n pixels
-
-**Returns:** Batch with all pixel values scaled to [0, 1]
-
-**Performance:** Operates element-wise on the entire batch tensor -/
-def normalizeBatch {b n : Nat} (batch : Batch b n) : Batch b n :=
-  ⊞ (i : Idx b) (j : Idx n) => batch[i,j] / 255.0
 
 /-- Standardize data to zero mean and unit variance.
 
@@ -152,28 +137,6 @@ def flattenImage (image : Array (Array Float)) : IO (Vector 784) := do
 
   -- Convert Array Float to Vector using indexed constructor
   return ⊞ (i : Idx 784) => flatData[i.1]!
-
-/-- Flatten 28×28 image (pure version, assumes valid dimensions).
-
-Pure variant of `flattenImage` without validation or IO effects.
-
-**Parameters:**
-- `image`: 2D array of Float values
-
-**Returns:** 784-dimensional vector flattened in row-major order
-
-**Precondition:** Image must be exactly 28×28 - undefined behavior otherwise (may panic or produce incorrect results)
-
-**Use case:** Performance-critical code where dimensions are guaranteed correct -/
-def flattenImagePure (image : Array (Array Float)) : Vector 784 :=
-  let flatData : Array Float := Id.run do
-    let mut arr : Array Float := Array.mkEmpty 784
-    for row in image do
-      for pixel in row do
-        arr := arr.push pixel
-    pure arr
-  -- Convert Array Float to Vector using indexed constructor
-  ⊞ (i : Idx 784) => flatData[i.1]!
 
 /-- Reshape 784-dimensional vector to 28×28 image.
 
@@ -266,39 +229,5 @@ def clipPixels {n : Nat} (image : Vector n) (min : Float := 0.0) (max : Float :=
     if val < min then min
     else if val > max then max
     else val
-
-/-- Add Gaussian noise for data augmentation.
-
-Adds random Gaussian noise to image pixels to improve model robustness through data augmentation.
-
-**Parameters:**
-- `image`: Vector of pixel values
-- `_stddev`: Standard deviation of Gaussian noise to add (default: 0.01)
-
-**Returns:** Currently returns input unchanged (placeholder implementation)
-
-**TODO: Implement Gaussian noise augmentation**
-**Status:** Placeholder - requires proper RNG implementation
-
-**Strategy:**
-1. Move function signature to IO monad: `IO (Vector n)` instead of pure `Vector n`
-2. Use `IO.rand` or implement Box-Muller transform for Gaussian sampling
-3. For each pixel p, compute p + N(0, stddev²) where N is Gaussian distribution
-4. Consider clipping result to valid range [0, 1] after adding noise
-
-**Needs:**
-- Random number generator in IO monad (Lean 4 has `IO.rand` for uniform)
-- Box-Muller or Ziggurat algorithm for Gaussian sampling from uniform
-- Seed management for reproducibility
-
-**References:**
-- Box-Muller transform: standard method for Gaussian sampling
-- Data augmentation: Simard et al., "Best Practices for Convolutional Neural Networks Applied to Visual Document Analysis" (ICDAR 2003)
-
-**Current behavior:** Returns input unchanged to avoid breaking compilation -/
-def addGaussianNoise {n : Nat} (image : Vector n) (_stddev : Float := 0.01) : Vector n :=
-  -- TODO: Implement with proper RNG in IO monad
-  -- Currently returns input unchanged until RNG is implemented
-  image
 
 end VerifiedNN.Data.Preprocessing

@@ -49,6 +49,23 @@ where:
 - Convergence properties (optimization theory)
 - Numerical stability of Float operations (ℝ vs Float gap)
 
+## Production Usage Status
+
+**Actively used in production:**
+- `sgdStep` - Core SGD parameter update (Training/Loop.lean lines 403-413)
+- Used in: MNISTTrainFull, MNISTTrainMedium, MiniTraining
+- Achieved: 93% MNIST accuracy (60K samples, 3.3 hours, 50 epochs)
+
+**Production-ready but currently unused:**
+- `sgdStepClipped` - SGD with gradient clipping
+- Tested extensively (Testing/OptimizerTests.lean), mathematically correct
+- Consider for training robustness improvements (prevents gradient explosion)
+
+**Implementation note:** Production training uses constant learning rate (config.learningRate).
+Learning rate scheduling available in Update.lean but not currently adopted.
+
+See Training/Loop.lean for production usage patterns.
+
 ## References
 
 - Robbins, H., & Monro, S. (1951). "A Stochastic Approximation Method". *Annals of Mathematical Statistics*.

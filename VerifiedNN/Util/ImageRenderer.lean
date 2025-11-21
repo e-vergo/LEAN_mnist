@@ -15,6 +15,9 @@ string operations, making it suitable for standalone executables.
 
 - `renderImage`: Convert MNIST image (784-dim vector) to ASCII art string
 - `renderImageWithLabel`: Render image with text label overlay
+- `renderImageComparison`: Side-by-side comparison of two images
+- `renderImageGrid`: Display multiple images in grid layout
+- `computeImageStats`: Calculate min/max/mean/stddev statistics
 - `brightnessToChar`: Map brightness value to ASCII character
 - `autoDetectRange`: Determine if input is normalized (0-1) or raw (0-255)
 
@@ -30,7 +33,7 @@ string operations, making it suitable for standalone executables.
 - Handles both MNIST raw format and preprocessed data
 
 **High Fidelity:**
-- 16-character brightness palette for detailed rendering
+- 10-character brightness palette for detailed rendering
 - Captures fine details in digit images
 - Inverted mode for light terminal backgrounds
 
@@ -57,12 +60,24 @@ IO.println asciiInverted
 -- With label
 let withLabel := renderImageWithLabel image s!"Ground Truth: {label}" false
 IO.println withLabel
+
+-- Side-by-side comparison
+let (img1, _) := samples[0]!
+let (img2, _) := samples[1]!
+let comparison := renderImageComparison img1 img2 "Original" "Comparison" false
+IO.println comparison
+
+-- Grid layout
+let images := [img1, img2, img3]
+let labels := ["Digit 0", "Digit 1", "Digit 2"]
+let grid := renderImageGrid images labels 3 false
+IO.println grid
 ```
 
 ## Implementation Notes
 
 **Character Palette:**
-The 16-character palette " .:-=+*#%@" provides good balance between detail
+The 10-character palette " .:-=+*#%@" provides good balance between detail
 and readability. Characters are ordered from darkest (space) to brightest (@).
 
 **Range Detection:**
@@ -74,6 +89,12 @@ This heuristic handles both formats automatically.
 Normal mode: dark pixels (0) → space, bright pixels (255) → @
 Inverted mode: dark pixels (0) → @, bright pixels (255) → space
 Inverted mode improves visibility on light-background terminals.
+
+**Manual Loop Unrolling:**
+The implementation uses manual loop unrolling (lines 216-303) to work around
+SciLean's DataArrayN indexing constraints. This allows fully computable execution
+while accessing all 784 pixels with literal indices. See inline documentation
+for detailed technical justification.
 
 ## References
 
@@ -429,43 +450,6 @@ def computeImageStats (img : Vector 784) : Float × Float × Float × Float :=
 
   (min, max, mean, stddev)
 
-/-- Render image with statistical overlay.
-
-Displays the ASCII art with statistics (min/max/mean/stddev) below the image.
-
-**Parameters:**
-- `img`: 784-dimensional MNIST image vector
-- `inverted`: Whether to use inverted brightness mapping
-
-**Returns:** Multi-line string with image and statistics
-
-**Output format:**
-```
-............................
-[... ASCII art ...]
-............................
-Statistics:
-  Min:    0.000  Max:  255.000
-  Mean:  45.123  Std:   78.456
-```
--/
-def renderImageWithStats (img : Vector 784) (inverted : Bool) : String :=
-  let ascii := renderImage img inverted
-  let (min, max, mean, stddev) := computeImageStats img
-  let isRaw255 := autoDetectRange img
-
-  let rangeStr := if isRaw255 then " (0-255 range)" else " (0-1 range)"
-  let minStr := toString min
-  let maxStr := toString max
-  let meanStr := toString mean
-  let stddevStr := toString stddev
-  let statsText :=
-    "\nStatistics:\n" ++
-    "  Min: " ++ minStr ++ "  Max: " ++ maxStr ++ "\n" ++
-    "  Mean: " ++ meanStr ++ "  Std: " ++ stddevStr ++ rangeStr
-
-  ascii ++ statsText
-
 /-- Render two images side-by-side for comparison.
 
 Displays two images horizontally adjacent, useful for comparing ground truth
@@ -578,80 +562,5 @@ def renderImageGrid (images : List (Vector 784)) (labels : List String)
       labelLine ++ "\n" ++ sepLine ++ "\n" ++ String.intercalate "\n" combinedLines
 
     String.intercalate "\n\n" renderedRows
-
-/-- Additional color palette options for different terminal themes. -/
-structure PaletteConfig where
-  chars : String
-  name : String
-
-/-- Available brightness palettes.
-
-Provides multiple palette options for different preferences and terminal themes:
-- `default`: Standard 10-char palette (space to @)
-- `simple`: 8-char palette for simpler rendering
-- `detailed`: 16-char palette for fine gradation
-- `blocks`: Unicode block characters for smooth gradients
--/
-def availablePalettes : List PaletteConfig := [
-  { chars := " .:-=+*#%@", name := "default" },
-  { chars := " .:-=+@", name := "simple" },
-  { chars := " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$",
-    name := "detailed" },
-  { chars := " ░▒▓█", name := "blocks" }
-]
-
-/-- Get palette by name, defaulting to standard palette if not found. -/
-def getPalette (name : String) : String :=
-  let rec findPalette (palettes : List PaletteConfig) : String :=
-    match palettes with
-    | [] => brightnessChars
-    | p :: rest => if p.name == name then p.chars else findPalette rest
-  findPalette availablePalettes
-
-/-- Render image with custom palette.
-
-Like `renderImage` but allows specifying a custom character palette.
-
-**Parameters:**
-- `img`: 784-dimensional MNIST image vector
-- `palette`: String of characters ordered from darkest to brightest
-- `inverted`: Whether to use inverted brightness mapping
-
-**Returns:** Multi-line string containing 28 rows of 28 characters each
--/
-def renderImageWithPalette (img : Vector 784) (_palette : String) (inverted : Bool) : String :=
-  -- For now, just use the default renderer
-  -- TODO: Implement custom palette support with proper SciLean indexing
-  -- The palette parameter is prefixed with _ to indicate it's intentionally unused
-  renderImage img inverted
-
-/-- Render image with border frame.
-
-Adds a decorative border around the ASCII art image.
-
-**Parameters:**
-- `img`: 784-dimensional MNIST image vector
-- `inverted`: Whether to use inverted brightness mapping
-- `borderStyle`: Border style - "single", "double", "rounded", "heavy", or "ascii"
-
-**Returns:** Multi-line string with bordered image
--/
-def renderImageWithBorder (img : Vector 784) (inverted : Bool)
-    (borderStyle : String := "single") : String :=
-  let ascii := renderImage img inverted
-  let lines := ascii.splitOn "\n"
-
-  let (tl, tr, bl, br, h, v) := match borderStyle with
-    | "double" => ("╔", "╗", "╚", "╝", "═", "║")
-    | "rounded" => ("╭", "╮", "╰", "╯", "─", "│")
-    | "heavy" => ("┏", "┓", "┗", "┛", "━", "┃")
-    | "ascii" => ("+", "+", "+", "+", "-", "|")
-    | _ => ("┌", "┐", "└", "┘", "─", "│")  -- single (default)
-
-  let topBorder := tl ++ String.mk (List.replicate 28 h.toList.head!) ++ tr
-  let bottomBorder := bl ++ String.mk (List.replicate 28 h.toList.head!) ++ br
-  let framedLines := lines.map fun line => v ++ line ++ v
-
-  topBorder ++ "\n" ++ String.intercalate "\n" framedLines ++ "\n" ++ bottomBorder
 
 end VerifiedNN.Util.ImageRenderer

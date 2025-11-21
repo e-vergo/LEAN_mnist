@@ -87,6 +87,84 @@ where g_i is the gradient from mini-batch i.
 - Learning rate schedule optimality (hyperparameter tuning)
 - Numerical precision of Float operations (ℝ vs Float gap)
 
+## Production Usage Status
+
+This module provides advanced optimizer infrastructure for research
+and experimentation. **Most features are currently unused in production**
+but are tested, correct, and ready for adoption.
+
+### Production-ready and actively used:
+- Constant learning rate (implicit default in Training/Loop.lean)
+- Basic parameter update patterns
+
+### Production-ready but currently unused:
+
+**Learning Rate Schedules:**
+- Step decay (`stepDecay`) - reduce LR at fixed intervals
+- Exponential decay (`exponentialDecay`) - smooth exponential reduction
+- Cosine annealing (`cosineAnnealing`) - cosine schedule (Loshchilov & Hutter 2017)
+- All schedules tested in Testing/OptimizerTests.lean
+
+**Warmup Scheduling:**
+- `warmupSchedule` - Linear warmup for initial epochs (Goyal et al. 2017)
+- `warmupThenSchedule` - Warmup followed by decay schedule
+- Standard practice for large-scale training
+
+**Gradient Accumulation:**
+- `GradientAccumulator` - Accumulate gradients across micro-batches
+- Enables larger effective batch sizes with limited memory
+- Tested in Testing/GradientCheck.lean and testing modules
+
+**Optimizer Abstraction:**
+- `OptimizerState` - Polymorphic wrapper for SGD/Momentum selection
+- `optimizerStep`, `getParams`, `updateOptimizerLR`, `getEpoch`
+- **Design intent:** Enable switching optimizers without changing training loop
+- **Current reality:** Training/Loop.lean uses SGDState directly (bypasses wrapper)
+- **History:** Training/Loop written before OptimizerState existed
+
+### Why features are unused:
+
+**Production training achieves 93% MNIST accuracy with:**
+- Basic SGD (no momentum)
+- Constant learning rate (no scheduling)
+- Single-batch updates (no accumulation)
+
+**These simple settings work well for:**
+- Small networks (784→128→10 MLP)
+- Well-conditioned problems (MNIST)
+- CPU-only training (no memory pressure)
+
+**When to adopt advanced features:**
+
+**Learning Rate Schedules:**
+- Useful for: Longer training runs (>50 epochs)
+- Useful for: Plateaus in loss/accuracy
+- Example: `warmupThenSchedule (warmup:=5) (cosineAnnealing epochs:=100)`
+
+**Gradient Accumulation:**
+- Useful for: Memory-constrained training
+- Useful for: Simulating larger batch sizes
+- Example: Accumulate 4 micro-batches of size 32 = effective batch 128
+
+**OptimizerState Wrapper:**
+- Useful for: Hyperparameter search over optimizers
+- Useful for: Switching between SGD and Momentum
+- **To adopt:** Refactor Training/Loop.lean to use OptimizerState
+
+### Future Considerations:
+
+1. **Refactoring opportunity:** Training/Loop.lean could adopt OptimizerState
+   wrapper for cleaner optimizer selection (currently uses SGDState directly)
+
+2. **Experimental validation:** Test if learning rate schedules improve beyond
+   93% accuracy on MNIST or speed up convergence
+
+3. **Upstream contribution:** If OptimizerState pattern proves valuable,
+   consider extracting as reusable pattern for other Lean ML projects
+
+See Testing/OptimizerTests.lean for usage examples of all features.
+See Training/Loop.lean for current production patterns.
+
 ## References
 
 - Loshchilov, I., & Hutter, F. (2017). "SGDR: Stochastic Gradient Descent with Warm Restarts". *ICLR*.

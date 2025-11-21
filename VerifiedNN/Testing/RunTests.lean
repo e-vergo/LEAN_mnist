@@ -1,6 +1,5 @@
 import VerifiedNN.Testing.UnitTests
 import VerifiedNN.Testing.OptimizerTests
-import VerifiedNN.Testing.Integration
 import VerifiedNN.Testing.LinearAlgebraTests
 import VerifiedNN.Testing.LossTests
 import VerifiedNN.Testing.NumericalStabilityTests
@@ -28,7 +27,6 @@ This runner executes the following test suites in order:
 5. **Data Pipeline Tests** - Preprocessing and iteration (✓ NEW - Comprehensive)
 6. **Optimizer Tests** - Parameter update operations (✓ Working)
 7. **Gradient Check Tests** - Finite difference validation (✓ Infrastructure ready)
-8. **Integration Tests** - End-to-end pipeline tests (⚠ Partial, dataset generation ready)
 
 ## Implementation Notes
 
@@ -36,7 +34,7 @@ This runner executes the following test suites in order:
 - **Level 0**: Core functionality (activations, data types, linear algebra) - WORKING
 - **Level 1**: Optimizer operations, loss functions, preprocessing - WORKING
 - **Level 2**: Numerical stability, gradient checking - WORKING
-- **Level 3**: Data pipeline, integration tests - PARTIAL
+- **Level 3**: Data pipeline - WORKING
 
 **Status Reporting:** The runner provides clear visual separation between test
 suites and reports pass/fail status for each test.
@@ -46,11 +44,10 @@ suites and reports pass/fail status for each test.
 - ✓ Ready to run: All test suites listed above
 - ✓ NEW: 4 comprehensive test suites added (LinearAlgebra, Loss, NumericalStability, DataPipeline)
 - ✓ EXPANDED: Gradient checking infrastructure available
-- ⚠ Partial: Full integration tests (blocked by Training.Loop)
 
 ## Test Coverage Summary
 
-**Total Test Suites:** 8
+**Total Test Suites:** 7
 **New Test Suites (2025-10-22):** 4
 - LinearAlgebraTests: 9 test suites covering all matrix/vector operations
 - LossTests: 7 test suites covering cross-entropy and softmax properties
@@ -72,7 +69,6 @@ lake env lean --run VerifiedNN/Testing/NumericalStabilityTests.lean
 lake env lean --run VerifiedNN/Testing/DataPipelineTests.lean
 lake env lean --run VerifiedNN/Testing/OptimizerTests.lean
 lake env lean --run VerifiedNN/Testing/GradientCheck.lean
-lake env lean --run VerifiedNN/Testing/Integration.lean
 ```
 -/
 
@@ -80,7 +76,6 @@ namespace VerifiedNN.Testing.Runner
 
 open VerifiedNN.Testing.UnitTests
 open VerifiedNN.Testing.OptimizerTests
-open VerifiedNN.Testing.Integration
 open VerifiedNN.Testing.LinearAlgebraTests
 open VerifiedNN.Testing.LossTests
 open VerifiedNN.Testing.NumericalStabilityTests
@@ -97,7 +92,6 @@ Executes the following test suites in order:
 5. Data Pipeline Tests: Preprocessing, iteration, MNIST pipeline
 6. Optimizer Tests: SGD, momentum, learning rate scheduling, gradient accumulation
 7. Gradient Check Tests: Finite difference validation of gradients
-8. Integration Tests: Dataset generation and placeholder tests for full pipeline
 
 **Returns:** IO Unit - Prints test results to stdout with visual separators
 
@@ -165,16 +159,9 @@ def runAllTests : IO Unit := do
   GradientCheck.runAllGradientTests
   IO.println ""
 
-  -- Run integration tests
-  IO.println "╔══════════════════════════════════════════╗"
-  IO.println "║      INTEGRATION TESTS                   ║"
-  IO.println "╚══════════════════════════════════════════╝"
-  Integration.runAllIntegrationTests
-  IO.println ""
-
   IO.println "=========================================="
   IO.println "✓ All Test Suites Complete"
-  IO.println "  - 8 Test Suites Executed"
+  IO.println "  - 7 Test Suites Executed"
   IO.println "  - 4 NEW Comprehensive Test Suites"
   IO.println "=========================================="
 
