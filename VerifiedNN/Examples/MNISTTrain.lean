@@ -283,10 +283,10 @@ Run `./scripts/download_mnist.sh` to download the dataset.
 
 (Times vary based on CPU performance and batch size)
 
-**Unsafe:** Uses automatic differentiation which is technically noncomputable,
-but marked unsafe to enable interpreter mode execution.
+**Unsafe:** Uses manual backpropagation (computable implementation), marked unsafe
+for IO operations and interpreter mode execution.
 -/
-noncomputable unsafe def runTraining (config : TrainingConfig) : IO Unit := do
+unsafe def runTraining (config : TrainingConfig) : IO Unit := do
   IO.println "=========================================="
   IO.println "MNIST Neural Network Training"
   IO.println "Verified Neural Network in Lean 4"
@@ -439,7 +439,7 @@ automatic differentiation code.
 - `parseArgs` for argument specification
 - `runTraining` for execution details
 -/
-noncomputable unsafe def main (args : List String) : IO Unit := do
+unsafe def main (args : List String) : IO Unit := do
   let config ← parseArgs args
   runTraining config
 
@@ -447,4 +447,4 @@ end VerifiedNN.Examples.MNISTTrain
 
 -- Top-level main for Lake executable infrastructure
 -- Uses unsafe to enable interpreter mode execution
-noncomputable unsafe def main (args : List String) : IO Unit := VerifiedNN.Examples.MNISTTrain.main args
+unsafe def main (args : List String) : IO Unit := VerifiedNN.Examples.MNISTTrain.main args

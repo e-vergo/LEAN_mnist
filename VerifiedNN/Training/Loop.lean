@@ -1,5 +1,6 @@
 import VerifiedNN.Network.Architecture
 import VerifiedNN.Network.Gradient
+import VerifiedNN.Network.ManualGradient
 import VerifiedNN.Training.Batch
 import VerifiedNN.Training.Metrics
 import VerifiedNN.Loss.CrossEntropy
@@ -83,6 +84,7 @@ namespace VerifiedNN.Training.Loop
 open VerifiedNN.Core
 open VerifiedNN.Network
 open VerifiedNN.Network.Gradient
+open VerifiedNN.Network.ManualGradient
 open VerifiedNN.Training.Batch
 open VerifiedNN.Training.Metrics
 open VerifiedNN.Loss
@@ -101,6 +103,7 @@ configuration management and passing to training functions.
 - `learningRate`: SGD step size (typical: 0.01-0.1 for MNIST)
 - `printEveryNBatches`: Log progress every N batches (default: 100)
 - `evaluateEveryNEpochs`: Evaluate metrics every N epochs (default: 1)
+- `debugLogging`: Enable detailed batch-level debugging logs (default: false)
 
 **Typical MNIST configuration:** 10-20 epochs, batch size 32-64, learning rate 0.01-0.05
 -/
@@ -110,6 +113,7 @@ structure TrainConfig where
   learningRate : Float
   printEveryNBatches : Nat := 100
   evaluateEveryNEpochs : Nat := 1
+  debugLogging : Bool := false
   deriving Repr
 
 /-- Checkpoint configuration for saving training state.
@@ -183,6 +187,99 @@ def logTrainingComplete (finalAcc finalLoss : Float) : IO Unit := do
   IO.println s!"Final Loss: {finalLoss}"
 
 end TrainingLog
+
+-- Debugging utilities for training diagnostics.
+-- Provides gradient and parameter inspection tools for debugging training issues.
+namespace DebugUtils
+
+open VerifiedNN.Core.LinearAlgebra
+
+/-- Compute L2 norm of a vector.
+
+**Formula:** ‖v‖₂ = √(Σᵢ vᵢ²)
+
+**Parameters:**
+- `v`: Vector of any dimension
+
+**Returns:** L2 norm as Float
+-/
+def vectorNorm {n : Nat} (v : Vector n) : Float :=
+  Float.sqrt (normSq v)
+
+/-- Check if vector contains NaN or Inf values.
+
+Checks first element as a simple heuristic.
+
+**Parameters:**
+- `v`: Vector to check
+
+**Returns:** True if first element is NaN or Inf
+-/
+def vectorHasNaN {n : Nat} (v : Vector n) : Bool :=
+  if h : 0 < n then
+    v[⟨0, h⟩].isNaN || v[⟨0, h⟩].isInf
+  else
+    false
+
+/-- Extract first k elements of a vector as an array for display.
+
+NOTE: Simplified to always return empty array due to Lean indexing complexity.
+The norm-based logging provides sufficient information for debugging.
+
+**Parameters:**
+- `v`: Vector to extract from (unused)
+- `k`: Number of elements to extract (unused)
+
+**Returns:** Empty array (feature disabled for simplicity)
+-/
+def vectorFirstK {n : Nat} (_v : Vector n) (_k : Nat := 5) : Array Float :=
+  #[]  -- Simplified: just use norms for debugging instead of individual values
+
+/-- Log detailed batch diagnostics for debugging.
+
+Prints comprehensive information about gradients and parameters during training:
+- Batch loss
+- Gradient norm (L2)
+- Parameter norms before and after update
+- Parameter norm change
+- Warnings for NaN/Inf, gradient explosion, or vanishing
+
+**Parameters:**
+- `batchIdx`: Current batch index (1-indexed for display)
+- `totalBatches`: Total number of batches
+- `loss`: Batch loss value
+- `gradNorm`: L2 norm of batch gradient
+- `paramsBefore`: Parameters before SGD update
+- `paramsAfter`: Parameters after SGD update
+- `avgGrad`: Average gradient for the batch
+-/
+def logBatchDebug {nParams : Nat}
+    (batchIdx totalBatches : Nat)
+    (loss : Float)
+    (gradNorm : Float)
+    (paramsBefore paramsAfter : Vector nParams)
+    (avgGrad : Vector nParams) : IO Unit := do
+  IO.println s!"Batch {batchIdx}/{totalBatches}:"
+  IO.println s!"  Batch loss: {loss}"
+  IO.println s!"  Batch gradient norm: {gradNorm}"
+
+  let paramNormBefore := vectorNorm paramsBefore
+  let paramNormAfter := vectorNorm paramsAfter
+  let paramNormChange := paramNormAfter - paramNormBefore
+  IO.println s!"  Params before norm: {paramNormBefore}, after norm: {paramNormAfter}"
+  IO.println s!"  Param norm change: {paramNormChange}"
+
+  -- Check for anomalies
+  if vectorHasNaN avgGrad then
+    IO.println "  WARNING: Gradient contains NaN or Inf!"
+
+  if gradNorm > 10.0 then
+    IO.println s!"  WARNING: Gradient explosion detected (norm={gradNorm})!"
+
+  if gradNorm < 0.0001 then
+    IO.println s!"  WARNING: Gradient vanishing detected (norm={gradNorm})!"
+
+end DebugUtils
 
 /-- Training state that tracks progress through training.
 
@@ -264,26 +361,43 @@ This is proven in standard calculus (linearity of differentiation).
 
 **Complexity:** O(B × nParams) where B = batch.size, nParams ≈ 101770 for MNIST MLP
 
-**Noncomputable:** Uses automatic differentiation which involves symbolic computation.
+**Computable:** Uses manual backpropagation (networkGradientManual) instead of symbolic AD.
 -/
-noncomputable def trainBatch
-    (state : TrainState) (batch : Array (Vector 784 × Nat)) : TrainState :=
+def trainBatch
+    (state : TrainState)
+    (batch : Array (Vector 784 × Nat))
+    (batchIdx totalBatches : Nat)
+    (config : TrainConfig) : IO TrainState := do
   if batch.size == 0 then
-    state
+    return state
   else
     -- Compute gradient for the batch
     -- We accumulate gradients across the batch and average them
     let params := state.optimState.params
 
     -- Compute average gradient over the batch
+    -- Use manual backpropagation (computable implementation)
     let gradSum := batch.foldl (fun accGrad (input, label) =>
-      let grad := networkGradient' params input label
+      let grad := networkGradientManual params input label
       ⊞ i => accGrad[i] + grad[i]
     ) (⊞ (_ : Idx nParams) => (0.0 : Float))
 
     -- Average the gradients
     let batchSizeFloat := batch.size.toFloat
     let avgGrad := ⊞ i => gradSum[i] / batchSizeFloat
+
+    -- Compute batch loss for logging
+    let batchLoss := if h : batch.size > 0 then
+      let (input, label) := batch[0]
+      let output := state.net.forward input
+      crossEntropyLoss output label
+    else
+      0.0
+
+    -- Debug logging if enabled
+    if config.debugLogging then
+      let gradNorm := DebugUtils.vectorNorm avgGrad
+      DebugUtils.logBatchDebug batchIdx totalBatches batchLoss gradNorm params (sgdStep state.optimState avgGrad).params avgGrad
 
     -- Apply SGD step
     let newOptimState := sgdStep state.optimState avgGrad
@@ -292,7 +406,7 @@ noncomputable def trainBatch
     let newNet := unflattenParams newOptimState.params
 
     -- Return updated state
-    { state with
+    return { state with
       net := newNet
       optimState := newOptimState
       totalBatchesSeen := state.totalBatchesSeen + 1
@@ -310,7 +424,7 @@ Processes all mini-batches in the training data for one complete pass.
 
 **Returns:** Updated training state after one epoch
 -/
-noncomputable def trainOneEpoch
+def trainOneEpoch
     (state : TrainState)
     (trainData : Array (Vector 784 × Nat))
     (config : TrainConfig)
@@ -323,7 +437,7 @@ noncomputable def trainOneEpoch
   let mut lastLoss : Float := 0.0
   for batchIdx in [0:batches.size] do
     let batch := batches[batchIdx]!
-    currentState := trainBatch currentState batch
+    currentState ← trainBatch currentState batch (batchIdx + 1) batches.size config
 
     -- Compute loss for logging (on last processed batch)
     if batch.size > 0 then
@@ -331,8 +445,9 @@ noncomputable def trainOneEpoch
       let output := currentState.net.forward input
       lastLoss := crossEntropyLoss output label
 
-    -- Log batch progress periodically using structured logging
-    TrainingLog.logBatchProgress (batchIdx + 1) batches.size lastLoss config.printEveryNBatches
+    -- Log batch progress periodically using structured logging (only if debug logging is off)
+    if !config.debugLogging then
+      TrainingLog.logBatchProgress (batchIdx + 1) batches.size lastLoss config.printEveryNBatches
 
   -- Evaluate on both training and validation sets at evaluation epochs
   if (state.currentEpoch + 1) % config.evaluateEveryNEpochs == 0 then
@@ -462,9 +577,9 @@ let trainedNet := finalState.net
 **For simple use cases:** See `trainEpochs` for a simplified interface that
 returns just the trained network.
 
-**Noncomputable:** Uses automatic differentiation for gradient computation.
+**Computable:** Uses manual backpropagation for gradient computation.
 -/
-noncomputable def trainEpochsWithConfig
+def trainEpochsWithConfig
     (net : MLPArchitecture)
     (trainData : Array (Vector 784 × Nat))
     (config : TrainConfig)
@@ -539,9 +654,9 @@ then extracts just the network from the returned `TrainState`.
 **For production:** Use `trainEpochsWithConfig` if you need validation monitoring,
 checkpoint support, or access to final optimizer state.
 
-**Noncomputable:** Uses automatic differentiation for gradient computation.
+**Computable:** Uses manual backpropagation for gradient computation.
 -/
-noncomputable def trainEpochs
+def trainEpochs
     (net : MLPArchitecture)
     (trainData : Array (Vector 784 × Nat))
     (epochs : Nat)

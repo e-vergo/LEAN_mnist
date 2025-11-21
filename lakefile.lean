@@ -77,3 +77,39 @@ lean_exe checkDataDistribution where
   root := `CheckDataDistribution
   supportInterpreter := true
   moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
+
+lean_exe denseBackwardTests where
+  root := `VerifiedNN.Testing.DenseBackwardTests
+  supportInterpreter := true
+  moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
+
+lean_exe manualGradientTests where
+  root := `VerifiedNN.Testing.ManualGradientTests
+  supportInterpreter := true
+  moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
+
+lean_exe miniTraining where
+  root := `VerifiedNN.Examples.MiniTraining
+  supportInterpreter := true
+  moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
+
+lean_exe debugTraining where
+  root := `VerifiedNN.Testing.DebugTraining
+  supportInterpreter := true
+  moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
+
+lean_exe sgdTests where
+  root := `VerifiedNN.Testing.SGDTests
+  supportInterpreter := true
+  moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
+
+lean_exe inspectGradient where
+  root := `VerifiedNN.Testing.InspectGradient
+  supportInterpreter := true
+  moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
+
+lean_exe mediumTraining where
+  root := `VerifiedNN.Testing.MediumTraining
+  supportInterpreter := true
+  moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
+

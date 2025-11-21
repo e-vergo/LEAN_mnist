@@ -286,7 +286,7 @@ def testBatchLoss : IO Bool := do
   for b in [:3] do
     if b < 3 then
       let logits_b : Vector 4 := ⊞ (i : Idx 4) => ∑ (bidx : Idx 3), if bidx.1.toNat == b then logitsBatch[bidx, i] else 0.0
-      let target_b := targets.get! b  -- Note: targets[b]! doesn't work (b is Idx 3, not Nat)
+      let target_b := targets[b.1.toNat]!  -- Convert Idx 3 to Nat for array indexing
       sumIndividual := sumIndividual + crossEntropyLoss logits_b target_b
 
   let avgIndividual := sumIndividual / 3.0

@@ -12,38 +12,42 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Secondary Goal:** Leverage dependent types to enforce dimension consistency at compile time, proving that type-checked operations maintain correct tensor dimensions at runtime.
 
-**Implementation:** Train an MLP on MNIST using Lean 4, SciLean, and SGD with backpropagation, where the core gradient computation is formally verified.
+**Implementation:** Type-safe MLP implementation with formally verified gradient computation. Training code exists but cannot execute due to SciLean's noncomputable automatic differentiation. The project demonstrates verification framework, data pipeline, and gradient specifications.
 
 **Verification Philosophy:** Mathematical properties proven on ℝ (real numbers), computational implementation in Float (IEEE 754). The Float→ℝ gap is acknowledged—we verify symbolic correctness, not floating-point numerics.
 
-**New to this project?** See [START_HERE.md](START_HERE.md) for a quick 5-minute overview or [GETTING_STARTED.md](GETTING_STARTED.md) for comprehensive onboarding with installation instructions.
-
-**Finding documentation:** See [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) for a complete guide to all documentation organized by experience level and task.
+**New to this project?** See [GETTING_STARTED.md](GETTING_STARTED.md) for comprehensive onboarding with installation instructions.
 
 ## Current Implementation Status
 
-**Build Status:** ✅ **All 40 Lean files compile successfully with ZERO errors**
+**Build Status:** ✅ **All 59 Lean files compile successfully with ZERO errors**
+
+**Execution Status:**
+
+- ✅ **Data Pipeline:** Fully functional (60K train + 10K test images)
+- ✅ **Visualization:** ASCII renderer works excellently (renderMNIST executable)
+- ✅ **Testing:** SmokeTest validates forward pass and gradients
+- ❌ **Training:** Non-executable (noncomputable AD in SciLean)
+- ⚠️ **Reality:** This is a verification framework and specification, not a working training system
 
 **Verification Progress:**
-- **Sorries:** 17 strategic placeholders (all documented with completion strategies)
-  - Network/Gradient.lean: 7 (index arithmetic bounds)
-  - Verification/GradientCorrectness.lean: 6 (mathlib integration)
-  - Verification/TypeSafety.lean: 2 (flatten/unflatten inverses)
-  - Layer/Properties.lean: 1 (affine combination)
+
+- **Sorries:** 4 active in Verification/TypeSafety.lean (flatten/unflatten inverses and dimension proofs, all documented with completion strategies)
 - **Axioms:** 9 total (8 convergence theory + 1 Float bridge, all justified)
+- **Gradient Theorems:** 26 proven theorems (correctness of AD for each operation)
 
 **Documentation:** 100% coverage with mathlib-quality standards
+
 - All 10 directories have comprehensive READMEs (~103KB total)
 - All sorries documented with proof strategies
 - All axioms documented with justification and references
-- See [CLEANUP_SUMMARY.md](CLEANUP_SUMMARY.md) for detailed cleanup report
 
-**Development Philosophy:** Build working implementations first, add verification as design stabilizes. The codebase is now ready for systematic proof completion following the [verified-nn-spec.md](verified-nn-spec.md) roadmap.
+**Development Philosophy:** Build working implementations first, add verification as design stabilizes. The codebase demonstrates verification concepts even though training cannot execute.
 
 ## Tech Stack
 
 ```
-Lean: v4.23.0 (specified in lean-toolchain)
+Lean: v4.20.1 (specified in lean-toolchain)
 SciLean: latest compatible version (master branch)
 mathlib4: (via SciLean)
 LSpec: testing framework
@@ -195,23 +199,90 @@ lake exe cache get             # Download precompiled mathlib
 lake build                     # Build entire project
 lake build VerifiedNN.Core.DataTypes  # Build specific module
 
+# Data setup
+./scripts/download_mnist.sh    # Download MNIST dataset (required for executables)
 
-# Execute
-lake exe simpleExample         # Run minimal example
-lake exe mnistTrain --epochs 10 --batch-size 32 --lr 0.01
+# Working executables (fully computable)
+lake exe renderMNIST 0          # View MNIST digit #0 as ASCII art
+lake exe renderMNIST --count 5  # Render first 5 digits
+lake exe mnistLoadTest          # Test data loading (60K train + 10K test)
+lake exe smokeTest              # Run validation tests (forward pass, gradients)
+lake exe checkDataDistribution  # Validate training set balance
 
-# Test
-lake build VerifiedNN.Testing.UnitTests
-lake env lean --run VerifiedNN/Testing/UnitTests.lean
+# Non-executable (noncomputable AD - will fail at compile/run time)
+# lake exe mnistTrain           # ❌ Cannot execute - noncomputable main
+# lake exe simpleExample        # ❌ Cannot execute - noncomputable main
+# lake exe trainManual          # ❌ Cannot execute - noncomputable main
+# lake exe fullIntegration      # ❌ Cannot execute - noncomputable main
 
-# Verify proofs
+# Verify proofs (build only, no execution)
 lake build VerifiedNN.Verification.GradientCorrectness
 lean --print-axioms VerifiedNN/Verification/GradientCorrectness.lean
 
-# Data and benchmarking
-./scripts/download_mnist.sh    # Download MNIST dataset
-./scripts/benchmark.sh          # Run performance benchmarks
+# Test suite (non-executable tests exist but cannot run due to AD)
+lake build VerifiedNN.Testing.UnitTests  # Builds, but cannot execute
+# lake env lean --run VerifiedNN/Testing/UnitTests.lean  # ❌ Would fail
 ```
+
+## Known Limitations
+
+### Noncomputable Training (Critical Limitation)
+
+The training examples (MNISTTrain, SimpleExample, TrainManual, FullIntegration) use `noncomputable unsafe def main` because they depend on SciLean's automatic differentiation, which is **fundamentally noncomputable** in current Lean 4. This means:
+
+**What doesn't work:**
+
+- ❌ Training code cannot be compiled to executable binaries
+- ❌ Training code cannot run in interpreter mode (`lake env lean --run`)
+- ❌ Any code path that uses the `∇` (gradient) operator is noncomputable
+- ❌ Parameter updates via gradient descent cannot execute
+- ❌ Claims about "training accuracy" or "convergence" cannot be empirically validated
+
+**What does work:**
+
+- ✅ Training code type-checks and builds successfully
+- ✅ Training code serves as executable specification
+- ✅ Forward pass can be computed (without gradients)
+- ✅ Data pipeline fully functional (load, preprocess, visualize)
+- ✅ Gradient correctness is formally proven (26 theorems)
+- ✅ SmokeTest validates concepts without executing training
+
+**Why this limitation exists:**
+
+SciLean's automatic differentiation (`∇` operator) relies on symbolic manipulation and transformation during elaboration. It cannot be reduced to executable code because:
+
+1. AD transformations happen at compile time via term rewriting
+2. The `∇` operator is marked `noncomputable` in SciLean
+3. Any function depending on `∇` becomes transitively noncomputable
+4. Lean 4 cannot compile noncomputable definitions to native code
+
+This is a fundamental architectural limitation, not a bug that can be fixed without major refactoring of SciLean's core design.
+
+### What This Project Actually Demonstrates
+
+**This is a verification framework and specification, not a working ML training system.**
+
+**Primary value:**
+
+- Formal verification of gradient correctness (26 proven theorems)
+- Type-safe neural network implementation with dependent types
+- Executable specification of training loop structure
+- Working data pipeline and visualization tools
+- Research foundation for verified machine learning
+
+**Use cases:**
+
+- Learning formal verification in ML context
+- Understanding typed neural network design
+- Studying gradient correctness proofs
+- Reference implementation for verification research
+
+**NOT use cases:**
+
+- Training actual models (cannot execute)
+- Performance benchmarking (no executable training)
+- Production ML system (research prototype only)
+- Claims about convergence or accuracy (cannot be validated empirically)
 
 ## Project Structure
 
@@ -233,7 +304,7 @@ scripts/
 └── benchmark.sh       # Performance benchmarks
 ```
 
-**Detailed architecture documentation:** See [ARCHITECTURE.md](ARCHITECTURE.md) for module dependency graphs, call flow diagrams, and design decisions.
+**Detailed architecture documentation:** See directory READMEs in each VerifiedNN/ subdirectory for module-specific details.
 
 ## Lean 4 Conventions
 
@@ -480,11 +551,7 @@ Before considering a module "complete":
 - [x] Code follows mathlib comment standards
 - [x] Cross-references to related modules documented
 
-See [DOCUMENTATION_ENHANCEMENT_REPORT.md](DOCUMENTATION_ENHANCEMENT_REPORT.md) for documentation quality improvements.
-
 ## Verification Workflow
-
-**Detailed proof development guide:** See [VERIFICATION_WORKFLOW.md](VERIFICATION_WORKFLOW.md) for step-by-step instructions on developing formal proofs in this codebase.
 
 ### Project Goals
 
@@ -499,14 +566,18 @@ See [DOCUMENTATION_ENHANCEMENT_REPORT.md](DOCUMENTATION_ENHANCEMENT_REPORT.md) f
 - Demonstrate type system prevents dimension mismatches by construction
 
 **Implementation Validation:**
-- Train functional MLP on MNIST with reasonable accuracy
-- Numerically validate AD against finite differences
-- Confirm implementation matches verified specification
+
+- ✅ SmokeTest validates forward pass correctness
+- ✅ GradientCheck compares AD against finite differences (when executable)
+- ✅ Type system ensures implementation matches specification at compile time
+- ⚠️ Actual training cannot be empirically validated (noncomputable AD)
 
 **Out of Scope:**
+
 - Floating-point numerical stability (ℝ vs Float gap acknowledged)
 - Convergence properties of SGD (optimization theory)
 - Generalization bounds or learning theory
+- Empirical training accuracy (training is non-executable)
 
 ### Proof Patterns
 ```lean
@@ -567,6 +638,32 @@ Development follows an iterative pattern focused on building working implementat
 
 Note: Code with incomplete proofs is acceptable during development—mark with TODO comments explaining what needs verification.
 
+### Understanding Execution vs. Verification
+
+Not all code in this project needs to execute—much of it serves as verified specification:
+
+**Code meant to execute:**
+
+- Data loading and preprocessing (MNISTLoadTest, CheckDataDistribution)
+- Visualization tools (RenderMNIST ASCII renderer)
+- Forward pass computations (without gradient computation)
+- Smoke tests validating concepts (SmokeTest)
+
+**Code meant to verify but not execute:**
+
+- Training loops using `∇` operator (MNISTTrain, SimpleExample)
+- Gradient computation via automatic differentiation
+- Parameter updates in SGD optimizer
+- Any function depending on noncomputable AD
+
+**Best practices:**
+
+- Mark non-executable code with `noncomputable` keyword
+- Document execution status in function docstrings
+- Use SmokeTest pattern: executable validation of non-executable concepts
+- Focus executable examples on what CAN run (data, visualization, forward pass)
+- Accept that training is specification, not executable implementation
+
 ### Debugging Proofs
 - **MCP Tools (Preferred):**
   - Use `lean_goal` to inspect proof state at specific locations
@@ -599,7 +696,18 @@ let x := dbgTraceIfShared "x is shared!" someArray
 
 ## Production Readiness Guidelines
 
-These represent the ultimate standard for production-quality code. During development, deviations are acceptable and should be documented with TODO comments.
+**IMPORTANT:** This is a **research prototype** and **verification framework**, not production software. The guidelines below describe code quality standards for the research artifact, not production deployment readiness.
+
+**Current Project Status:**
+
+- ✅ Build system works (all 59 files compile)
+- ✅ Type system demonstrates safety properties
+- ✅ Gradient correctness formally verified (26 theorems)
+- ✅ Data pipeline and visualization fully functional
+- ❌ Training specification exists but cannot execute
+- ⚠️ Focus on learning, verification research, and specification—not production deployment
+
+These represent code quality standards for research artifacts. During development, deviations are acceptable and should be documented with TODO comments.
 
 ### Critical Standards
 - **Type Safety:** Use dependent types for dimension tracking where it enhances correctness
@@ -661,13 +769,10 @@ These represent the ultimate standard for production-quality code. During develo
 ### Internal Documentation (Start Here!)
 
 **Essential reading for this project:**
-- **[START_HERE.md](START_HERE.md)** - Quick 5-minute project overview
+
 - **[GETTING_STARTED.md](GETTING_STARTED.md)** - Comprehensive setup and onboarding
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System design and module dependencies
-- **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Complete testing handbook
-- **[COOKBOOK.md](COOKBOOK.md)** - Practical recipes and examples
-- **[VERIFICATION_WORKFLOW.md](VERIFICATION_WORKFLOW.md)** - Proof development guide
 - **[verified-nn-spec.md](verified-nn-spec.md)** - Complete technical specification
+- **Directory READMEs** - All 10 VerifiedNN/ subdirectories have comprehensive documentation
 
 ### Essential External Documentation
 - Lean 4 Official: https://lean-lang.org/documentation/
@@ -706,23 +811,43 @@ When working with Lean code in this project, **always leverage the MCP tools** a
 ### When in Doubt
 - **First:** Use `lean_leansearch` or `lean_loogle` to search for relevant theorems/definitions
 - **Second:** Use `lean_local_search` to find similar code in this codebase
-- **Third:** Check internal documentation guides:
-  - [COOKBOOK.md](COOKBOOK.md) - Practical recipes and examples
-  - [TESTING_GUIDE.md](TESTING_GUIDE.md) - Testing strategies and patterns
-  - [VERIFICATION_WORKFLOW.md](VERIFICATION_WORKFLOW.md) - Proof development steps
-  - [ARCHITECTURE.md](ARCHITECTURE.md) - Module structure and dependencies
+- **Third:** Check internal documentation:
+  - [verified-nn-spec.md](verified-nn-spec.md) - Detailed implementation guidance
+  - [GETTING_STARTED.md](GETTING_STARTED.md) - Setup and onboarding
   - Directory READMEs - All 10 VerifiedNN/ subdirectories have comprehensive documentation
 - Consult SciLean examples and documentation
 - Check mathlib for existing analysis lemmas via `lean_hover_info` and `lean_declaration_file`
-- Reference [verified-nn-spec.md](verified-nn-spec.md) for detailed implementation guidance
-- Review [ARCHITECTURE.md](ARCHITECTURE.md) for codebase organization and module structure
 - Ask on Lean Zulip #scientific-computing (Tomáš Skřivan, SciLean author, is responsive)
+
+## Development Priorities
+
+Listed in priority order:
+
+### Priority 1: Verification Completion
+
+- Resolve 4 remaining sorries in Verification/TypeSafety.lean
+- All sorries are array extensionality lemmas (straightforward proofs requiring DataArrayN.ext)
+- Strategy documented in TODO comments with each sorry
+
+### Priority 2: Extended Layer Types
+
+- Convolutional layers (Conv2D) with verified gradients
+- Dropout with probabilistic correctness proofs
+- Batch normalization with running statistics
+
+### Priority 3: Performance Optimization
+
+- Profile gradient computation bottlenecks
+- Optimize matrix operations via OpenBLAS
+- Benchmark against reference implementations
+
+### Priority 4: Mathlib Submission Preparation
+
+- Audit axiom usage for minimization opportunities
+- Ensure all documentation meets mathlib standards
+- Coordinate with mathlib maintainers on scope
 
 ---
 
-**Last Updated:** October 22, 2025
+**Last Updated:** November 20, 2025
 **Maintained by:** Project contributors
-
-**Recent Updates:**
-- **2025-10-22:** Added references to new documentation guides (GETTING_STARTED, ARCHITECTURE, TESTING_GUIDE, COOKBOOK, VERIFICATION_WORKFLOW, DOCUMENTATION_INDEX)
-- **2025-10-21:** Repository cleanup to mathlib submission quality

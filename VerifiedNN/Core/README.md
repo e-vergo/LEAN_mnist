@@ -195,11 +195,9 @@ def softmax {n : Nat} (x : Vector n) : Vector n :=
 3. **Activation AD:** Float.exp may not be differentiable in current SciLean version
 4. **Approximate Equality:** Uses average rather than max absolute difference (pending efficient reduction operations in SciLean)
 
-**Resolved in this cleanup:**
+**Addressed Limitations:**
 - ✅ Softmax stability - Uses SciLean's numerically stable implementation
 - ✅ matvec_linear proof - Completed using mathlib's Finset.sum properties
-- ✅ All docstrings enhanced to mathlib submission quality
-- ✅ Module organization and comments improved
 
 ## Development Notes
 
@@ -264,4 +262,3 @@ This directory was cleaned to mathlib submission quality on 2025-10-21:
 - Cleaned import organization (removed extra blank lines)
 - Total documentation: ~480 lines of high-quality comments in 1,075 lines of code
 
-**Last Updated:** 2025-10-22 (re-verified: all standards met)

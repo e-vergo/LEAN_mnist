@@ -424,11 +424,10 @@ lake exe mnistTrain --epochs 2 --batch-size 32 --lr 0.01
 - GradientMonitoring.lean: 278 lines (gradient health diagnostics)
 - **Total: 1,428 lines**
 
-**Last verified:** 2025-10-22 (line length fixes applied)
-
 **Known dependencies:**
-- Network/Gradient.lean uses `sorry` for some gradient correctness proofs (7 sorries, all documented)
-- No issues in Training/ directory itself - all code is production-ready
+
+- Network/Gradient.lean uses 2 axioms for parameter flattening (all documented with proof sketches)
+- Training/ directory itself is production-ready
 
 ## Known Limitations
 
@@ -491,6 +490,3 @@ lake exe mnistTrain --epochs 2 --batch-size 32 --lr 0.01
 - Lean 4 documentation: https://lean-lang.org/documentation/
 
 ---
-
-**Maintained by:** VerifiedNN contributors
-**Last updated:** 2025-10-22

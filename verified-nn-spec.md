@@ -159,9 +159,9 @@ lean-verified-nn/
 └── README.md
 ```
 
-## 4. Implementation Tasks by Phase
+## 4. Implementation Tasks
 
-### Phase 1: Project Setup and Core Infrastructure
+### Project Setup and Core Infrastructure
 
 #### Task 1.1: Repository Initialization
 **File:** `lean-toolchain`, `lakefile.lean`
@@ -216,7 +216,7 @@ lean-verified-nn/
 
 **Deliverable:** Differentiable activation function library with formal properties
 
-### Phase 2: Layer Abstractions
+### Layer Abstractions
 
 #### Task 2.1: Dense Layer Implementation
 **File:** `VerifiedNN/Layer/Dense.lean`
@@ -257,7 +257,7 @@ lean-verified-nn/
 
 **Deliverable:** Compositional neural network building blocks
 
-### Phase 3: Network Architecture
+### Network Architecture
 
 #### Task 3.1: Network Definition
 **File:** `VerifiedNN/Network/Architecture.lean`
@@ -302,7 +302,7 @@ lean-verified-nn/
 
 **Deliverable:** Automatic differentiation for full network
 
-### Phase 4: Loss Function
+### Loss Function
 
 #### Task 4.1: Cross-Entropy Implementation
 **File:** `VerifiedNN/Loss/CrossEntropy.lean`
@@ -336,7 +336,7 @@ lean-verified-nn/
 
 **Deliverable:** Verified gradient computation for loss function
 
-### Phase 5: Optimization
+### Optimization
 
 #### Task 5.1: SGD Implementation
 **File:** `VerifiedNN/Optimizer/SGD.lean`
@@ -381,7 +381,7 @@ lean-verified-nn/
 
 **Deliverable:** Flexible parameter update system
 
-### Phase 6: Training Infrastructure
+### Training Infrastructure
 
 #### Task 6.1: Mini-Batch Handling
 **File:** `VerifiedNN/Training/Batch.lean`
@@ -428,7 +428,7 @@ lean-verified-nn/
 
 **Deliverable:** Training and evaluation metrics
 
-### Phase 7: Data Pipeline
+### Data Pipeline
 
 #### Task 7.1: MNIST Data Loading
 **File:** `VerifiedNN/Data/MNIST.lean`
@@ -472,7 +472,7 @@ lean-verified-nn/
 
 **Deliverable:** Memory-efficient data iteration
 
-### Phase 8: Formal Verification
+### Formal Verification
 
 #### Task 8.1: Gradient Correctness Proofs
 **File:** `VerifiedNN/Verification/GradientCorrectness.lean`
@@ -529,7 +529,7 @@ lean-verified-nn/
 
 **Deliverable:** Domain-specific proof automation
 
-### Phase 9: Testing and Validation
+### Testing and Validation
 
 #### Task 9.1: Gradient Checking
 **File:** `VerifiedNN/Testing/GradientCheck.lean`
@@ -571,7 +571,7 @@ lean-verified-nn/
 
 **Deliverable:** End-to-end integration validation
 
-### Phase 10: Examples and Documentation
+### Examples and Documentation
 
 #### Task 10.1: Simple Example
 **File:** `VerifiedNN/Examples/SimpleExample.lean`
@@ -766,7 +766,7 @@ lean --print-axioms VerifiedNN/Verification/GradientCorrectness.lean
 
 ## 8. Suggested Implementation Order
 
-### Iteration 1: Core Foundation (Vertical Slice)
+### Core Foundation (Vertical Slice)
 1. Project setup (Task 1.1)
 2. Core data types (Task 1.2)
 3. Basic linear algebra (Task 1.3, subset)
@@ -776,7 +776,7 @@ lean --print-axioms VerifiedNN/Verification/GradientCorrectness.lean
 
 **Milestone:** Can create a layer, compute forward pass, and verify gradient numerically
 
-### Iteration 2: Network and Training Loop
+### Network and Training Loop
 1. Complete linear algebra (Task 1.3)
 2. Complete activations (Task 1.4)
 3. Full dense layer (Task 2.1)
@@ -788,7 +788,7 @@ lean --print-axioms VerifiedNN/Verification/GradientCorrectness.lean
 
 **Milestone:** Can train a network on synthetic data
 
-### Iteration 3: MNIST Integration
+### MNIST Integration
 1. MNIST data loading (Task 7.1)
 2. Data preprocessing (Task 7.2)
 3. Mini-batch handling (Task 6.1)
@@ -798,7 +798,7 @@ lean --print-axioms VerifiedNN/Verification/GradientCorrectness.lean
 
 **Milestone:** Successfully trains on MNIST with measurable accuracy
 
-### Iteration 4: Verification Layer
+### Verification Layer
 1. Gradient correctness proofs (Task 8.1)
 2. Type safety proofs (Task 8.2)
 3. Convergence theorems (Task 8.3, statements)
@@ -807,7 +807,7 @@ lean --print-axioms VerifiedNN/Verification/GradientCorrectness.lean
 
 **Milestone:** Key mathematical properties formally verified
 
-### Iteration 5: Polish and Documentation
+### Polish and Documentation
 1. Layer properties (Task 2.2)
 2. Layer composition (Task 2.3)
 3. Network gradient integration (Task 3.3)
@@ -915,7 +915,6 @@ lean --print-axioms VerifiedNN/Verification/GradientCorrectness.lean
 
 ---
 
-**Document Version:** 1.0  
-**Target Lean Version:** 4.20.0  
-**Target SciLean Version:** 4.20.1  
-**Last Updated:** 2025
+**Document Version:** 1.0
+**Target Lean Version:** 4.20.0
+**Target SciLean Version:** 4.20.1

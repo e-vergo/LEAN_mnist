@@ -137,8 +137,10 @@ def shuffleData {α : Type} [Inhabited α] (data : Array α) : IO (Array α) := 
   for i in [0:data.size] do
     -- Generate random index j where i ≤ j < data.size
     let range := data.size - i
-    if range > 0 then
-      let rand ← IO.rand 0 range
+    if range > 1 then
+      -- IO.rand returns [lo, hi), so rand ∈ [0, range-1]
+      -- But to be safe, clamp j to valid bounds
+      let rand ← IO.rand 0 (range - 1)
       let j := i + rand
       -- Swap arr[i] and arr[j]
       let temp := arr[i]!
