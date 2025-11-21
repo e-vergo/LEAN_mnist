@@ -208,6 +208,9 @@ Loads and combines image and label files into paired dataset format.
 - `image`: 784-dimensional Float vector (unnormalized, values in [0, 255])
 - `label`: Nat in range [0, 9] representing digit class
 
+⚠️ **IMPORTANT**: Raw pixel values are in [0, 255]. You **MUST** normalize to [0, 1]
+before training by calling `Preprocessing.normalizeDataset` to avoid gradient explosion!
+
 **Error handling:**
 - If image and label counts don't match, returns only matching pairs (min of both) and logs warning
 - Propagates empty arrays from failed image/label loading -/

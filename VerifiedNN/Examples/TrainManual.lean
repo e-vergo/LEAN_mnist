@@ -1,9 +1,9 @@
 import VerifiedNN.Data.MNIST
 import VerifiedNN.Network.Architecture
 import VerifiedNN.Network.Initialization
+import VerifiedNN.Network.Gradient
 import VerifiedNN.Network.ManualGradient
 import VerifiedNN.Training.Metrics
-import VerifiedNN.Training.GradientMonitoring
 import VerifiedNN.Core.DataTypes
 import SciLean
 
@@ -61,9 +61,9 @@ open VerifiedNN.Core
 open VerifiedNN.Data.MNIST
 open VerifiedNN.Network
 open VerifiedNN.Network.Initialization
+open VerifiedNN.Network.Gradient
 open VerifiedNN.Network.ManualGradient
 open VerifiedNN.Training.Metrics
-open VerifiedNN.Training.GradientMonitoring
 open SciLean
 
 /-- Training configuration for manual gradient training -/
@@ -86,33 +86,22 @@ def createBatches (data : Array (Vector 784 × Nat)) (batchSize : Nat)
 def trainEpochManual (net : MLPArchitecture) (data : Array (Vector 784 × Nat))
     (config : Config) : IO MLPArchitecture := do
   let mut currentNet := net
-  let mut firstGradientSample : Option (Matrix 128 784 × Vector 128 × Matrix 10 128 × Vector 10) := none
 
   -- Train on single examples to avoid expensive gradient accumulation
   for exampleIdx in [0:data.size] do
     let (input, label) := data[exampleIdx]!
-    let gradients := computeManualGradients currentNet input label
 
-    -- Store first gradient for monitoring
-    if firstGradientSample.isNone then
-      firstGradientSample := some gradients
+    -- Compute gradient using manual backpropagation
+    let params := flattenParams currentNet
+    let gradient := networkGradientManual params input label
 
-    currentNet := applyGradients currentNet gradients config.learningRate
+    -- Apply SGD update
+    let newParams := ⊞ i => params[i] - config.learningRate * gradient[i]
+    currentNet := unflattenParams newParams
 
     if (exampleIdx + 1) % 50 == 0 then
       IO.println s!"  Example {exampleIdx + 1}/{data.size}"
       (← IO.getStdout).flush
-
-  -- Display gradient norms at end of epoch
-  match firstGradientSample with
-  | some grads =>
-    let norms := computeGradientNorms grads
-    IO.println s!"  Gradient norms: {formatGradientNorms norms}"
-    let healthMsg := checkGradientHealth norms
-    if healthMsg != "" then
-      IO.println s!"  {healthMsg}"
-    (← IO.getStdout).flush
-  | none => pure ()
 
   return currentNet
 

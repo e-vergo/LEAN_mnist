@@ -54,3 +54,10 @@ env/
 # OS-specific
 Thumbs.db
 .Trash-*
+
+# Training logs (keep directory structure)
+/logs/*
+!/logs/.gitkeep
+training_log.txt
+training_console.log
+training_console_new.log

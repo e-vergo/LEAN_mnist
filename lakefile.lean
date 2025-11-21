@@ -93,6 +93,16 @@ lean_exe miniTraining where
   supportInterpreter := true
   moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
 
+lean_exe mnistTrainFull where
+  root := `VerifiedNN.Examples.MNISTTrainFull
+  supportInterpreter := true
+  moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
+
+lean_exe mnistTrainMedium where
+  root := `VerifiedNN.Examples.MNISTTrainMedium
+  supportInterpreter := true
+  moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
+
 lean_exe debugTraining where
   root := `VerifiedNN.Testing.DebugTraining
   supportInterpreter := true
@@ -110,6 +120,11 @@ lean_exe inspectGradient where
 
 lean_exe mediumTraining where
   root := `VerifiedNN.Testing.MediumTraining
+  supportInterpreter := true
+  moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
+
+lean_exe performanceTest where
+  root := `VerifiedNN.Testing.PerformanceTest
   supportInterpreter := true
   moreLinkArgs := #["-L/opt/homebrew/opt/openblas/lib", "-lopenblas"]
 

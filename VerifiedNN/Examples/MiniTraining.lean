@@ -79,9 +79,9 @@ def runMiniTraining : IO Unit := do
   IO.println ""
 
   -- Training parameters
-  let epochs := 3
+  let epochs := 10
   let batchSize := 10
-  let learningRate := 0.01
+  let learningRate := 0.5  -- Aggressive learning rate for testing
 
   IO.println "Training Configuration:"
   IO.println s!"  Epochs: {epochs}"
