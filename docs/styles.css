@@ -155,7 +155,7 @@ pre code {
 }
 
 section {
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
 }
 
 /* ============================================================================
@@ -349,6 +349,10 @@ section {
   padding: var(--spacing-md);
   box-shadow: 0 1px 3px var(--shadow);
   transition: all var(--transition);
+  max-height: 400px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .visual-box:hover {
@@ -367,9 +371,18 @@ section {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   line-height: 1.4;
-  overflow-x: auto;
+  overflow: auto;
   white-space: pre;
   color: var(--body-text);
+  flex: 1;
+  margin: 0;
+}
+
+.visual-box svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
 }
 
 .visual-box .ascii-art {
@@ -379,6 +392,7 @@ section {
   background-color: var(--code-bg);
   padding: var(--spacing-sm);
   border-radius: var(--border-radius-sm);
+  overflow: auto;
 }
 
 /* ============================================================================
@@ -732,7 +746,7 @@ section {
   background-color: var(--heading);
   color: rgba(255, 255, 255, 0.8);
   padding: var(--spacing-2xl) 0;
-  margin-top: var(--spacing-3xl);
+  margin-top: var(--spacing-2xl);
 }
 
 .footer-content {
@@ -1014,6 +1028,34 @@ section {
   color: var(--success);
 }
 
+/* Custom Scrollbar Styling */
+.visual-box::-webkit-scrollbar,
+pre::-webkit-scrollbar,
+code::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.visual-box::-webkit-scrollbar-track,
+pre::-webkit-scrollbar-track,
+code::-webkit-scrollbar-track {
+  background: var(--code-bg);
+  border-radius: 4px;
+}
+
+.visual-box::-webkit-scrollbar-thumb,
+pre::-webkit-scrollbar-thumb,
+code::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.visual-box::-webkit-scrollbar-thumb:hover,
+pre::-webkit-scrollbar-thumb:hover,
+code::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary-text);
+}
+
 /* Accessibility - Skip to main content */
 .skip-link,
 .skip-to-main {
@@ -1034,11 +1076,7 @@ section {
 
 /* Print styles */
 @media print {
-  .header,
-  .footer,
-  .cta-buttons {
-    display: none;
-  }
+  /* Keep header, footer, and CTA buttons visible in print/PDF */
 
   body {
     background: white;
@@ -1050,5 +1088,13 @@ section {
   .theorem-box {
     border: 1px solid #ccc;
     box-shadow: none;
+  }
+
+  /* Prevent page breaks inside important elements */
+  .visual-box,
+  .achievement-card,
+  .theorem-box,
+  .code-block {
+    page-break-inside: avoid;
   }
 }
