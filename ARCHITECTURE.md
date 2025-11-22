@@ -7,7 +7,7 @@
 
 This document explains the architecture of the VerifiedNN project, focusing on the technical innovations required to build a complete, verified, executable neural network training system in Lean 4.
 
-**Key Challenge Solved:** SciLean's automatic differentiation is noncomputable (cannot execute), blocking gradient descent. We solved this by implementing manual backpropagation with explicit chain rule application, achieving executable training while preserving formal verification.
+**Key Challenge Solved:** SciLean's automatic differentiation is noncomputable (cannot execute), blocking gradient descent. The solution uses this by implementing manual backpropagation with explicit chain rule application, achieving executable training while preserving formal verification.
 
 **System Components:**
 1. Manual Backpropagation Engine (computable gradients)
@@ -26,7 +26,7 @@ SciLean provides automatic differentiation via the `∇` operator, but it's **no
 ```lean
 -- This type-checks but CANNOT execute:
 def gradient (f : Float^[n] → Float) (x : Float^[n]) : Float^[n] :=
-  (∇ x', f x') x  -- ❌ noncomputable
+  (∇ x', f x') x  -- noncomputable
 ```
 
 **Why it matters:** Any function using `∇` becomes transitively noncomputable, including:
@@ -39,7 +39,7 @@ def gradient (f : Float^[n] → Float) (x : Float^[n]) : Float^[n] :=
 
 ### The Solution: Manual Backpropagation
 
-We implemented explicit backpropagation by manually applying the chain rule for each operation:
+This system implementsed explicit backpropagation by manually applying the chain rule for each operation:
 
 **Implementation:** `VerifiedNN/Network/ManualGradient.lean` (361 lines)
 
@@ -316,22 +316,22 @@ theorem layer_dimension_invariant {inDim outDim : Nat}
 **Alternatives Considered:**
 
 1. **Use SciLean's `∇` operator:**
-   - ❌ Noncomputable, blocks training execution
-   - ✅ Would provide automatic correctness if executable
+   - Noncomputable, blocks training execution
+   - Would provide automatic correctness if executable
 
 2. **Axiomatize gradient computation:**
-   - ❌ No executable training at all
-   - ✅ Could focus purely on verification
+   - No executable training at all
+   - Could focus purely on verification
 
 3. **Use external ML library (Python/PyTorch):**
-   - ❌ Breaks Lean's verification guarantees
-   - ✅ Would be fast and practical
+   - Breaks Lean's verification guarantees
+   - Would be fast and practical
 
-4. **✅ Manual backprop with verification:**
-   - ✅ Executable training (3.3 hours for 60K samples)
-   - ✅ Formal verification of gradient correctness
-   - ✅ Self-contained Lean 4 implementation
-   - ⚠️ More code than automatic AD (361 lines)
+4. ** Manual backprop with verification:**
+   - Executable training (3.3 hours for 60K samples)
+   - Formal verification of gradient correctness
+   - Self-contained Lean 4 implementation
+   - Note: More code than automatic AD (361 lines)
 
 **Decision:** Manual backprop achieves project goals (verified + executable) with acceptable tradeoffs.
 
@@ -435,10 +435,9 @@ VerifiedNN/
 ├── Layer/             # DenseLayer with forward + backward
 │   └── Key: Type-safe layer operations
 │
-├── Network/           # MLPArchitecture + ManualGradient ⭐
-│   ├── Architecture: Network structure
+├── Network/           # MLPArchitecture + ManualGradient │   ├── Architecture: Network structure
 │   ├── Initialization: He initialization
-│   ├── ManualGradient: ⭐ Computable backprop (361 lines)
+│   ├── ManualGradient: Computable backprop (361 lines)
 │   ├── Gradient: AD-based gradients (noncomputable)
 │   └── Serialization: Model saving/loading
 │
@@ -453,20 +452,17 @@ VerifiedNN/
 │   ├── Batch: Shuffling and mini-batches
 │   └── Metrics: Accuracy, loss, per-class stats
 │
-├── Data/              # MNIST loading + preprocessing ⭐
-│   ├── MNIST: IDX binary parsing
-│   └── Preprocessing: ⭐ Normalization (critical!)
+├── Data/              # MNIST loading + preprocessing │   ├── MNIST: IDX binary parsing
+│   └── Preprocessing: Normalization (critical!)
 │
-├── Verification/      # Formal proofs ⭐
-│   ├── GradientCorrectness: ⭐ 26 theorems
+├── Verification/      # Formal proofs │   ├── GradientCorrectness: 26 theorems
 │   ├── TypeSafety: Dimension proofs (4 sorries)
 │   └── Convergence: Optimization theory (axiomatized)
 │
 ├── Testing/           # Unit tests, gradient checks
 │   └── Key: SmokeTest validates concepts
 │
-└── Examples/          # MNISTTrainFull ⭐
-    └── MNISTTrainFull: ⭐ Production training (93% accuracy)
+└── Examples/          # MNISTTrainFull └── MNISTTrainFull: Production training (93% accuracy)
 ```
 
 **Critical Files:**
@@ -553,5 +549,5 @@ VerifiedNN/
 
 ---
 
-> **⚠️ Research Prototype Disclaimer**
+> ** Note: Research Prototype Disclaimer**
 > This is a formal verification research prototype. While training achieves 93% MNIST accuracy, this is not production ML software. Focus is on verification research, not performance or deployment.

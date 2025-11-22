@@ -14,22 +14,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Implementation:** Type-safe MLP implementation with formally verified gradient computation. **Manual backpropagation enables executable training** (93% MNIST accuracy in 3.3 hours), working around SciLean's noncomputable automatic differentiation.
 
-**Verification Philosophy:** Mathematical properties proven on ℝ (real numbers), computational implementation in Float (IEEE 754). The Float→ℝ gap is acknowledged—we verify symbolic correctness, not floating-point numerics.
+**Verification Philosophy:** Mathematical properties proven on ℝ (real numbers), computational implementation in Float (IEEE 754). The Float→ℝ gap is acknowledged—the system verify symbolic correctness, not floating-point numerics.
 
 **New to this project?** See [GETTING_STARTED.md](GETTING_STARTED.md) for comprehensive onboarding with installation instructions.
 
 ## Current Implementation Status
 
-**Build Status:** ✅ **All 59 Lean files compile successfully with ZERO errors**
+**Build Status:** **All 59 Lean files compile successfully with ZERO errors**
 
 **Execution Status:**
 
-- ✅ **Data Pipeline:** Fully functional (60K train + 10K test images)
-- ✅ **Visualization:** ASCII renderer works excellently (renderMNIST executable)
-- ✅ **Testing:** SmokeTest validates forward pass and gradients
-- ✅ **Training:** Fully functional with manual backpropagation (60K samples, 93% accuracy)
-- ✅ **Model Saving:** 29 checkpoints saved (2.6MB each, human-readable)
-- ⚠️ **Automatic Differentiation:** SciLean's `∇` operator remains noncomputable (not a blocker due to manual backprop)
+- **Data Pipeline:** Fully functional (60K train + 10K test images)
+- **Visualization:** ASCII renderer works excellently (renderMNIST executable)
+- **Testing:** SmokeTest validates forward pass and gradients
+- **Training:** Fully functional with manual backpropagation (60K samples, 93% accuracy)
+- **Model Saving:** 29 checkpoints saved (2.6MB each, human-readable)
+- Note: **Automatic Differentiation:** SciLean's `∇` operator remains noncomputable (not a blocker due to manual backprop)
 
 **Verification Progress:**
 
@@ -47,7 +47,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Key Achievements
 
-### 🔬 Working Training System
+### Working Training System System
 - **93% MNIST accuracy** on full 60,000 sample training set
 - **Manual backpropagation:** Computable gradient descent (workaround for noncomputable AD)
 - **Complete ML pipeline:** IDX loading → normalization → training → model saving
@@ -220,14 +220,14 @@ lake exe smokeTest              # Run validation tests (forward pass, gradients)
 lake exe checkDataDistribution  # Validate training set balance
 
 # Production training (manual backpropagation - fully executable)
-lake exe mnistTrainMedium       # ✅ 5K samples, 12 minutes, 85-95% accuracy
-lake exe mnistTrainFull         # ✅ 60K samples, 3.3 hours, 93% accuracy
+lake exe mnistTrainMedium       # 5K samples, 12 minutes, 85-95% accuracy
+lake exe mnistTrainFull         # 60K samples, 3.3 hours, 93% accuracy
 
 # Non-executable (depend on noncomputable AD - DEPRECATED)
 # These examples use SciLean's ∇ operator which is noncomputable
 # Use mnistTrainMedium/mnistTrainFull instead (manual backprop)
-# lake exe simpleExample        # ❌ Cannot execute - noncomputable main
-# lake exe trainManual          # ❌ Cannot execute - noncomputable main
+# lake exe simpleExample        # Cannot execute - noncomputable main
+# lake exe trainManual          # Cannot execute - noncomputable main
 
 # Verify proofs (build only, no execution)
 lake build VerifiedNN.Verification.GradientCorrectness
@@ -235,7 +235,7 @@ lean --print-axioms VerifiedNN/Verification/GradientCorrectness.lean
 
 # Test suite (non-executable tests exist but cannot run due to AD)
 lake build VerifiedNN.Testing.UnitTests  # Builds, but cannot execute
-# lake env lean --run VerifiedNN/Testing/UnitTests.lean  # ❌ Would fail
+# lake env lean --run VerifiedNN/Testing/UnitTests.lean  # Would fail
 ```
 
 ## Known Limitations
@@ -245,32 +245,32 @@ lake build VerifiedNN.Testing.UnitTests  # Builds, but cannot execute
 **Historical Problem:** SciLean's automatic differentiation was fundamentally noncomputable in Lean 4, blocking gradient descent.
 
 **Solution:** Implemented manual backpropagation with explicit chain rule application:
-- ✅ Training code is fully computable and executable
-- ✅ Achieved 93% MNIST accuracy in 3.3 hours
-- ✅ 29 saved model checkpoints (best at epoch 49)
-- ✅ Gradient correctness formally verified (26 theorems)
+- Training code is fully computable and executable
+- Achieved 93% MNIST accuracy in 3.3 hours
+- 29 saved model checkpoints (best at epoch 49)
+- Gradient correctness formally verified (26 theorems)
 
 **What still doesn't work:**
-- ❌ SciLean's `∇` operator remains noncomputable (by design)
-- ❌ Examples using automatic differentiation cannot execute
-- ❌ Future work: Make SciLean's AD computable (upstream issue)
+- SciLean's `∇` operator remains noncomputable (by design)
+- Examples using automatic differentiation cannot execute
+- Future work: Make SciLean's AD computable (upstream issue)
 
 **What does work:**
-- ✅ Production training via manual backprop (`mnistTrainMedium`, `mnistTrainFull`)
-- ✅ Complete gradient verification (manual gradients proven correct)
-- ✅ Full ML pipeline (data → training → saved models)
+- Production training via manual backprop (`mnistTrainMedium`, `mnistTrainFull`)
+- Complete gradient verification (manual gradients proven correct)
+- Full ML pipeline (data → training → saved models)
 
 ### What This Project Demonstrates
 
 **This is a working verified neural network training system achieving production-level accuracy.**
 
 **Primary achievements:**
-- ✅ **Executable training:** 93% MNIST accuracy (60K samples, 3.3 hours)
-- ✅ **Manual backpropagation:** Computable gradient descent implementation
-- ✅ **Formal verification:** 26 proven gradient correctness theorems
-- ✅ **Type-safe design:** Dimension errors prevented at compile time
-- ✅ **Complete ML pipeline:** IDX parsing → normalization → training → serialization
-- ✅ **Model checkpointing:** 29 saved models (2.6MB each, human-readable)
+- **Executable training:** 93% MNIST accuracy (60K samples, 3.3 hours)
+- **Manual backpropagation:** Computable gradient descent implementation
+- **Formal verification:** 26 proven gradient correctness theorems
+- **Type-safe design:** Dimension errors prevented at compile time
+- **Complete ML pipeline:** IDX parsing → normalization → training → serialization
+- **Model checkpointing:** 29 saved models (2.6MB each, human-readable)
 
 **Use cases:**
 - Training verified neural networks (production-level accuracy)
@@ -279,9 +279,9 @@ lake build VerifiedNN.Testing.UnitTests  # Builds, but cannot execute
 - Reference for manual backpropagation in dependent types
 
 **Limitations:**
-- ⚠️ Training is 400× slower than PyTorch (CPU-only, no SIMD optimization)
-- ⚠️ Single architecture (784→128→10 MLP)
-- ⚠️ Research-quality code (not production ML infrastructure)
+- Note: Training is 400× slower than PyTorch (CPU-only, no SIMD optimization)
+- Note: Single architecture (784→128→10 MLP)
+- Note: Research-quality code (not production ML infrastructure)
 
 ## Project Structure
 
@@ -290,19 +290,19 @@ VerifiedNN/
 ├── Core/              # Fundamental types, linear algebra, activations
 ├── Layer/             # Dense layers with differentiability proofs
 ├── Network/           # MLP architecture, initialization, gradients
-│   ├── ManualGradient.lean  # ⭐ BREAKTHROUGH: Computable backprop
-│   ├── Serialization.lean   # ⭐ Model saving/loading (29 checkpoints)
+│   ├── ManualGradient.lean  # BREAKTHROUGH: Computable backprop
+│   ├── Serialization.lean   # Model saving/loading (29 checkpoints)
 │   └── Gradient.lean        # AD-based gradients (noncomputable reference)
 ├── Loss/              # Cross-entropy with mathematical properties
 ├── Optimizer/         # SGD implementation
 ├── Training/          # Training loop, batching, metrics
 ├── Data/              # MNIST loading and preprocessing
-│   └── Preprocessing.lean   # ⭐ Normalization (critical for stability!)
+│   └── Preprocessing.lean   # Normalization (critical for stability!)
 ├── Verification/      # Formal proofs (gradient correctness, type safety, convergence)
 ├── Testing/           # Unit tests, integration tests, gradient checking
 └── Examples/          # Minimal examples and full MNIST training
-    ├── MNISTTrainMedium.lean  # ✅ 5K samples (12 min)
-    └── MNISTTrainFull.lean    # ✅ 60K samples (3.3 hours, 93% accuracy)
+    ├── MNISTTrainMedium.lean  # 5K samples (12 min)
+    └── MNISTTrainFull.lean    # 60K samples (3.3 hours, 93% accuracy)
 
 scripts/
 ├── download_mnist.sh  # MNIST dataset retrieval
@@ -417,7 +417,7 @@ This repository has been cleaned to mathlib submission quality. All new code and
 
 ### Documentation Standards (Mandatory)
 
-**Module-level docstrings** (use `/-!` format):
+**Module-level docstrings** (use `/-.` format):
 ```lean
 /-!
 # Module Name
@@ -572,10 +572,10 @@ Before considering a module "complete":
 
 **Implementation Validation:**
 
-- ✅ SmokeTest validates forward pass correctness
-- ✅ Manual backpropagation achieves 93% MNIST accuracy (empirically validated)
-- ✅ Type system ensures implementation matches specification at compile time
-- ✅ Training convergence demonstrated (60K samples, 50 epochs, 29 checkpoints)
+- SmokeTest validates forward pass correctness
+- Manual backpropagation achieves 93% MNIST accuracy (empirically validated)
+- Type system ensures implementation matches specification at compile time
+- Training convergence demonstrated (60K samples, 50 epochs, 29 checkpoints)
 
 **Out of Scope:**
 
@@ -712,13 +712,13 @@ let x := dbgTraceIfShared "x is shared!" someArray
 
 **Current Project Status:**
 
-- ✅ Build system works (all 59 files compile)
-- ✅ Type system demonstrates safety properties
-- ✅ Gradient correctness formally verified (26 theorems)
-- ✅ Data pipeline and visualization fully functional
-- ✅ Training executes successfully (93% MNIST accuracy, 3.3 hours)
-- ✅ Model serialization and checkpointing (29 saved models)
-- ⚠️ Focus on verification research and educational use—not production ML infrastructure
+- Build system works (all 59 files compile)
+- Type system demonstrates safety properties
+- Gradient correctness formally verified (26 theorems)
+- Data pipeline and visualization fully functional
+- Training executes successfully (93% MNIST accuracy, 3.3 hours)
+- Model serialization and checkpointing (29 saved models)
+- Note: Focus on verification research and educational use—not production ML infrastructure
 
 These represent code quality standards for research artifacts. During development, deviations are acceptable and should be documented with TODO comments.
 
@@ -816,15 +816,15 @@ When working with Lean code in this project, **always leverage the MCP tools** a
 ### During Active Development
 
 **Training Code Standards:**
-- ✅ **Use manual backpropagation** for all training implementations
-- ✅ Verify manual gradients against symbolic derivatives (theorems)
-- ❌ **Don't use `∇` operator** in training code (noncomputable)
-- ✅ Document gradient computation strategy in comments
-- ✅ Test gradients with SmokeTest or gradient checking
+- **Use manual backpropagation** for all training implementations
+- Verify manual gradients against symbolic derivatives (theorems)
+- **Don't use `∇` operator** in training code (noncomputable)
+- Document gradient computation strategy in comments
+- Test gradients with SmokeTest or gradient checking
 
 **Example Pattern:**
 ```lean
--- ✅ GOOD: Manual backprop (computable)
+-- GOOD: Manual backprop (computable)
 def networkGradient (params : Float^[n]) (x : Float^[784]) (y : Nat) : Float^[n] :=
   -- Forward pass with activation caching
   let z1 := W1 * x + b1
@@ -834,7 +834,7 @@ def networkGradient (params : Float^[n]) (x : Float^[784]) (y : Nat) : Float^[n]
   let dL_dW2 := outerProduct dL_dz2 h1
   ...
 
--- ❌ BAD: Automatic differentiation (noncomputable)
+-- BAD: Automatic differentiation (noncomputable)
 def networkGradient (params : Float^[n]) (x : Float^[784]) (y : Nat) : Float^[n] :=
   (∇ p, loss (unflattenParams p) x y) params  -- Cannot execute!
 ```
@@ -891,4 +891,4 @@ Listed in priority order:
 **Last Updated:** November 21, 2025
 **Maintained by:** Project contributors
 
-**Project Status:** ✅ Training working (93% accuracy), 4 sorries remaining, 9 axioms justified
+**Project Status:** Training working (93% accuracy), 4 sorries remaining, 9 axioms justified

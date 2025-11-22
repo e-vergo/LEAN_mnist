@@ -1,6 +1,6 @@
 # Contributing to VerifiedNN
 
-Thank you for your interest in contributing to the VerifiedNN project! This document provides guidelines for contributing to this formally verified neural network implementation in Lean 4.
+Thank you for your interest in contributing to the VerifiedNN project. This document provides guidelines for contributing to this formally verified neural network implementation in Lean 4.
 
 ---
 
@@ -157,17 +157,17 @@ import VerifiedNN.Network.Architecture
 
 **Type annotations:**
 ```lean
--- ✅ GOOD: Explicit type signatures for public definitions
+-- GOOD: Explicit type signatures for public definitions
 def computeGradient (net : MLPArchitecture) (x : Float^[784]) (y : Nat)
   : Float^[nParams] := ...
 
--- ❌ BAD: Missing type signature
+-- BAD: Missing type signature
 def computeGradient net x y := ...
 ```
 
 **Manual Backpropagation Standard:**
 ```lean
--- ✅ GOOD: Use manual backprop for training code
+-- GOOD: Use manual backprop for training code
 def networkGradient (params : Float^[n]) (x : Float^[784]) (y : Nat)
   : Float^[n] :=
   -- Forward pass with caching
@@ -177,7 +177,7 @@ def networkGradient (params : Float^[n]) (x : Float^[784]) (y : Nat)
   let dL_dz2 := y_hat - y_onehot
   ...
 
--- ❌ BAD: Don't use noncomputable AD in training code
+-- BAD: Don't use noncomputable AD in training code
 def networkGradient (params : Float^[n]) (x : Float^[784]) (y : Nat)
   : Float^[n] :=
   (∇ p, loss (unflattenParams p) x y) params  -- Noncomputable!
@@ -187,10 +187,10 @@ def networkGradient (params : Float^[n]) (x : Float^[784]) (y : Nat)
 
 **Use efficient array types:**
 ```lean
--- ✅ GOOD: SciLean's DataArrayN (efficient)
+-- GOOD: SciLean's DataArrayN (efficient)
 def process (x : Float^[n]) : Float^[n] := ...
 
--- ❌ BAD: Standard Array (inefficient for numerics)
+-- BAD: Standard Array (inefficient for numerics)
 def process (x : Array Float) : Array Float := ...
 ```
 
@@ -204,10 +204,10 @@ def matrixMultiply {m n k : Nat} (A : Float^[m,n]) (B : Float^[n,k])
 
 **Avoid unnecessary allocations:**
 ```lean
--- ✅ GOOD: In-place style operations
+-- GOOD: In-place style operations
 let result := ⊞ i => a[i] + b[i]
 
--- ❌ BAD: Multiple intermediate arrays
+-- BAD: Multiple intermediate arrays
 let temp := a.map (· + 1)
 let result := temp.zipWith b (· + ·)
 ```
@@ -274,7 +274,7 @@ theorem flatten_unflatten_inverse (x : Float^[nParams]) :
 
 **Prefer explicit tactics:**
 ```lean
--- ✅ GOOD: Clear tactic sequence
+-- GOOD: Clear tactic sequence
 theorem composition_correct {f g : Float → Float} :
   derivative (g ∘ f) = (derivative g ∘ f) * derivative f := by
   unfold derivative composition
@@ -282,7 +282,7 @@ theorem composition_correct {f g : Float → Float} :
   simp only [mul_comm]
   ring
 
--- ⚠️ ACCEPTABLE: Auto tactics if proof is obvious
+-- Note: ACCEPTABLE: Auto tactics if proof is obvious
 theorem trivial_lemma : 2 + 2 = 4 := by norm_num
 ```
 
@@ -646,7 +646,7 @@ By contributing, you agree that your contributions will be licensed under the sa
 
 ---
 
-**Thank you for contributing to verified machine learning!**
+**Thank you for contributing to verified machine learning.**
 
 For questions about these guidelines, open a discussion or ask in the Lean Zulip #scientific-computing channel.
 

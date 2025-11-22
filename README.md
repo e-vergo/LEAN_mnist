@@ -1,27 +1,26 @@
 # Verified Neural Network Training in Lean 4
 
-**Status:** ✅ **TRAINING WORKING + VERIFICATION COMPLETE** - Manual backpropagation achieves 93% MNIST accuracy on full 60,000 sample training set. All 59 files build successfully with 26 gradient correctness theorems proven.
+**Status:** Build: All 59 files compile successfully. Training: 93% MNIST accuracy on 60,000 samples. Verification: 26 gradient correctness theorems proven.
 
-This project **rigorously proves** that backpropagation computes mathematically correct gradients for neural network training AND demonstrates working training on MNIST. We implement an MLP architecture in Lean 4 with formal verification that computed gradients equal analytical derivatives, plus a computable manual gradient implementation that achieves excellent accuracy.
+This project provides formal verification that backpropagation computes mathematically correct gradients for neural network training. The system implements an MLP architecture in Lean 4 with formal verification that computed gradients equal analytical derivatives. A computable manual gradient implementation enables executable training.
 
-> **⚠️ Research and Educational Project**
-> This is a formal verification research prototype demonstrating verified gradient correctness and type-safe neural network implementation. While the neural network trains successfully and achieves 93% MNIST accuracy, this is not production ML software. The focus is on learning formal verification, understanding typed neural network design, and advancing research in verified machine learning. See [ARCHITECTURE.md](ARCHITECTURE.md) for technical details.
+**Research and Educational Project:** This is a formal verification research prototype demonstrating verified gradient correctness and type-safe neural network implementation. The neural network achieves 93% MNIST accuracy. This is not production ML software. The focus is on formal verification research, typed neural network design, and verified machine learning. See [ARCHITECTURE.md](ARCHITECTURE.md) for technical details.
 
 ---
 
-## 🚀 **First Time Here?**
+## New Users
 
 **Comprehensive guide:** [GETTING_STARTED.md](GETTING_STARTED.md) - Full installation with troubleshooting
 
-**Having issues?** [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Common problems solved
+**For troubleshooting:** [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Common problems solved
 
-⚠️ **IMPORTANT:** Run `./scripts/download_mnist.sh` to download MNIST dataset before running examples
+**IMPORTANT:** Run `./scripts/download_mnist.sh` to download MNIST dataset before running examples
 
 ---
 
-## 🎉 Quick Start in 5 Minutes
+## Quick Start Guide
 
-Want to see a verified neural network in action? Here's the fastest path:
+To run a verified neural network:
 
 ```bash
 # 1. Install dependencies (one-time setup - 10 minutes)
@@ -52,19 +51,19 @@ lake exe mnistTrainFull
 - Full training (60K): 93% test accuracy in 3.3 hours
 - 29 saved model checkpoints (best model auto-selected)
 
-**What You're Seeing:**
-- ✅ Type-safe neural network with dimension verification
-- ✅ Manual backpropagation (computable gradient descent)
-- ✅ Formal verification of gradient correctness (26 proven theorems)
-- ✅ Complete ML pipeline: data loading → training → model saving → evaluation
+**System Components:**
+- Type-safe neural network with dimension verification
+- Manual backpropagation (computable gradient descent)
+- Formal verification of gradient correctness (26 proven theorems)
+- Complete ML pipeline: data loading, training, model saving, evaluation
 
 ---
 
-## 🎉 **Training Success with Manual Backpropagation**
+## Training with Manual Backpropagation
 
-**TRAINING WORKS!** While SciLean's automatic differentiation (`∇` operator) is noncomputable, we've implemented **manual backpropagation** that achieves excellent results:
+SciLean's automatic differentiation (gradient operator) is noncomputable. Manual backpropagation provides executable training with verified correctness.
 
-### ✅ Verified Results
+### Verified Results
 
 **Medium-Scale (5K samples):**
 - **Accuracy:** 85-95% test accuracy after 10 epochs
@@ -79,19 +78,17 @@ lake exe mnistTrainFull
 - **Stability:** No gradient explosion, no NaN/Inf errors
 - **Models Saved:** 29 checkpoints (best at epoch 49)
 
-### 🔑 Critical Data Normalization Requirement
-
-⚠️ **IMPORTANT:** MNIST pixels must be normalized from [0, 255] → [0, 1] before training!
+### Critical Data Normalization Requirement Note: **IMPORTANT:** MNIST pixels must be normalized from [0, 255] → [0, 1] before training!
 
 Without normalization:
-- ❌ Gradients explode to 460-750× normal magnitude
-- ❌ Network cannot learn (stuck at random guessing)
-- ❌ Loss remains at ~2.3 (no improvement)
+- Gradients explode to 460-750× normal magnitude
+- Network cannot learn (stuck at random guessing)
+- Loss remains at ~2.3 (no improvement)
 
 With normalization (using `Preprocessing.normalizeDataset`):
-- ✅ Gradients healthy (0.7-1.8 range)
-- ✅ Rapid learning (90% after 1 epoch)
-- ✅ Stable training (no clipping needed)
+- Gradients healthy (0.7-1.8 range)
+- Rapid learning (90% after 1 epoch)
+- Stable training (no clipping needed)
 
 **How to normalize:**
 ```lean
@@ -99,47 +96,47 @@ let trainData ← MNIST.loadMNISTTrain dataDir
 let trainNorm := Preprocessing.normalizeDataset trainData  -- Divide by 255.0
 ```
 
-### 🚀 What Works
+### Functional Components
 
-- ✅ **Training:** `mnistTrainMedium` (5K) and `mnistTrainFull` (60,000 samples) both executable
-- ✅ **Manual Gradients:** Computable backpropagation implementation
-- ✅ **Data Pipeline:** 60,000 train + 10K test MNIST images load perfectly
-- ✅ **Model Saving:** 29 checkpoints saved (2.6MB each, human-readable)
-- ✅ **ASCII Renderer:** Excellent visualization - `lake exe renderMNIST`
-- ✅ **MNIST Load Test:** `lake exe mnistLoadTest` validates data integrity
-- ✅ **Smoke Test:** `lake exe smokeTest` tests forward pass and gradients
-- ✅ **All 26 gradient correctness theorems proven** and type-check successfully
-- ✅ **Build succeeds** with zero errors
+- **Training:** `mnistTrainMedium` (5K) and `mnistTrainFull` (60,000 samples) both executable
+- **Manual Gradients:** Computable backpropagation implementation
+- **Data Pipeline:** 60,000 train + 10K test MNIST images load perfectly
+- **Model Saving:** 29 checkpoints saved (2.6MB each, human-readable)
+- **ASCII Renderer:** Excellent visualization - `lake exe renderMNIST`
+- **MNIST Load Test:** `lake exe mnistLoadTest` validates data integrity
+- **Smoke Test:** `lake exe smokeTest` tests forward pass and gradients
+- **All 26 gradient correctness theorems proven** and type-check successfully
+- **Build succeeds** with zero errors
 
-### ⚠️ What Still Doesn't Work
+### Current Limitations Doesn't Work
 
-- ❌ **Automatic differentiation examples:** `simpleExample`, `trainManual` use `∇` operator (noncomputable)
-- ❌ **Test executables:** `gradientCheck`, `fullIntegration` depend on AD
-- ❌ **SciLean's `∇` operator:** Cannot be compiled to executable code
+- **Automatic differentiation examples:** `simpleExample`, `trainManual` use `∇` operator (noncomputable)
+- **Test executables:** `gradientCheck`, `fullIntegration` depend on AD
+- **SciLean's `∇` operator:** Cannot be compiled to executable code
 
 **Why The Limitation:**
 SciLean's automatic differentiation uses symbolic manipulation during elaboration that cannot be compiled. Our solution: implement manual backpropagation that IS computable while still proving correctness via the noncomputable AD theorems.
 
 ---
 
-## 🎯 Core Achievement
+## Core Achievement
 
-**PRIMARY GOAL:** ✅ **PROVEN + VALIDATED** - Gradient correctness proven AND training achieves 93% accuracy on full 60,000 sample MNIST
-**SECONDARY GOAL:** ✅ **VERIFIED** - Type-level dimension specifications enforce runtime correctness
-**TERTIARY GOAL:** ✅ **ACHIEVED** - Full training pipeline working with manual backpropagation
+Primary goal: **PROVEN + VALIDATED** - Gradient correctness proven AND training achieves 93% accuracy on full 60,000 sample MNIST
+Secondary goal: **VERIFIED** - Type-level dimension specifications enforce runtime correctness
+Tertiary goal: **ACHIEVED** - Full training pipeline working with manual backpropagation
 
 **MAIN THEOREM** (`network_gradient_correct`): A 2-layer neural network with dense layers, ReLU activation, softmax output, and cross-entropy loss is **end-to-end differentiable**, proving that backpropagation computes mathematically correct gradients.
 
-**Build Status:** ✅ All 59 Lean files compile with **ZERO errors** and **4 active sorries** (TypeSafety.lean)
-**Proof Status:** ✅ **26 theorems proven** (11 gradient correctness + 14 type safety + 1 convergence lemma)
-**Documentation:** ✅ Mathlib submission quality across all 10 directories
-**Training Status:** ✅ **93% accuracy on full 60,000 sample MNIST with manual backpropagation implementation**
+**Build Status:** All 59 Lean files compile with **ZERO errors** and **4 active sorries** (TypeSafety.lean)
+**Proof Status:** **26 theorems proven** (11 gradient correctness + 14 type safety + 1 convergence lemma)
+**Documentation:** Mathlib submission quality across all 10 directories
+**Training Status:** **93% accuracy on full 60,000 sample MNIST with manual backpropagation implementation**
 
 ---
 
 ## ⚡ What Actually Works
 
-### ✅ Fully Working Executables
+### Functional Executables Executables
 
 #### Training (Manual Backpropagation)
 
@@ -171,7 +168,7 @@ SciLean's automatic differentiation uses symbolic manipulation during elaboratio
 - **Loss Evaluation** - Softmax, cross-entropy computation
 - **Executable:** `lake exe smokeTest` - Fast validation suite
 
-### ❌ Non-Executable (Blocked by Noncomputable AD)
+### Non-Executable Components (Blocked by Noncomputable AD)
 
 #### Automatic Differentiation Examples
 
@@ -202,9 +199,7 @@ lake exe renderMNIST --count 3 --inverted
 lake exe smokeTest
 # Expected: All tests pass in <10 seconds
 
-# 🎉 TRAIN THE NETWORK! 🎉
-
-# Medium-scale training (fast, 12 minutes)
+# TRAIN THE NETWORK! # Medium-scale training (fast, 12 minutes)
 lake exe mnistTrainMedium
 # Expected: 85-95% test accuracy after 10 epochs
 # Log file: logs/training_{timestamp}.log
@@ -272,29 +267,29 @@ Total checkpoints: 29
 
 ```bash
 # These use SciLean's ∇ operator and cannot execute:
-lake exe simpleExample      # ❌ Uses noncomputable AD
-lake exe trainManual        # ❌ Uses noncomputable AD
-lake exe gradientCheck      # ❌ Uses noncomputable AD
-lake exe fullIntegration    # ❌ Uses noncomputable AD
+lake exe simpleExample      # Uses noncomputable AD
+lake exe trainManual        # Uses noncomputable AD
+lake exe gradientCheck      # Uses noncomputable AD
+lake exe fullIntegration    # Uses noncomputable AD
 ```
 
 **Technical Achievement:** The ASCII renderer uses a manual unrolling workaround (28 match cases, 784 literal indices) to bypass SciLean's `DataArrayN` indexing limitation. See [Util/README.md](VerifiedNN/Util/README.md) for implementation details.
 
 ---
 
-## 📊 Project Statistics
+## Project Statistics
 
 ### Verification Metrics
 
 - **Total Lean Files:** 59 (across 10 subdirectories)
 - **Lines of Code:** ~10,500+
-- **Build Status:** ✅ **100% SUCCESS** (zero compilation errors, zero warnings)
+- **Build Status:** **100% SUCCESS** (zero compilation errors, zero warnings)
 - **Active Sorries:** **4** (TypeSafety.lean - array extensionality lemmas for parameter marshalling)
 - **Proofs Completed:** 26 theorems (11 gradient correctness + 14 type safety + 1 convergence)
 - **Axioms Used:** 4 type definitions + 7 unproven theorems (marked with `sorry`)
-- **Documentation Quality:** ✅ Mathlib submission standards (10/10 directories complete)
+- **Documentation Quality:** Mathlib submission standards (10/10 directories complete)
 
-### Training Infrastructure (Fully Working!)
+### Training Infrastructure - Fully Functional
 
 - **Manual Backpropagation:** Computable gradient computation (VerifiedNN/Network/ManualGradient.lean)
   - Layer-by-layer gradient computation for dense layers
@@ -321,7 +316,7 @@ lake exe fullIntegration    # ❌ Uses noncomputable AD
 
 ---
 
-## ✅ What Has Been Proven
+## Verification Status
 
 ### Gradient Correctness (Primary Contribution)
 
@@ -336,39 +331,15 @@ Proves that a 2-layer MLP with:
 
 is **differentiable at every point**, establishing that automatic differentiation correctly computes gradients via backpropagation.
 
-**2. Supporting Gradient Theorems (10 proven)**
+**2. Supporting Gradient Theorems (10 proven)** `cross_entropy_softmax_gradient_correct` - Softmax + cross-entropy differentiability `layer_composition_gradient_correct` - Dense layer differentiability `chain_rule_preserves_correctness` - Chain rule via mathlib's fderiv_comp `gradient_matches_finite_difference` - Numerical validation theorem `smul_gradient_correct` - Scalar multiplication gradient `vadd_gradient_correct` - Vector addition gradient `matvec_gradient_wrt_vector` - Matrix-vector gradient (input) `matvec_gradient_wrt_matrix` - Matrix-vector gradient (matrix) `relu_gradient_almost_everywhere` - ReLU derivative correctness `sigmoid_gradient_correct` - Sigmoid derivative correctness
 
-✅ `cross_entropy_softmax_gradient_correct` - Softmax + cross-entropy differentiability
-✅ `layer_composition_gradient_correct` - Dense layer differentiability
-✅ `chain_rule_preserves_correctness` - Chain rule via mathlib's fderiv_comp
-✅ `gradient_matches_finite_difference` - Numerical validation theorem
-✅ `smul_gradient_correct` - Scalar multiplication gradient
-✅ `vadd_gradient_correct` - Vector addition gradient
-✅ `matvec_gradient_wrt_vector` - Matrix-vector gradient (input)
-✅ `matvec_gradient_wrt_matrix` - Matrix-vector gradient (matrix)
-✅ `relu_gradient_almost_everywhere` - ReLU derivative correctness
-✅ `sigmoid_gradient_correct` - Sigmoid derivative correctness
+### Type Safety (Secondary Contribution - 14 theorems) All dimension preservation theorems proven (compile-time guarantees) Type system enforces runtime correctness (dependent types) Parameter marshalling verified (with 2 justified axioms for SciLean DataArray limitations) Flatten/unflatten type safety proven Network construction dimension consistency proven Batch operations preserve dimensions proven
 
-### Type Safety (Secondary Contribution - 14 theorems)
-
-✅ All dimension preservation theorems proven (compile-time guarantees)
-✅ Type system enforces runtime correctness (dependent types)
-✅ Parameter marshalling verified (with 2 justified axioms for SciLean DataArray limitations)
-✅ Flatten/unflatten type safety proven
-✅ Network construction dimension consistency proven
-✅ Batch operations preserve dimensions proven
-
-### Mathematical Properties (5 theorems)
-
-✅ `layer_preserves_affine_combination` - Dense layers are affine transformations
-✅ `matvec_linear` - Matrix-vector multiplication linearity
-✅ `Real.logSumExp_ge_component` - Log-sum-exp inequality (26-line proof)
-✅ `loss_nonneg_real` - Cross-entropy non-negativity on ℝ (proven)
-✅ `robbins_monro_lr_condition` - Robbins-Monro learning rate criterion
+### Mathematical Properties (5 theorems) `layer_preserves_affine_combination` - Dense layers are affine transformations `matvec_linear` - Matrix-vector multiplication linearity `Real.logSumExp_ge_component` - Log-sum-exp inequality (26-line proof) `loss_nonneg_real` - Cross-entropy non-negativity on ℝ (proven) `robbins_monro_lr_condition` - Robbins-Monro learning rate criterion
 
 ---
 
-## 🔬 Research Contributions
+## Research Contributions
 
 This project advances the state of formally verified machine learning by:
 
@@ -418,7 +389,7 @@ Integrated lean-lsp-mcp for AI-powered development:
 
 ---
 
-## 📋 Axioms and Unproven Theorems Catalog
+## Axioms and Unproven Theorems Catalog Theorems Catalog
 
 **Approach:** Following best practices, all proof obligations are stated as `theorem` declarations with `sorry`, making it explicit that these are proofs to complete, not assumed axioms. Type definitions remain as `axiom` declarations.
 
@@ -463,23 +434,22 @@ Integrated lean-lsp-mcp for AI-powered development:
 1. **`theorem sgd_converges_strongly_convex`** - Linear convergence for strongly convex functions
    *States:* SGD converges at linear rate under strong convexity
    *Reference:* Bottou, Curtis, & Nocedal (2018)
-   *Status:* ⚠️ Unproven (`sorry`)
+   *Status:* Note: Unproven (`sorry`)
 
 2. **`theorem sgd_converges_convex`** - Sublinear convergence for convex functions
    *States:* SGD converges at O(1/√T) rate for convex functions
    *Reference:* Nemirovski et al. (2009)
-   *Status:* ⚠️ Unproven (`sorry`)
+   *Status:* Note: Unproven (`sorry`)
 
-3. **`theorem sgd_finds_stationary_point_nonconvex`** - Stationary point convergence ⭐
-   *States:* SGD finds stationary points in non-convex landscapes (neural networks)
+3. **`theorem sgd_finds_stationary_point_nonconvex`** - Stationary point convergence *States:* SGD finds stationary points in non-convex landscapes (neural networks)
    *Reference:* Allen-Zhu, Li, & Song (2018)
-   *Status:* ⚠️ Unproven (`sorry`)
+   *Status:* Note: Unproven (`sorry`)
    *Note:* Most relevant for MNIST MLP training
 
 4. **`theorem batch_size_reduces_variance`** - Variance reduction with larger batches
    *States:* Larger batches reduce stochastic gradient variance
    *Reference:* Standard statistical result
-   *Status:* ⚠️ Unproven (`sorry`)
+   *Status:* Note: Unproven (`sorry`)
 
 **Why these remain unproven:**
 - Well-established results in optimization literature
@@ -547,11 +517,11 @@ axiom flatten_unflatten_id (params : Vector nParams) :
 - **Source:** SciLean/Data/DataArray/DataArray.lean:130
 - **Limitation:** DataArray is not yet a quotient type in SciLean (acknowledged in source comments)
 - **Proof requires:** Element-wise equality → array equality, which needs DataArray.ext
-- **Without it:** Cannot prove round-trip properties without assuming the extensionality we need
+- **Without it:** Cannot prove round-trip properties without assuming the extensionality the system need
 
 **Why these are acceptable:**
 - **Algorithmically true:** Code implements inverse transformations by construction
-- **Inherited limitation:** We axiomatize the same property SciLean already axiomatizes
+- **Inherited limitation:** The system axiomatize the same property SciLean already axiomatizes
 - **Proof sketches:** Full 80+ line proof strategies documented showing how they WOULD be proven
 - **Consistency:** Assert only what is computationally verified
 - **Reversible:** Clear path to proof once SciLean provides quotient DataArray
@@ -562,11 +532,11 @@ SciLean source analysis confirmed DataArray.ext is axiomatized.
 
 ---
 
-### Category 5: Standard Library Gap ✅ ELIMINATED
+### Category 5: Standard Library Gap ELIMINATED
 
 **Former Axiom:** `array_range_mem_bound` - Elements of Array.range n are bounded by n
 
-**Status:** ✅ **PROVEN** (2025-10-21) - Converted from axiom to theorem
+**Status:** **PROVEN** (2025-10-21) - Converted from axiom to theorem
 
 **Location:** `VerifiedNN/Network/Gradient.lean:65` (now a proven theorem)
 
@@ -589,7 +559,7 @@ private theorem array_range_mem_bound {n : Nat} (i : Nat) (h : i ∈ Array.range
 
 ---
 
-## 🔍 How to Verify Claims
+## Verification Procedures Claims
 
 ### 1. Build Verification
 
@@ -643,56 +613,36 @@ lake env lean --run VerifiedNN/Examples/SimpleExample.lean
 # Attempt real training (will fail without MNIST data)
 lake exe mnistTrain --epochs 1
 
-# Expected: Error about missing data files (we don't include MNIST in repo)
+# Expected: Error about missing data files (the system don't include MNIST in repo)
 ```
 
 ---
 
-## 🎓 Academic Integrity Statement
+## Academic Integrity Statement
 
-### What We Claim
+### Verified Claims
 
-✅ **Formal verification complete:** Main theorem `network_gradient_correct` proven (26 theorems total)
-✅ **Build succeeds:** All 59 files compile with zero errors
-✅ **Data pipeline works:** 60,000 train + 10K test MNIST images load and preprocess correctly
-✅ **Visualization works:** ASCII renderer produces excellent output
-✅ **Components work:** Forward pass, network initialization, loss evaluation all validated
-✅ **Comprehensive testing:** 30+ tests pass across data, loss, linear algebra, stability
-✅ **Documentation complete:** Mathlib submission quality across all 10 directories
+**Formal verification complete:** Main theorem `network_gradient_correct` proven (26 theorems total) **Build succeeds:** All 59 files compile with zero errors **Data pipeline works:** 60,000 train + 10K test MNIST images load and preprocess correctly **Visualization works:** ASCII renderer produces excellent output **Components work:** Forward pass, network initialization, loss evaluation all validated **Comprehensive testing:** 30+ tests pass across data, loss, linear algebra, stability **Documentation complete:** Mathlib submission quality across all 10 directories
 
-### What We Do NOT Claim
+### Limitations
 
-❌ **Training does NOT execute:** SciLean AD is noncomputable, blocking all gradient computation
-❌ **Cannot run training:** `mnistTrain`, `simpleExample` fail with "noncomputable main" error
-❌ **Cannot run gradient tests:** `gradientCheck`, `fullIntegration` also non-executable
-❌ **No execution results:** We have ZERO training accuracy metrics, loss curves, or convergence data
-❌ **Training code exists but cannot run:** All infrastructure built, type-checks, but won't execute
+**AD-based training non-executable:** SciLean AD is noncomputable, blocking gradient computation. **AD examples cannot run:** `mnistTrain`, `simpleExample` fail with "noncomputable main" error. **AD gradient tests non-executable:** `gradientCheck`, `fullIntegration` also non-executable. **No AD execution results:** Zero training accuracy metrics, loss curves, or convergence data from AD-based examples. **AD infrastructure exists but cannot execute:** All infrastructure built and type-checks, but won't run.
 
-### What Has Been Tested
+### Testing Coverage
 
-✅ **Data loading:** 70,000 MNIST images verified (60,000 train + 10K test)
-✅ **ASCII renderer:** Visualization tested and working
-✅ **Smoke test:** Forward pass, initialization, predictions all pass
-✅ **Preprocessing:** 8/8 normalization tests pass
-✅ **Loss functions:** 7/7 property tests pass
-✅ **Numerical stability:** 7/7 edge case tests pass
-✅ **Build verification:** Zero compilation errors across all 59 files
+**Data loading:** 70,000 MNIST images verified (60,000 train + 10K test). **ASCII renderer:** Visualization tested and functional. **Smoke test:** Forward pass, initialization, predictions validated. **Preprocessing:** 8/8 normalization tests pass. **Loss functions:** 7/7 property tests pass. **Numerical stability:** 7/7 edge case tests pass. **Build verification:** Zero compilation errors across all 59 files.
 
-### What Cannot Be Verified Through Execution
+### Non-Executable Components
 
-⚠️ **Gradient computation:** Proven correct mathematically, but cannot execute
-⚠️ **Training convergence:** Infrastructure built, but noncomputable
-⚠️ **End-to-end backpropagation:** Type-checks successfully, but won't run
+**Gradient computation:** Mathematically proven correct, but AD-based implementation cannot execute. **Training convergence:** Infrastructure built but AD-based version is noncomputable. **End-to-end backpropagation:** Type-checks successfully but AD-based version won't run.
 
-### What Requires Trust
+### Trust Assumptions
 
-⚠️ Mathematical soundness of 11 axioms (justified via literature references)
-⚠️ SciLean's automatic differentiation correctness (external dependency)
-⚠️ Mathlib's calculus library correctness (foundational assumption)
+Mathematical soundness of 9 axioms (justified via literature references). SciLean's automatic differentiation correctness (external dependency). Mathlib's calculus library correctness (foundational assumption).
 
 ---
 
-## 🎯 Next Steps
+## Future Work
 
 ### Immediate Priorities
 
@@ -731,7 +681,7 @@ lake exe mnistTrain --epochs 1
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 LEAN_mnist/
@@ -739,35 +689,35 @@ LEAN_mnist/
 ├── lakefile.lean            # Build configuration
 ├── VerifiedNN.lean          # Top-level re-export module
 ├── VerifiedNN/
-│   ├── Core/                # ✅ 3 files (1,075 LOC) - Foundation types, linear algebra, activations
-│   ├── Data/                # ✅ 3 files (857 LOC) - MNIST loading, preprocessing, iteration
-│   ├── Layer/               # ✅ 4 files (912 LOC) - Dense layers with 13 proven properties
-│   ├── Network/             # ✅ 4 files (1,412 LOC) - MLP, initialization, gradients, serialization
-│   ├── Loss/                # ✅ 4 files (1,035 LOC) - Cross-entropy with mathematical properties
-│   ├── Optimizer/           # ✅ 3 files (720 LOC) - SGD, momentum, learning rate schedules
-│   ├── Training/            # ✅ 6 files (2,048 LOC) - Loop, metrics, gradient monitoring, utilities
-│   ├── Examples/            # ✅ 4 files (1,200+ LOC) - Simple, MNIST, TrainManual, demos
-│   ├── Testing/             # ✅ 10 files - Unit tests, integration tests, gradient checks
-│   └── Verification/        # ✅ 6 files - **MAIN THEOREM PROVEN** ✨
-│       ├── GradientCorrectness.lean  # 🎯 11 gradient correctness theorems
+│   ├── Core/                # 3 files (1,075 LOC) - Foundation types, linear algebra, activations
+│   ├── Data/                # 3 files (857 LOC) - MNIST loading, preprocessing, iteration
+│   ├── Layer/               # 4 files (912 LOC) - Dense layers with 13 proven properties
+│   ├── Network/             # 4 files (1,412 LOC) - MLP, initialization, gradients, serialization
+│   ├── Loss/                # 4 files (1,035 LOC) - Cross-entropy with mathematical properties
+│   ├── Optimizer/           # 3 files (720 LOC) - SGD, momentum, learning rate schedules
+│   ├── Training/            # 6 files (2,048 LOC) - Loop, metrics, gradient monitoring, utilities
+│   ├── Examples/            # 4 files (1,200+ LOC) - Simple, MNIST, TrainManual, demos
+│   ├── Testing/             # 10 files - Unit tests, integration tests, gradient checks
+│   └── Verification/        # 6 files - **MAIN THEOREM PROVEN** 
+│       ├── GradientCorrectness.lean  #  11 gradient correctness theorems
 │       ├── TypeSafety.lean           # 14 type safety theorems
 │       ├── Convergence/              # 8 axioms (out of scope) + 1 proven lemma
 │       └── Tactics.lean              # Proof automation helpers
 ├── scripts/
-│   ├── download_mnist.sh    # ✅ Downloads real MNIST dataset (70K images)
-│   ├── benchmark.sh         # ⚠️ Placeholder (future work)
-│   └── test_mnist_load.sh   # ✅ Validates MNIST data loading
+│   ├── download_mnist.sh    # Downloads real MNIST dataset (70K images)
+│   ├── benchmark.sh         # Note: Placeholder (future work)
+│   └── test_mnist_load.sh   # Validates MNIST data loading
 └── README.md                # This file
 ```
 
 **Legend:**
-- ✅ **Complete:** Fully implemented and verified
-- ⚠️ **Partial:** Structure in place, not production-ready
-- 🎯 **Primary Contribution:** Main scientific achievement
+- **Complete:** Fully implemented and verified
+- Note: **Partial:** Structure in place, not production-ready
+-  **Primary Contribution:** Main scientific achievement
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 ### Getting Started
 
@@ -814,7 +764,7 @@ Each `VerifiedNN/` subdirectory contains detailed module documentation:
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 **New users:** See [GETTING_STARTED.md](GETTING_STARTED.md) for comprehensive setup instructions.
 
@@ -864,7 +814,7 @@ lake exe renderMNIST --count 3 --inverted
 
 ---
 
-## 🚫 Why Training Cannot Execute
+## Execution Limitations Cannot Execute
 
 ### The Noncomputable Barrier
 
@@ -881,17 +831,17 @@ lake exe renderMNIST --count 3 --inverted
 
 ```bash
 # These commands FAIL with "error: `main` is marked as noncomputable"
-lake exe mnistTrain --epochs 10    # ❌ Error
-lake exe simpleExample             # ❌ Error
-lake env lean --run VerifiedNN/Examples/MNISTTrain.lean  # ❌ Error
+lake exe mnistTrain --epochs 10    # Error
+lake exe simpleExample             # Error
+lake env lean --run VerifiedNN/Examples/MNISTTrain.lean  # Error
 ```
 
 **Why Even Interpreter Mode Fails:**
 
-- ❌ **Noncomputable ≠ slow:** It means "has no computational interpretation at all"
-- ❌ **Not a performance issue:** There's no code to execute, fast or slow
-- ❌ **Cannot be worked around:** It's a fundamental property of the `∇` operator
-- ✅ **Proofs still valid:** Verification works on noncomputable functions
+- **Noncomputable ≠ slow:** It means "has no computational interpretation at all"
+- **Not a performance issue:** There's no code to execute, fast or slow
+- **Cannot be worked around:** It's a fundamental property of the `∇` operator
+- **Proofs still valid:** Verification works on noncomputable functions
 
 ### What Training Infrastructure Exists
 
@@ -899,13 +849,13 @@ The project includes complete training code (all type-checks and builds successf
 
 **Training Modules Built:**
 
-- ✅ **Training.Loop** - Full epoch loop with metrics tracking
-- ✅ **Training.Batch** - Mini-batch processing
-- ✅ **Training.Metrics** - Loss, accuracy, per-class diagnostics
-- ✅ **Training.GradientMonitoring** - Exploding/vanishing gradient detection
-- ✅ **Network.Gradient** - Complete gradient computation (noncomputable)
-- ✅ **Optimizer.SGD** - Parameter update logic
-- ✅ **Examples.MNISTTrain** - Full training script with CLI args
+- **Training.Loop** - Full epoch loop with metrics tracking
+- **Training.Batch** - Mini-batch processing
+- **Training.Metrics** - Loss, accuracy, per-class diagnostics
+- **Training.GradientMonitoring** - Exploding/vanishing gradient detection
+- **Network.Gradient** - Complete gradient computation (noncomputable)
+- **Optimizer.SGD** - Parameter update logic
+- **Examples.MNISTTrain** - Full training script with CLI args
 
 **Status: All code builds with zero errors, but cannot execute**
 
@@ -916,13 +866,13 @@ The project includes complete training code (all type-checks and builds successf
 ```bash
 # Validate data pipeline works
 ./scripts/download_mnist.sh
-lake exe mnistLoadTest  # ✅ Works - validates 70K images
+lake exe mnistLoadTest  # Works - validates 70K images
 
 # Visualize the data
-lake exe renderMNIST --count 5  # ✅ Works - beautiful ASCII art
+lake exe renderMNIST --count 5  # Works - beautiful ASCII art
 
 # Test forward pass and network initialization
-lake exe smokeTest  # ✅ Works - validates network components
+lake exe smokeTest  # Works - validates network components
 ```
 
 ### What This Project Successfully Demonstrates
@@ -931,19 +881,19 @@ Despite the execution limitation, this project achieves its core goals:
 
 **Verification Success (Primary Goal):**
 
-- ✅ **Gradient correctness:** 26 theorems proving AD computes exact derivatives
-- ✅ **Type safety:** Dimension consistency enforced by type system
-- ✅ **Mathematical properties:** Loss non-negativity, differentiability, etc.
-- ✅ **End-to-end differentiability:** Main theorem `network_gradient_correct` proven
-- ✅ **Build succeeds:** All 59 files compile with zero errors
+- **Gradient correctness:** 26 theorems proving AD computes exact derivatives
+- **Type safety:** Dimension consistency enforced by type system
+- **Mathematical properties:** Loss non-negativity, differentiability, etc.
+- **End-to-end differentiability:** Main theorem `network_gradient_correct` proven
+- **Build succeeds:** All 59 files compile with zero errors
 
 **Implementation Success (Secondary Goal):**
 
-- ✅ **Data pipeline:** 70K MNIST images load and preprocess correctly
-- ✅ **Visualization:** Beautiful ASCII renderer works perfectly
-- ✅ **Network architecture:** Complete MLP implementation
-- ✅ **Training infrastructure:** Loop, metrics, monitoring all built (non-executable)
-- ✅ **Testing suite:** 30+ tests validate components work correctly
+- **Data pipeline:** 70K MNIST images load and preprocess correctly
+- **Visualization:** Beautiful ASCII renderer works perfectly
+- **Network architecture:** Complete MLP implementation
+- **Training infrastructure:** Loop, metrics, monitoring all built (non-executable)
+- **Testing suite:** 30+ tests validate components work correctly
 
 **Research Contribution:**
 
@@ -951,7 +901,7 @@ This project demonstrates that formal verification of neural network gradients i
 
 ---
 
-## 🔗 External Resources
+## External Resources
 
 ### Lean 4
 - Official docs: https://lean-lang.org/documentation/
@@ -969,13 +919,13 @@ This project demonstrates that formal verification of neural network gradients i
 
 ---
 
-## 📄 License
+## License
 
 MIT License - See LICENSE file for details
 
 ---
 
-## 🏆 Acknowledgments
+## Acknowledgments
 
 - **SciLean** (Tomáš Skřivan) - Automatic differentiation framework
 - **Mathlib4** community - Mathematical foundations
@@ -988,12 +938,12 @@ MIT License - See LICENSE file for details
 
 **Last Updated:** November 21, 2025
 
-**Project Status:** ✅ **VERIFICATION COMPLETE, TRAINING WORKING (93% ACCURACY)**
+**Project Status:** **VERIFICATION COMPLETE, TRAINING WORKING (93% ACCURACY)**
 
-**Build Status:** ✅ All 59 files compile successfully (zero errors)
+**Build Status:** All 59 files compile successfully (zero errors)
 
-**Execution Status:** ✅ Full training pipeline working - 93% accuracy on 60,000 sample MNIST (3.3 hours)
+**Execution Status:** Full training pipeline working - 93% accuracy on 60,000 sample MNIST (3.3 hours)
 
-**Documentation:** ✅ Mathlib submission quality (all 10 directories at publication standards)
+**Documentation:** Mathlib submission quality (all 10 directories at publication standards)
 
 **Primary Scientific Contribution:** First complete implementation of computable, formally verified backpropagation in Lean 4 with working end-to-end training pipeline achieving 93% MNIST accuracy.
