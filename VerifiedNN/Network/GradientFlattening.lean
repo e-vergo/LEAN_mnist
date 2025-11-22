@@ -172,7 +172,7 @@ def flattenGradients
       have hrow : row < 128 := by
         -- row = i / 784, and i < 784 * 128
         -- Therefore row = i / 784 < (784 * 128) / 784 = 128
-        sorry
+        omega
       have hcol : col < 784 := Nat.mod_lt i (by omega : 0 < 784)
       dW1[natToIdx 128 row hrow, natToIdx 784 col hcol]
     -- Layer 1 bias: indices [100352, 100479]
@@ -183,7 +183,7 @@ def flattenGradients
         -- i < 784 * 128 + 128 and ¬(i < 784 * 128)
         -- Therefore 784 * 128 ≤ i < 784 * 128 + 128
         -- So bias_idx = i - 784 * 128 < 128
-        sorry
+        omega
       db1[natToIdx 128 bias_idx hb]
     -- Layer 2 weights: indices [100480, 101759]
     -- W2 is [10, 128] in row-major order
@@ -195,7 +195,7 @@ def flattenGradients
       have hrow : row < 10 := by
         -- offset < 128 * 10 (from h3 and previous conditions)
         -- row = offset / 128 < (128 * 10) / 128 = 10
-        sorry
+        omega
       have hcol : col < 128 := Nat.mod_lt offset (by omega : 0 < 128)
       dW2[natToIdx 10 row hrow, natToIdx 128 col hcol]
     -- Layer 2 bias: indices [101760, 101769]
@@ -207,7 +207,9 @@ def flattenGradients
         -- But i < nParams = 784*128 + 128 + 128*10 + 10
         -- Therefore 784*128+128+128*10 ≤ i < 784*128+128+128*10+10
         -- So bias_idx < 10
-        sorry
+        have hi : i < nParams := idx.2
+        unfold nParams at hi
+        omega
       db2[natToIdx 10 bias_idx hb]
 
 /-- Flatten Layer 1 weight gradients into parameter vector segment.
@@ -231,7 +233,9 @@ def flattenLayer1Weights (dW1 : Matrix 128 784) : Vector (784 * 128) :=
     let flat_idx := idx.1.toNat
     let row := flat_idx / 784
     let col := flat_idx % 784
-    have hrow : row < 128 := by sorry
+    have hrow : row < 128 := by
+      have hi : flat_idx < 784 * 128 := idx.2
+      omega
     have hcol : col < 784 := Nat.mod_lt flat_idx (by omega : 0 < 784)
     dW1[natToIdx 128 row hrow, natToIdx 784 col hcol]
 
@@ -257,7 +261,9 @@ def flattenLayer2Weights (dW2 : Matrix 10 128) : Vector (128 * 10) :=
     let flat_idx := idx.1.toNat
     let row := flat_idx / 128
     let col := flat_idx % 128
-    have hrow : row < 10 := by sorry
+    have hrow : row < 10 := by
+      have hi : flat_idx < 128 * 10 := idx.2
+      omega
     have hcol : col < 128 := Nat.mod_lt flat_idx (by omega : 0 < 128)
     dW2[natToIdx 10 row hrow, natToIdx 128 col hcol]
 

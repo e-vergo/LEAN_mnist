@@ -373,6 +373,25 @@ Parameter flattening and gradient computation via automatic differentiation.
 
 The file contains 4 occurrences of the word "sorry" (lines 294, 315, 339, 360) as documentation markers within a proof sketch comment, not executable code. These serve as placeholders showing how the axiom flatten_unflatten_id would be proven once DataArrayN extensionality becomes available.
 
+### GradientFlattening Module (270 lines)
+
+Implements gradient flattening and unflattening operations with complete verification.
+
+**Key Functions:**
+- `flattenGradients`: Flatten network gradients (dW1, db1, dW2, db2) into single parameter vector
+- `unflattenGradients`: Reconstruct gradient structure from flat vector
+- Helper functions for layer-specific flattening
+
+**Memory Layout**: Mirrors parameter layout from Gradient module:
+- Layer 1 weight gradients: indices 0-100351 (100,352 values)
+- Layer 1 bias gradients: indices 100352-100479 (128 values)
+- Layer 2 weight gradients: indices 100480-101759 (1,280 values)
+- Layer 2 bias gradients: indices 101760-101769 (10 values)
+
+**Verification Status**: 0 sorries, 0 axioms, fully verified
+
+All 6 index bound proofs completed using omega tactic. The module demonstrates complete formal verification of gradient parameter marshalling, proving all index arithmetic constraints for safe array access.
+
 ### ManualGradient Module
 
 Provides manual backpropagation implementation that achieves 93% MNIST accuracy. This is the computable alternative to the noncomputable automatic differentiation in Gradient.lean, enabling executable training while maintaining gradient correctness verification.
